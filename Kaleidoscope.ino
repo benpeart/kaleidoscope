@@ -12,9 +12,9 @@
 Adafruit_NeoPixel LED_strip[LED_STRIPS];
 
 // statically define the 'filmstrips' to use to generate the kaleidoscope
-#define TRIANGLE_COLUMNS 7    // the height of the 'viewport' triangle
-#define TRIANGLE_ROWS 13      // the width of the base of the 'viewport' triange
-#define TRIANGLE_COUNT 49     // the number of pixels in the 'viewport' triangle
+#define TRIANGLE_COLUMNS 7 // the height of the 'viewport' triangle
+#define TRIANGLE_ROWS 13   // the width of the base of the 'viewport' triange
+#define TRIANGLE_COUNT 49  // the number of pixels in the 'viewport' triangle
 #define JEWEL_STRIP_ROWS 28
 #define JEWEL_RED 0x7b1542
 #define JEWEL_GREEN 0x249b23
@@ -25,39 +25,6 @@ Adafruit_NeoPixel LED_strip[LED_STRIPS];
 #define JEWEL_LEAD 0x27100a
 
 // store the strip RGB values in program memory (flash) to save SRAM
-static const uint32_t PROGMEM OldJewelStrip[TRIANGLE_COLUMNS][JEWEL_STRIP_ROWS] =
-    {
-        {JEWEL_RED, JEWEL_RED, JEWEL_PURPLE, JEWEL_PURPLE, JEWEL_BLUE, JEWEL_BLUE, JEWEL_LEAD,
-         JEWEL_ORANGE, JEWEL_ORANGE, JEWEL_ORANGE, JEWEL_ORANGE, JEWEL_ORANGE, JEWEL_ORANGE, JEWEL_LEAD,
-         JEWEL_PURPLE, JEWEL_PURPLE, JEWEL_RED, JEWEL_RED, JEWEL_YELLOW, JEWEL_YELLOW, JEWEL_LEAD,
-         JEWEL_YELLOW, JEWEL_YELLOW, JEWEL_YELLOW, JEWEL_YELLOW, JEWEL_YELLOW, JEWEL_YELLOW, JEWEL_LEAD},
-        {JEWEL_RED, JEWEL_RED, JEWEL_PURPLE, JEWEL_PURPLE, JEWEL_BLUE, JEWEL_BLUE, JEWEL_LEAD,
-         JEWEL_ORANGE, JEWEL_ORANGE, JEWEL_ORANGE, JEWEL_ORANGE, JEWEL_ORANGE, JEWEL_ORANGE, JEWEL_LEAD,
-         JEWEL_PURPLE, JEWEL_PURPLE, JEWEL_RED, JEWEL_RED, JEWEL_YELLOW, JEWEL_YELLOW, JEWEL_LEAD,
-         JEWEL_YELLOW, JEWEL_YELLOW, JEWEL_YELLOW, JEWEL_YELLOW, JEWEL_YELLOW, JEWEL_YELLOW, JEWEL_LEAD},
-
-        {JEWEL_RED, JEWEL_RED, JEWEL_PURPLE, JEWEL_PURPLE, JEWEL_BLUE, JEWEL_BLUE, JEWEL_LEAD,
-         JEWEL_PURPLE, JEWEL_PURPLE, JEWEL_PURPLE, JEWEL_PURPLE, JEWEL_PURPLE, JEWEL_PURPLE, JEWEL_LEAD,
-         JEWEL_PURPLE, JEWEL_PURPLE, JEWEL_RED, JEWEL_RED, JEWEL_YELLOW, JEWEL_YELLOW, JEWEL_LEAD,
-         JEWEL_BLUE, JEWEL_BLUE, JEWEL_BLUE, JEWEL_BLUE, JEWEL_BLUE, JEWEL_BLUE, JEWEL_LEAD},
-        {JEWEL_RED, JEWEL_RED, JEWEL_PURPLE, JEWEL_PURPLE, JEWEL_BLUE, JEWEL_BLUE, JEWEL_LEAD,
-         JEWEL_PURPLE, JEWEL_PURPLE, JEWEL_PURPLE, JEWEL_PURPLE, JEWEL_PURPLE, JEWEL_PURPLE, JEWEL_LEAD,
-         JEWEL_PURPLE, JEWEL_PURPLE, JEWEL_RED, JEWEL_RED, JEWEL_YELLOW, JEWEL_YELLOW, JEWEL_LEAD,
-         JEWEL_BLUE, JEWEL_BLUE, JEWEL_BLUE, JEWEL_BLUE, JEWEL_BLUE, JEWEL_BLUE, JEWEL_LEAD},
-        {JEWEL_RED, JEWEL_RED, JEWEL_PURPLE, JEWEL_PURPLE, JEWEL_BLUE, JEWEL_BLUE, JEWEL_LEAD,
-         JEWEL_PURPLE, JEWEL_PURPLE, JEWEL_PURPLE, JEWEL_PURPLE, JEWEL_PURPLE, JEWEL_PURPLE, JEWEL_LEAD,
-         JEWEL_PURPLE, JEWEL_PURPLE, JEWEL_RED, JEWEL_RED, JEWEL_YELLOW, JEWEL_YELLOW, JEWEL_LEAD,
-         JEWEL_BLUE, JEWEL_BLUE, JEWEL_BLUE, JEWEL_BLUE, JEWEL_BLUE, JEWEL_BLUE, JEWEL_LEAD},
-
-        {JEWEL_RED, JEWEL_RED, JEWEL_PURPLE, JEWEL_PURPLE, JEWEL_BLUE, JEWEL_BLUE, JEWEL_LEAD,
-         JEWEL_GREEN, JEWEL_GREEN, JEWEL_GREEN, JEWEL_GREEN, JEWEL_GREEN, JEWEL_GREEN, JEWEL_LEAD,
-         JEWEL_PURPLE, JEWEL_PURPLE, JEWEL_RED, JEWEL_RED, JEWEL_YELLOW, JEWEL_YELLOW, JEWEL_LEAD,
-         JEWEL_ORANGE, JEWEL_ORANGE, JEWEL_ORANGE, JEWEL_ORANGE, JEWEL_ORANGE, JEWEL_ORANGE, JEWEL_LEAD},
-        {JEWEL_RED, JEWEL_RED, JEWEL_PURPLE, JEWEL_PURPLE, JEWEL_BLUE, JEWEL_BLUE, JEWEL_LEAD,
-         JEWEL_GREEN, JEWEL_GREEN, JEWEL_GREEN, JEWEL_GREEN, JEWEL_GREEN, JEWEL_GREEN, JEWEL_LEAD,
-         JEWEL_PURPLE, JEWEL_PURPLE, JEWEL_RED, JEWEL_RED, JEWEL_YELLOW, JEWEL_YELLOW, JEWEL_LEAD,
-         JEWEL_ORANGE, JEWEL_ORANGE, JEWEL_ORANGE, JEWEL_ORANGE, JEWEL_ORANGE, JEWEL_ORANGE, JEWEL_LEAD}};
-
 static const uint32_t PROGMEM JewelStrip[JEWEL_STRIP_ROWS][TRIANGLE_COLUMNS] =
     {
         {JEWEL_RED, JEWEL_RED, JEWEL_RED, JEWEL_RED, JEWEL_RED, JEWEL_RED, JEWEL_RED},
@@ -91,8 +58,6 @@ static const uint32_t PROGMEM JewelStrip[JEWEL_STRIP_ROWS][TRIANGLE_COLUMNS] =
         {JEWEL_YELLOW, JEWEL_YELLOW, JEWEL_BLUE, JEWEL_BLUE, JEWEL_BLUE, JEWEL_ORANGE, JEWEL_ORANGE},
         {JEWEL_YELLOW, JEWEL_YELLOW, JEWEL_BLUE, JEWEL_BLUE, JEWEL_BLUE, JEWEL_ORANGE, JEWEL_ORANGE},
         {JEWEL_LEAD, JEWEL_LEAD, JEWEL_LEAD, JEWEL_LEAD, JEWEL_LEAD, JEWEL_LEAD, JEWEL_LEAD}};
-
-
 
 // draw a pixel mirrored and rotated 6 times to emulate a kaleidoscope
 void drawKaleidoscopePixel6(uint16_t index, uint32_t c)
@@ -507,10 +472,10 @@ void test_drawKaleidoscopePixel6()
 
     for (uint8_t x = 0; x < LED_STRIPS; x++)
       LED_strip[x].show();
-    delay(500);
+    delay(1000);
 
     // turn off the pixels
-    drawKaleidoscopePixel6(index, 0); // Red
+    drawKaleidoscopePixel6(index, 0);
   }
 }
 
@@ -535,14 +500,12 @@ void drawKaleidoscopePixel12(uint16_t index, uint32_t c)
   }
 }
 
-
 struct Kaleidoscope
 {
   Kaleidoscope(const uint32_t strip[][TRIANGLE_COLUMNS], int rows)
   {
     rgb_strip = strip;
     total_rows = rows;
-    current_row = 0;
   }
 
   // this will draw the kaleidoscope starting at the given offset
@@ -552,6 +515,7 @@ struct Kaleidoscope
     int end = offset + TRIANGLE_ROWS;
     int counter = 0;
 
+    // draw the kaleidoscope pixels for this 'frame'
     for (int x = 0; x < TRIANGLE_COLUMNS; x++)
     {
       for (int y = begin; y < end; y++)
@@ -566,10 +530,14 @@ struct Kaleidoscope
     for (int x = 0; x < LED_STRIPS; x++)
       LED_strip[x].show();
     delay(wait);
+
+    // erase the kaleidoscope pixels
+    for (int x = 0; x < LED_STRIPS; x++)
+      LED_strip[x].clear();
   }
 
   const uint32_t (*rgb_strip)[TRIANGLE_COLUMNS];
-  uint8_t current_row, total_rows;
+  uint8_t total_rows;
 };
 
 Kaleidoscope kaleidoscope(JewelStrip, JEWEL_STRIP_ROWS);
@@ -590,19 +558,19 @@ void setup()
     LED_strip[x].begin();
     LED_strip[x].clear();
     LED_strip[x].setBrightness(50);
-    LED_strip[x].show(); // Initialize all pixels to 'off'
+    LED_strip[x].show();
   }
 }
 
 void loop()
 {
-#if 0
+#if 1
   static int current_offset = 0;
 
   test_drawKaleidoscopePixel6();
 
-  kaleidoscope.draw(current_offset++, 100);
-  current_offset = current_offset % kaleidoscope.total_rows;
+  //kaleidoscope.draw(current_offset, 100);
+  //current_offset = ++current_offset % kaleidoscope.total_rows;
 #else
   // why can't it display white?
   LED_strip[0].fill(0xffffffff, 0, 16);
@@ -753,4 +721,3 @@ uint32_t Wheel(byte WheelPos)
   WheelPos -= 170;
   return LED_strip[0].Color(WheelPos * 3, 255 - WheelPos * 3, 0);
 }
-
