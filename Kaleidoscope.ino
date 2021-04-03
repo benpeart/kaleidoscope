@@ -1,4 +1,5 @@
 #include <Adafruit_NeoPixel.h>
+#define __DEBUG__
 
 // IMPORTANT: To reduce NeoPixel burnout risk, add 1000 uF capacitor across
 // pixel power leads, add 300 - 500 Ohm resistor on first pixel's data input
@@ -8,14 +9,12 @@
 #define PIN_BASE 6
 #define LED_STRIPS 2
 #define PIXELS_PER_STRIP 150
-
-Adafruit_NeoPixel LED_strip[LED_STRIPS];
+#define TRIANGLE_ROWS 7                                             // the height of the 'viewport' triangle
+#define TRIANGLE_COLUMNS 13                                         // the width of the base of the 'viewport' triange
+#define TRIANGLE_COUNT (TRIANGLE_ROWS * (TRIANGLE_COLUMNS + 1) / 2) // the number of pixels in the 'viewport' triangle
 
 // statically define the 'filmstrips' to use to generate the kaleidoscope
-#define TRIANGLE_COLUMNS 7 // the height of the 'viewport' triangle
-#define TRIANGLE_ROWS 13   // the width of the base of the 'viewport' triange
-#define TRIANGLE_COUNT 49  // the number of pixels in the 'viewport' triangle
-#define JEWEL_STRIP_ROWS 28
+#define JEWEL_STRIP_COLUMNS 28
 #define JEWEL_RED 0x7b1542
 #define JEWEL_GREEN 0x249b23
 #define JEWEL_BLUE 0x1c5dd2
@@ -25,7 +24,8 @@ Adafruit_NeoPixel LED_strip[LED_STRIPS];
 #define JEWEL_LEAD 0x27100a
 
 // store the strip RGB values in program memory (flash) to save SRAM
-static const uint32_t PROGMEM JewelStrip[JEWEL_STRIP_ROWS][TRIANGLE_COLUMNS] =
+// TODO: optimize the strip array to only require 3 bytes per pixel
+static const uint32_t PROGMEM JewelStrip[JEWEL_STRIP_COLUMNS][TRIANGLE_ROWS] =
     {
         {JEWEL_RED, JEWEL_RED, JEWEL_RED, JEWEL_RED, JEWEL_RED, JEWEL_RED, JEWEL_RED},
         {JEWEL_RED, JEWEL_RED, JEWEL_RED, JEWEL_RED, JEWEL_RED, JEWEL_RED, JEWEL_RED},
@@ -58,6 +58,18 @@ static const uint32_t PROGMEM JewelStrip[JEWEL_STRIP_ROWS][TRIANGLE_COLUMNS] =
         {JEWEL_YELLOW, JEWEL_YELLOW, JEWEL_BLUE, JEWEL_BLUE, JEWEL_BLUE, JEWEL_ORANGE, JEWEL_ORANGE},
         {JEWEL_YELLOW, JEWEL_YELLOW, JEWEL_BLUE, JEWEL_BLUE, JEWEL_BLUE, JEWEL_ORANGE, JEWEL_ORANGE},
         {JEWEL_LEAD, JEWEL_LEAD, JEWEL_LEAD, JEWEL_LEAD, JEWEL_LEAD, JEWEL_LEAD, JEWEL_LEAD}};
+
+#ifdef __DEBUG__
+#define BLUE_STRIP_COLUMNS 1
+static const uint32_t PROGMEM BlueStrip[BLUE_STRIP_COLUMNS][TRIANGLE_ROWS] =
+    {{0x0000FF, 0x0000FF, 0x0000FF, 0x0000FF, 0x0000FF, 0x0000FF, 0x0000FF}};
+
+#define YELLOW_STRIP_COLUMNS 1
+static const uint32_t PROGMEM YellowStrip[YELLOW_STRIP_COLUMNS][TRIANGLE_ROWS] =
+    {{0xFFFF00, 0xFFFF00, 0xFFFF00, 0xFFFF00, 0xFFFF00, 0xFFFF00, 0xFFFF00}};
+#endif
+
+Adafruit_NeoPixel LED_strip[LED_STRIPS];
 
 // draw a pixel mirrored and rotated 6 times to emulate a kaleidoscope
 void drawKaleidoscopePixel6(uint16_t index, uint32_t c)
@@ -461,6 +473,7 @@ void drawKaleidoscopePixel6(uint16_t index, uint32_t c)
   }
 }
 
+#ifdef __DEBUG__
 void test_drawKaleidoscopePixel6()
 {
   // loop through all pixels in the source triange making sure they
@@ -478,49 +491,95 @@ void test_drawKaleidoscopePixel6()
     drawKaleidoscopePixel6(index, 0);
   }
 }
+#endif
 
-// draw a pixel mirrored and rotated 12 times to emulate a kaleidoscope
-void drawKaleidoscopePixel12(uint16_t index, uint32_t c)
+// https://stackoverflow.com/questions/1102692/how-to-alpha-blend-rgba-unsigned-byte-color-fast
+uint32_t blendAlpha(uint32_t colora, uint32_t colorb, uint32_t alpha)
 {
-  switch (index)
-  {
-  case 1:
-    LED_strip[0].setPixelColor(110, c);
-    LED_strip[0].setPixelColor(111, c);
-    LED_strip[0].setPixelColor(112, c);
-    LED_strip[1].setPixelColor(22, c);
-    LED_strip[1].setPixelColor(23, c);
-    LED_strip[1].setPixelColor(24, c);
-    break;
-  case 2:
-    LED_strip[0].setPixelColor(7, c);
-    break;
-  case 3:
-    break;
-  }
+  uint32_t rb1 = ((0xFF - alpha) * (colora & 0xFF00FF)) >> 8;
+  uint32_t rb2 = (alpha * (colorb & 0xFF00FF)) >> 8;
+  uint32_t g1 = ((0xFF - alpha) * (colora & 0x00FF00)) >> 8;
+  uint32_t g2 = (alpha * (colorb & 0x00FF00)) >> 8;
+
+  return ((rb1 + rb2) & 0xFF00FF) + ((g1 + g2) & 0x00FF00);
 }
 
 struct Kaleidoscope
 {
-  Kaleidoscope(const uint32_t strip[][TRIANGLE_COLUMNS], int rows)
+  // https://stackoverflow.com/questions/1052818/create-a-pointer-to-two-dimensional-array
+  uint8_t total_rows_1;
+  const uint32_t (*rgb_strip_1)[TRIANGLE_ROWS];
+  uint8_t total_rows_2;
+  const uint32_t (*rgb_strip_2)[TRIANGLE_ROWS];
+
+  Kaleidoscope() {} // Default constructor
+
+  void init(const uint32_t (*strip_1)[TRIANGLE_ROWS], int rows_1, const uint32_t (*strip_2)[TRIANGLE_ROWS], int rows_2)
   {
-    rgb_strip = strip;
-    total_rows = rows;
+    rgb_strip_1 = strip_1;
+    total_rows_1 = rows_1;
+    rgb_strip_2 = strip_2;
+    total_rows_2 = rows_2;
+    
+#ifdef __DEBUG__
+    Serial.print("BlueStrip = ");
+    Serial.println((uint32_t)BlueStrip, HEX);
+    Serial.print("rgb_strip_1 = ");
+    Serial.println((uint32_t)rgb_strip_1, HEX);
+
+    Serial.print("BlueStrip(0, 0) = 0x");
+    Serial.println(BlueStrip[0][0], HEX);
+
+    Serial.print("rgb_strip_1(0, 0) = 0x");
+    Serial.println(rgb_strip_1[0][0], HEX);
+#endif
   }
 
   // this will draw the kaleidoscope starting at the given offset
-  void draw(uint8_t offset, uint8_t wait)
+  void draw(uint8_t offset_1, uint8_t offset_2, uint8_t wait)
   {
-    int begin = offset;
-    int end = offset + TRIANGLE_ROWS;
+    int begin = offset_1;
+    int end = offset_1 + TRIANGLE_COLUMNS;
     int counter = 0;
 
+#ifdef __NDEBUG__
+    Serial.print("BlueStrip = ");
+    Serial.println((uint32_t)BlueStrip, HEX);
+    Serial.print("rgb_strip_1 = ");
+    Serial.println((uint32_t)rgb_strip_1, HEX);
+
+    Serial.print("BlueStrip(0, 0) = 0x");
+    Serial.println(BlueStrip[0][0], HEX);
+
+    Serial.print("rgb_strip_1(0, 0) = 0x");
+    Serial.println(rgb_strip_1[0][0], HEX);
+#endif
+
     // draw the kaleidoscope pixels for this 'frame'
-    for (int x = 0; x < TRIANGLE_COLUMNS; x++)
+    for (int y = 0; y < TRIANGLE_ROWS; y++)
     {
-      for (int y = begin; y < end; y++)
+      for (int x = begin; x < end; x++)
       {
-        drawKaleidoscopePixel6(counter, rgb_strip[y % total_rows][x]);
+        uint32_t pixel_1 = rgb_strip_1[x % total_rows_1][y];
+        uint32_t pixel_2 = rgb_strip_2[(x + offset_2) % total_rows_2][y];
+
+#ifdef __NDEBUG__
+        Serial.print("pixel_1(");
+        Serial.print(x % total_rows_1, DEC);
+        Serial.print(",");
+        Serial.print(y, DEC);
+        Serial.print(") = 0x");
+        Serial.println(pixel_1, HEX);
+
+        Serial.print("pixel_2(");
+        Serial.print((x + offset_2) % total_rows_2, DEC);
+        Serial.print(",");
+        Serial.print(y, DEC);
+        Serial.print(") = 0x");
+        Serial.println(pixel_2, HEX);
+#endif
+        // blend the pixels by doing 50% transparency
+        drawKaleidoscopePixel6(counter, blendAlpha(pixel_1, pixel_2, 0x7f));
         counter++;
       }
       begin++;
@@ -535,15 +594,34 @@ struct Kaleidoscope
     for (int x = 0; x < LED_STRIPS; x++)
       LED_strip[x].clear();
   }
-
-  const uint32_t (*rgb_strip)[TRIANGLE_COLUMNS];
-  uint8_t total_rows;
 };
 
-Kaleidoscope kaleidoscope(JewelStrip, JEWEL_STRIP_ROWS);
+#ifdef __DEBUG__
+Kaleidoscope kaleidoscope;
+#else
+Kaleidoscope kaleidoscope(JewelStrip, JEWEL_STRIP_COLUMNS, JewelStrip, JEWEL_STRIP_COLUMNS);
+#endif
 
 void setup()
 {
+  // 3 second delay for recovery
+  delay(3000);
+
+#ifdef __DEBUG__
+  Serial.begin(115200);
+  while (!Serial)
+  {
+    ; // wait for serial port to connect. Needed for native USB port only
+  }
+  Serial.println("Debugging Kaleidoscope");
+#endif
+
+  // randomize using noise from analog pin 5
+  randomSeed(analogRead(5));
+
+  kaleidoscope.init(BlueStrip, BLUE_STRIP_COLUMNS, YellowStrip, YELLOW_STRIP_COLUMNS);
+
+  // initialize all LED strips
   for (int x = 0; x < LED_STRIPS; x++)
   {
     // Parameter 1 = number of pixels in strip
@@ -564,14 +642,28 @@ void setup()
 
 void loop()
 {
-#if 1
-  static int current_offset = 0;
+  // start with random offsets to provide more variety
+  static int current_offset_1 = random(kaleidoscope.total_rows_1);
+  static int current_offset_2 = random(kaleidoscope.total_rows_2);
 
+#ifdef __NDEBUG__
+#if 0
+  Serial.print("current_oiffset_1 = ");
+  Serial.println(current_offset_1, DEC);
+  Serial.println("test_drawKaleidoscopePixel6");
   test_drawKaleidoscopePixel6();
+#endif
+  Serial.print("kaleidoscope.draw(");
+  Serial.print(current_offset_1, DEC);
+  Serial.print(", ");
+  Serial.print(current_offset_2, DEC);
+  Serial.println(");");
+#endif
+  kaleidoscope.draw(current_offset_1, current_offset_2, 100);
 
-  //kaleidoscope.draw(current_offset, 100);
-  //current_offset = ++current_offset % kaleidoscope.total_rows;
-#else
+  current_offset_1 = ++current_offset_1 % kaleidoscope.total_rows_1;
+  current_offset_2 = ++current_offset_2 % kaleidoscope.total_rows_2;
+#if 0
   // why can't it display white?
   LED_strip[0].fill(0xffffffff, 0, 16);
   LED_strip[0].show();
@@ -608,6 +700,8 @@ void loop()
 #endif
 #endif
 }
+
+#ifdef __DEBUG__
 
 // Fill the dots one after the other with a color
 void colorWipe(uint32_t c, uint8_t wait)
@@ -721,3 +815,5 @@ uint32_t Wheel(byte WheelPos)
   WheelPos -= 170;
   return LED_strip[0].Color(WheelPos * 3, 255 - WheelPos * 3, 0);
 }
+
+#endif // __DEBUG__
