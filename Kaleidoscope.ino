@@ -1,6 +1,8 @@
 #include <Adafruit_NeoPixel.h>
 #define __DEBUG__
 
+#define PHOTOCELL_PIN 0 // the cell and 10K pulldown are connected to a0
+
 // IMPORTANT: To reduce NeoPixel burnout risk, add 1000 uF capacitor across
 // pixel power leads, add 300 - 500 Ohm resistor on first pixel's data input
 // and minimize distance between Arduino and first pixel.  Avoid connecting
@@ -514,23 +516,55 @@ struct Kaleidoscope
 
   Kaleidoscope() {} // Default constructor
 
-  void init(const uint32_t (*strip_1)[TRIANGLE_ROWS], int rows_1, const uint32_t (*strip_2)[TRIANGLE_ROWS], int rows_2)
+  void init(const uint32_t strip_1[][TRIANGLE_ROWS], int rows_1, const uint32_t strip_2[][TRIANGLE_ROWS], int rows_2)
   {
     rgb_strip_1 = strip_1;
     total_rows_1 = rows_1;
     rgb_strip_2 = strip_2;
     total_rows_2 = rows_2;
-    
-#ifdef __DEBUG__
+
+#ifdef __NDEBUG__
+    // If you uncomment out the Serial.println below, it will corrupt memory and 'we have a problem'
+    // I'm not the only one that ran into this:
+    // https://stackoverflow.com/questions/38923872/arduino-serial-parseint-data-read-corrupted-by-too-much-serial-print
+    for (int y = 0; y < TRIANGLE_ROWS; y++)
+    {
+      for (int x = 0; x < rows_1; x++)
+      {
+        uint32_t pixel_1, pixel_2, pixel_3;
+
+        pixel_1 = BlueStrip[x][y];
+        pixel_2 = strip_1[x][y];
+        pixel_3 = rgb_strip_1[x][y];
+        //Serial.println(pixel_1, HEX);
+        //Serial.println(pixel_2, HEX);
+        //Serial.println(pixel_3, HEX);
+        if (pixel_1 != pixel_2 != pixel_3)
+        {
+          Serial.println("Huston, we have a problem");
+          Serial.println(pixel_1, HEX);
+          Serial.println(pixel_2, HEX);
+          Serial.println(pixel_2, HEX);
+          return;
+        }
+      }
+    }
+    Serial.println("It's all good");
+
     Serial.print("BlueStrip = ");
     Serial.println((uint32_t)BlueStrip, HEX);
+    Serial.print("strip_1 = ");
+    Serial.println((uint32_t)strip_1, HEX);
     Serial.print("rgb_strip_1 = ");
     Serial.println((uint32_t)rgb_strip_1, HEX);
 
-    Serial.print("BlueStrip(0, 0) = 0x");
+    Serial.print("BlueStrip[0][0] = 0x");
     Serial.println(BlueStrip[0][0], HEX);
 
-    Serial.print("rgb_strip_1(0, 0) = 0x");
+    Serial.print("strip_1[0][0] = 0x");
+    Serial.println(strip_1[0][0], HEX);
+
+    Serial.print("rgb_strip_1[0][0] = 0x");
     Serial.println(rgb_strip_1[0][0], HEX);
 #endif
   }
@@ -543,16 +577,21 @@ struct Kaleidoscope
     int counter = 0;
 
 #ifdef __NDEBUG__
+    uint32_t pixel1, pixel2;
+
+    pixel1 = BlueStrip[0][0];
+    pixel2 = rgb_strip_1[0][0];
+
     Serial.print("BlueStrip = ");
     Serial.println((uint32_t)BlueStrip, HEX);
     Serial.print("rgb_strip_1 = ");
     Serial.println((uint32_t)rgb_strip_1, HEX);
 
     Serial.print("BlueStrip(0, 0) = 0x");
-    Serial.println(BlueStrip[0][0], HEX);
+    Serial.println(pixel1, HEX);
 
     Serial.print("rgb_strip_1(0, 0) = 0x");
-    Serial.println(rgb_strip_1[0][0], HEX);
+    Serial.println(pixel2, HEX);
 #endif
 
     // draw the kaleidoscope pixels for this 'frame'
@@ -613,13 +652,13 @@ void setup()
   {
     ; // wait for serial port to connect. Needed for native USB port only
   }
-  Serial.println("Debugging Kaleidoscope");
 #endif
 
   // randomize using noise from analog pin 5
   randomSeed(analogRead(5));
 
-  kaleidoscope.init(BlueStrip, BLUE_STRIP_COLUMNS, YellowStrip, YELLOW_STRIP_COLUMNS);
+  //  kaleidoscope.init(BlueStrip, BLUE_STRIP_COLUMNS, YellowStrip, YELLOW_STRIP_COLUMNS);
+  kaleidoscope.init(JewelStrip, JEWEL_STRIP_COLUMNS, JewelStrip, JEWEL_STRIP_COLUMNS);
 
   // initialize all LED strips
   for (int x = 0; x < LED_STRIPS; x++)
@@ -635,13 +674,30 @@ void setup()
     LED_strip[x] = Adafruit_NeoPixel(PIXELS_PER_STRIP, PIN_BASE + x, NEO_GRB + NEO_KHZ800);
     LED_strip[x].begin();
     LED_strip[x].clear();
-    LED_strip[x].setBrightness(50);
     LED_strip[x].show();
   }
 }
 
 void loop()
 {
+  // check the photocell and adjust our brightness
+  int photocellReading = analogRead(PHOTOCELL_PIN);
+#ifdef __DEBUG__
+  Serial.print("Analog reading = ");
+  Serial.println(photocellReading); // the raw analog reading
+#endif
+
+  // map 0-1023 to 0-255 since thats the range for setBrightness
+  int LEDbrightness = map(photocellReading, 0, 1023, 0, 255);
+#ifdef __DEBUG__
+  Serial.print("LED brightness = ");
+  Serial.println(LEDbrightness);
+#endif
+  for (int x = 0; x < LED_STRIPS; x++)
+  {
+    LED_strip[x].setBrightness(LEDbrightness);
+  }
+
   // start with random offsets to provide more variety
   static int current_offset_1 = random(kaleidoscope.total_rows_1);
   static int current_offset_2 = random(kaleidoscope.total_rows_2);
@@ -659,35 +715,20 @@ void loop()
   Serial.print(current_offset_2, DEC);
   Serial.println(");");
 #endif
-  kaleidoscope.draw(current_offset_1, current_offset_2, 100);
+#if 1
+  kaleidoscope.draw(current_offset_1, current_offset_2, 200);
 
-  current_offset_1 = ++current_offset_1 % kaleidoscope.total_rows_1;
-  current_offset_2 = ++current_offset_2 % kaleidoscope.total_rows_2;
-#if 0
-  // why can't it display white?
-  LED_strip[0].fill(0xffffffff, 0, 16);
-  LED_strip[0].show();
-  delay(5000);
-
+  current_offset_1 = (++current_offset_1 + random(10)) % kaleidoscope.total_rows_1;
+  current_offset_2 = (++current_offset_2 + random(10)) % kaleidoscope.total_rows_2;
+#else
   // Some example procedures showing how to display to the pixels:
   for (long x = 0; x < 65535; x += 100)
   {
-    LED_strip[0].fill(LED_strip[0].ColorHSV(x), 0, 16);
+    LED_strip[0].fill(LED_strip[0].gamma32(LED_strip[0].ColorHSV(x)), 0, 16);
     LED_strip[0].show();
     delay(50);
   }
 
-#if 0
-  colorWipe(LED_strip[0].gamma32(LED_strip[0].ColorHSV(65536*0/6)), 50); // Red
-  colorWipe(LED_strip[0].gamma32(LED_strip[0].ColorHSV(65536*1/6)), 50); // Yellow
-  colorWipe(LED_strip[0].gamma32(LED_strip[0].ColorHSV(65536*2/6)), 50); // Green
-  colorWipe(LED_strip[0].gamma32(LED_strip[0].ColorHSV(65536*3/6)), 50); // Cyan
-  colorWipe(LED_strip[0].gamma32(LED_strip[0].ColorHSV(65536*4/6)), 50); // Blue
-  colorWipe(LED_strip[0].gamma32(LED_strip[0].ColorHSV(65536*5/6)), 50); // Magenta
-
-  colorWipe(LED_strip[0].Color(255, 0, 0), 50); // Red
-  colorWipe(LED_strip[0].Color(0, 255, 0), 50); // Green
-  colorWipe(LED_strip[0].Color(0, 0, 255), 50); // Blue
 
   // Send a theater pixel chase in...
   theaterChase(LED_strip[0].Color(127, 127, 127), 50); // White
@@ -697,7 +738,6 @@ void loop()
   rainbow(20);
   rainbowCycle(20);
   theaterChaseRainbow(50);
-#endif
 #endif
 }
 
