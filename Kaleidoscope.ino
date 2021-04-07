@@ -508,11 +508,16 @@ uint32_t blendAlpha(uint32_t colora, uint32_t colorb, uint32_t alpha)
 
 struct Kaleidoscope
 {
+  // pointer to two dimensional arrays of color values for kaleidoscope effect
   // https://stackoverflow.com/questions/1052818/create-a-pointer-to-two-dimensional-array
   uint8_t total_rows_1;
   const uint32_t (*rgb_strip_1)[TRIANGLE_ROWS];
   uint8_t total_rows_2;
   const uint32_t (*rgb_strip_2)[TRIANGLE_ROWS];
+
+  // offset into strips, used to provide movement for the kaleidoscope
+  int current_offset_1 = random(total_rows_1);
+  int current_offset_2 = random(total_rows_2);
 
   Kaleidoscope() {} // Default constructor
 
@@ -523,6 +528,9 @@ struct Kaleidoscope
     rgb_strip_2 = strip_2;
     total_rows_2 = rows_2;
 
+    // start with random offsets to provide more variety
+    current_offset_1 = random(total_rows_1);
+    current_offset_2 = random(total_rows_2);
 #ifdef __NDEBUG__
     // If you uncomment out the Serial.println below, it will corrupt memory and 'we have a problem'
     // I'm not the only one that ran into this:
@@ -633,13 +641,59 @@ struct Kaleidoscope
     for (int x = 0; x < LED_STRIPS; x++)
       LED_strip[x].clear();
   }
+
+  // update the position of the strips and draw the kaleidoscope
+  void animateKaleidoscope()
+  {
+#ifdef __NDEBUG__
+    Serial.print("current_oiffset_1 = ");
+    Serial.println(current_offset_1, DEC);
+    Serial.println("test_drawKaleidoscopePixel6");
+    test_drawKaleidoscopePixel6();
+#endif
+
+#ifdef __NDEBUG__
+    Serial.print("kaleidoscope.draw(");
+    Serial.print(current_offset_1, DEC);
+    Serial.print(", ");
+    Serial.print(current_offset_2, DEC);
+    Serial.println(");");
+#endif
+    draw(current_offset_1, current_offset_2, 200);
+
+    current_offset_1 = (++current_offset_1 + random(10)) % total_rows_1;
+    current_offset_2 = (++current_offset_2 + random(10)) % total_rows_2;
+  }
 };
 
+// automatically adjust the brightness of the LED strips to match the ambient lighting
+void adjustBrightness()
+{
+  // store the current LED brightness so we can minimize minor differences
+  static int LEDbrightness = 0;
+
+  // check the photocell and map 0-1023 to 0-255 since that is the range for setBrightness
+  int photocellReading = analogRead(PHOTOCELL_PIN);
+  int newBrightness = map(photocellReading, 0, 1023, 0, 255);
+
+  // adjust our brightness if it has changed significantly
+  if ((newBrightness > LEDbrightness + 5) || (newBrightness < LEDbrightness - 5))
+  {
 #ifdef __DEBUG__
-Kaleidoscope kaleidoscope;
-#else
-Kaleidoscope kaleidoscope(JewelStrip, JEWEL_STRIP_COLUMNS, JewelStrip, JEWEL_STRIP_COLUMNS);
+    Serial.print("Analog photocell reading = ");
+    Serial.println(photocellReading); // the raw analog reading
+    Serial.print("new brightness = ");
+    Serial.println(newBrightness);
 #endif
+    LEDbrightness = newBrightness;
+    for (int x = 0; x < LED_STRIPS; x++)
+    {
+      LED_strip[x].setBrightness(LEDbrightness);
+    }
+  }
+}
+
+Kaleidoscope kaleidoscope;
 
 void setup()
 {
@@ -654,11 +708,8 @@ void setup()
   }
 #endif
 
-  // randomize using noise from analog pin 5
+  // initialize the random number generator using noise from analog pin 5
   randomSeed(analogRead(5));
-
-  //  kaleidoscope.init(BlueStrip, BLUE_STRIP_COLUMNS, YellowStrip, YELLOW_STRIP_COLUMNS);
-  kaleidoscope.init(JewelStrip, JEWEL_STRIP_COLUMNS, JewelStrip, JEWEL_STRIP_COLUMNS);
 
   // initialize all LED strips
   for (int x = 0; x < LED_STRIPS; x++)
@@ -676,56 +727,19 @@ void setup()
     LED_strip[x].clear();
     LED_strip[x].show();
   }
+
+  //  kaleidoscope.init(BlueStrip, BLUE_STRIP_COLUMNS, YellowStrip, YELLOW_STRIP_COLUMNS);
+  kaleidoscope.init(JewelStrip, JEWEL_STRIP_COLUMNS, JewelStrip, JEWEL_STRIP_COLUMNS);
 }
 
 void loop()
 {
-  // store the current LED brighness so we can minimize minor differences
-  static int LEDbrightness = 0;
+  // automatically adjust the brightness of the LED strips to match the ambient lighting
+  adjustBrightness();
 
-  // check the photocell and adjust our brightness if it has changed significantly
-  int photocellReading = analogRead(PHOTOCELL_PIN);
-
-  // map 0-1023 to 0-255 since that is the range for setBrightness
-  int newBrightness = map(photocellReading, 0, 1023, 0, 255);
-  if ((newBrightness > LEDbrightness + 5) || (newBrightness < LEDbrightness - 5))
-  {
-#ifdef __DEBUG__
-    Serial.print("Analog photocell reading = ");
-    Serial.println(photocellReading); // the raw analog reading
-    Serial.print("new brightness = ");
-    Serial.println(newBrightness);
-#endif
-    LEDbrightness = newBrightness;
-    for (int x = 0; x < LED_STRIPS; x++)
-    {
-      LED_strip[x].setBrightness(LEDbrightness);
-    }
-  }
-
-  // start with random offsets to provide more variety
-  static int current_offset_1 = random(kaleidoscope.total_rows_1);
-  static int current_offset_2 = random(kaleidoscope.total_rows_2);
+  kaleidoscope.animateKaleidoscope();
 
 #ifdef __NDEBUG__
-#if 0
-  Serial.print("current_oiffset_1 = ");
-  Serial.println(current_offset_1, DEC);
-  Serial.println("test_drawKaleidoscopePixel6");
-  test_drawKaleidoscopePixel6();
-#endif
-  Serial.print("kaleidoscope.draw(");
-  Serial.print(current_offset_1, DEC);
-  Serial.print(", ");
-  Serial.print(current_offset_2, DEC);
-  Serial.println(");");
-#endif
-#if 1
-  kaleidoscope.draw(current_offset_1, current_offset_2, 200);
-
-  current_offset_1 = (++current_offset_1 + random(10)) % kaleidoscope.total_rows_1;
-  current_offset_2 = (++current_offset_2 + random(10)) % kaleidoscope.total_rows_2;
-#else
   // Some example procedures showing how to display to the pixels:
   for (long x = 0; x < 65535; x += 100)
   {
@@ -733,7 +747,6 @@ void loop()
     LED_strip[0].show();
     delay(50);
   }
-
 
   // Send a theater pixel chase in...
   theaterChase(LED_strip[0].Color(127, 127, 127), 50); // White
