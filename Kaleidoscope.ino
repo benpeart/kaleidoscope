@@ -11,11 +11,12 @@
 #define PIN_BASE 6
 #define LED_STRIPS 2
 #define PIXELS_PER_STRIP 150
+
+// statically define the 'filmstrips' to use to generate the kaleidoscope
 #define TRIANGLE_ROWS 7                                             // the height of the 'viewport' triangle
 #define TRIANGLE_COLUMNS 13                                         // the width of the base of the 'viewport' triange
 #define TRIANGLE_COUNT (TRIANGLE_ROWS * (TRIANGLE_COLUMNS + 1) / 2) // the number of pixels in the 'viewport' triangle
 
-// statically define the 'filmstrips' to use to generate the kaleidoscope
 #define JEWEL_STRIP_COLUMNS 28
 #define JEWEL_RED 0x7b1542
 #define JEWEL_GREEN 0x249b23
@@ -510,34 +511,35 @@ struct Kaleidoscope
 {
   // pointer to two dimensional arrays of color values for kaleidoscope effect
   // https://stackoverflow.com/questions/1052818/create-a-pointer-to-two-dimensional-array
-  uint8_t total_rows_1;
-  const uint32_t (*rgb_strip_1)[TRIANGLE_ROWS];
-  uint8_t total_rows_2;
+  const uint32_t (*strip_1)[TRIANGLE_ROWS];
+  uint8_t strip_1_columns;
   const uint32_t (*rgb_strip_2)[TRIANGLE_ROWS];
+  uint8_t strip_2_columns;
 
   // offset into strips, used to provide movement for the kaleidoscope
-  int current_offset_1 = random(total_rows_1);
-  int current_offset_2 = random(total_rows_2);
+  int current_offset_1;
+  int current_offset_2;
 
   Kaleidoscope() {} // Default constructor
 
-  void init(const uint32_t strip_1[][TRIANGLE_ROWS], int rows_1, const uint32_t strip_2[][TRIANGLE_ROWS], int rows_2)
+  void init(const uint32_t rgb_strip_1[][TRIANGLE_ROWS], int strip_1_col, const uint32_t rgb_strip_2[][TRIANGLE_ROWS], int strip_2_col)
   {
-    rgb_strip_1 = strip_1;
-    total_rows_1 = rows_1;
-    rgb_strip_2 = strip_2;
-    total_rows_2 = rows_2;
+    strip_1 = rgb_strip_1;
+    strip_1_columns = strip_1_col;
+    rgb_strip_2 = rgb_strip_2;
+    strip_2_columns = strip_2_col;
 
     // start with random offsets to provide more variety
-    current_offset_1 = random(total_rows_1);
-    current_offset_2 = random(total_rows_2);
+    current_offset_1 = random(strip_1_columns);
+    current_offset_2 = random(strip_2_columns);
+
 #ifdef __NDEBUG__
     // If you uncomment out the Serial.println below, it will corrupt memory and 'we have a problem'
     // I'm not the only one that ran into this:
     // https://stackoverflow.com/questions/38923872/arduino-serial-parseint-data-read-corrupted-by-too-much-serial-print
     for (int y = 0; y < TRIANGLE_ROWS; y++)
     {
-      for (int x = 0; x < rows_1; x++)
+      for (int x = 0; x < strip_1_columns; x++)
       {
         uint32_t pixel_1, pixel_2, pixel_3;
 
@@ -580,57 +582,77 @@ struct Kaleidoscope
   // this will draw the kaleidoscope starting at the given offset
   void draw(uint8_t offset_1, uint8_t offset_2, uint8_t wait)
   {
-    int begin = offset_1;
-    int end = offset_1 + TRIANGLE_COLUMNS;
-    int counter = 0;
+    int begin, end, viewport_index = 0;
+
+    begin = end = offset_1;
+
+    Serial.print("offset_1 = ");
+    Serial.println((uint32_t)offset_1);
 
 #ifdef __NDEBUG__
     uint32_t pixel1, pixel2;
 
     pixel1 = BlueStrip[0][0];
-    pixel2 = rgb_strip_1[0][0];
+    pixel2 = strip_1[0][0];
 
     Serial.print("BlueStrip = ");
     Serial.println((uint32_t)BlueStrip, HEX);
-    Serial.print("rgb_strip_1 = ");
-    Serial.println((uint32_t)rgb_strip_1, HEX);
+    Serial.print("strip_1 = ");
+    Serial.println((uint32_t)strip_1, HEX);
 
     Serial.print("BlueStrip(0, 0) = 0x");
     Serial.println(pixel1, HEX);
 
-    Serial.print("rgb_strip_1(0, 0) = 0x");
+    Serial.print("strip_1(0, 0) = 0x");
     Serial.println(pixel2, HEX);
 #endif
 
     // draw the kaleidoscope pixels for this 'frame'
-    for (int y = 0; y < TRIANGLE_ROWS; y++)
+    for (int row = 0; row < TRIANGLE_ROWS; row++)
     {
-      for (int x = begin; x < end; x++)
+      for (int x = begin; x <= end; x++)
       {
-        uint32_t pixel_1 = rgb_strip_1[x % total_rows_1][y];
-        uint32_t pixel_2 = rgb_strip_2[(x + offset_2) % total_rows_2][y];
-
-#ifdef __NDEBUG__
-        Serial.print("pixel_1(");
-        Serial.print(x % total_rows_1, DEC);
-        Serial.print(",");
-        Serial.print(y, DEC);
-        Serial.print(") = 0x");
+        int column = x;
+        if (column < 0)
+          column += strip_1_columns;
+        else if (column >= strip_1_columns)
+          column -= strip_1_columns;
+        uint32_t pixel_1 = strip_1[column][row];
+#ifdef __DEBUG__
+        Serial.print("pixel_1[");
+        Serial.print(column);
+        Serial.print("][");
+        Serial.print(row);
+        Serial.print("] = 0x");
         Serial.println(pixel_1, HEX);
+#endif        
 
-        Serial.print("pixel_2(");
-        Serial.print((x + offset_2) % total_rows_2, DEC);
-        Serial.print(",");
-        Serial.print(y, DEC);
-        Serial.print(") = 0x");
+        column = x + offset_2;
+        if (column < 0)
+          column += strip_2_columns;
+        else if (column >= strip_2_columns)
+          column -= strip_2_columns;
+        uint32_t pixel_2 = rgb_strip_2[column][row];
+#ifdef __DEBUG__
+        Serial.print("pixel_2[");
+        Serial.print(column);
+        Serial.print("][");
+        Serial.print(row);
+        Serial.print("] = 0x");
         Serial.println(pixel_2, HEX);
+#endif        
+
+        // blend the pixels from the two strips by doing 50% transparency
+        uint32_t pixel = blendAlpha(pixel_1, pixel_2, 0x7f);
+#ifdef __DEBUG__
+        Serial.print("blended pixel = 0x");
+        Serial.println(pixel, HEX);
 #endif
-        // blend the pixels by doing 50% transparency
-        drawKaleidoscopePixel6(counter, blendAlpha(pixel_1, pixel_2, 0x7f));
-        counter++;
+        drawKaleidoscopePixel6(viewport_index, pixel);
+        viewport_index++;
       }
-      begin++;
-      end--;
+      begin--;
+      end++;
     }
 
     for (int x = 0; x < LED_STRIPS; x++)
@@ -661,8 +683,8 @@ struct Kaleidoscope
 #endif
     draw(current_offset_1, current_offset_2, 200);
 
-    current_offset_1 = (++current_offset_1 + random(10)) % total_rows_1;
-    current_offset_2 = (++current_offset_2 + random(10)) % total_rows_2;
+    current_offset_1 = (++current_offset_1 /*+ random(10)*/) % strip_1_columns;
+    current_offset_2 = (++current_offset_2 /*+ random(10)*/) % strip_2_columns;
   }
 };
 
