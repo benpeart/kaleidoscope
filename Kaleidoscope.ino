@@ -680,22 +680,27 @@ void setup()
 
 void loop()
 {
-  // check the photocell and adjust our brightness
-  int photocellReading = analogRead(PHOTOCELL_PIN);
-#ifdef __DEBUG__
-  Serial.print("Analog reading = ");
-  Serial.println(photocellReading); // the raw analog reading
-#endif
+  // store the current LED brighness so we can minimize minor differences
+  static int LEDbrightness = 0;
 
-  // map 0-1023 to 0-255 since thats the range for setBrightness
-  int LEDbrightness = map(photocellReading, 0, 1023, 0, 255);
-#ifdef __DEBUG__
-  Serial.print("LED brightness = ");
-  Serial.println(LEDbrightness);
-#endif
-  for (int x = 0; x < LED_STRIPS; x++)
+  // check the photocell and adjust our brightness if it has changed significantly
+  int photocellReading = analogRead(PHOTOCELL_PIN);
+
+  // map 0-1023 to 0-255 since that is the range for setBrightness
+  int newBrightness = map(photocellReading, 0, 1023, 0, 255);
+  if ((newBrightness > LEDbrightness + 5) || (newBrightness < LEDbrightness - 5))
   {
-    LED_strip[x].setBrightness(LEDbrightness);
+#ifdef __DEBUG__
+    Serial.print("Analog photocell reading = ");
+    Serial.println(photocellReading); // the raw analog reading
+    Serial.print("new brightness = ");
+    Serial.println(newBrightness);
+#endif
+    LEDbrightness = newBrightness;
+    for (int x = 0; x < LED_STRIPS; x++)
+    {
+      LED_strip[x].setBrightness(LEDbrightness);
+    }
   }
 
   // start with random offsets to provide more variety
