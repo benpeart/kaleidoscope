@@ -1,6 +1,7 @@
 #define __DEBUG__
 
 #include <Adafruit_NeoPixel.h>
+#include "RealTimeClock.h"
 
 #define PHOTOCELL_PIN 0 // the cell and 10K pulldown are connected to a0
 
@@ -717,6 +718,7 @@ void adjustBrightness()
 }
 
 Kaleidoscope kaleidoscope;
+RealTimeClock clock;
 
 void setup()
 {
@@ -751,6 +753,9 @@ void setup()
 
   //  kaleidoscope.setup(BlueStrip, BLUE_STRIP_COLUMNS, YellowStrip, YELLOW_STRIP_COLUMNS);
   kaleidoscope.setup(JewelStrip, JEWEL_STRIP_COLUMNS, JewelStrip, JEWEL_STRIP_COLUMNS);
+
+  // intialize the real time clock
+  clock.setup();
 }
 
 void loop()
@@ -759,6 +764,9 @@ void loop()
   adjustBrightness();
 
   kaleidoscope.animateKaleidoscope();
+
+  // update the clock display
+  clock.loop();
 
 #ifdef __NDEBUG__
   // Some example procedures showing how to display to the pixels:
