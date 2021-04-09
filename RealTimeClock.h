@@ -7,18 +7,14 @@
 class RealTimeClock
 {
 public:
-    // default constructor
-    //RealTimeClock(){};
-
     void setup()
     {
+        Serial.println("RealTimeClock.setup");
         if (!rtc.begin())
         {
 #ifdef __DEBUG__
             Serial.println("Couldn't find RTC");
-            Serial.flush();
 #endif
-            abort();
         }
 
         if (!rtc.isrunning())
@@ -37,6 +33,7 @@ public:
 
     void loop()
     {
+        Serial.println("RealTimeClock.loop");
         DateTime now = rtc.now();
 #ifdef __DEBUG__
         Serial.print(now.year(), DEC);

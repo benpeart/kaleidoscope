@@ -24,6 +24,7 @@ public:
     // initialize all LED strips
     void setup()
     {
+        Serial.println("LEDStrips.setup");
         for (int x = 0; x < LED_STRIPS; x++)
         {
             // Parameter 1 = number of pixels in strip
@@ -43,6 +44,7 @@ public:
     // automatically adjust the brightness of the LED strips to match the ambient lighting
     void adjustBrightness()
     {
+        Serial.println("LEDStrips.adjustBrightness");
         // store the current LED brightness so we can minimize minor differences
         static int LEDbrightness = 0;
 
@@ -70,7 +72,7 @@ public:
 
 LEDStrips LEDs;
 
-#else
+#else // LED_STRIPS_H
 
 extern LEDStrips LEDs;
 

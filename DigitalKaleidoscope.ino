@@ -1,18 +1,19 @@
 #define __DEBUG__
 
-#include "LED_strips.h"
+#include "LEDStrips.h"
 #include "Kaleidoscope.h"
 #include "RealTimeClock.h"
+#include "seven-segment.h"
 
 Kaleidoscope kaleidoscope;
 RealTimeClock clock;
 
 void setup()
 {
+#ifdef __DEBUG__
   // 3 second delay for recovery
   delay(3000);
 
-#ifdef __DEBUG__
   Serial.begin(115200);
 #ifndef ESP8266
   while (!Serial)
@@ -26,11 +27,11 @@ void setup()
   // intialize the LED strips
   LEDs.setup();
 
-  // kaleidoscope.setup(BlueStrip, BLUE_STRIP_COLUMNS, YellowStrip, YELLOW_STRIP_COLUMNS);
-  kaleidoscope.setup();
-
   // intialize the real time clock
   clock.setup();
+
+  // initialize the kaleidoscope
+  kaleidoscope.setup();
 }
 
 void loop()
