@@ -1,5 +1,6 @@
-#include <Adafruit_NeoPixel.h>
 #define __DEBUG__
+
+#include <Adafruit_NeoPixel.h>
 
 #define PHOTOCELL_PIN 0 // the cell and 10K pulldown are connected to a0
 
@@ -522,7 +523,7 @@ struct Kaleidoscope
 
   Kaleidoscope() {} // Default constructor
 
-  void init(const uint32_t rgb_strip_1[][TRIANGLE_ROWS], int strip_1_col, const uint32_t rgb_strip_2[][TRIANGLE_ROWS], int strip_2_col)
+  void setup(const uint32_t rgb_strip_1[][TRIANGLE_ROWS], int strip_1_col, const uint32_t rgb_strip_2[][TRIANGLE_ROWS], int strip_2_col)
   {
     strip_1 = rgb_strip_1;
     strip_1_columns = strip_1_col;
@@ -724,10 +725,9 @@ void setup()
 
 #ifdef __DEBUG__
   Serial.begin(115200);
-  while (!Serial)
-  {
-    ; // wait for serial port to connect. Needed for native USB port only
-  }
+#ifndef ESP8266
+  while (!Serial); // wait for serial port to connect. Needed for native USB port only
+#endif
 #endif
 
   // initialize the random number generator using noise from analog pin 5
@@ -747,11 +747,10 @@ void setup()
     LED_strip[x] = Adafruit_NeoPixel(PIXELS_PER_STRIP, PIN_BASE + x, NEO_GRB + NEO_KHZ800);
     LED_strip[x].begin();
     LED_strip[x].clear();
-    LED_strip[x].show();
   }
 
-  //  kaleidoscope.init(BlueStrip, BLUE_STRIP_COLUMNS, YellowStrip, YELLOW_STRIP_COLUMNS);
-  kaleidoscope.init(JewelStrip, JEWEL_STRIP_COLUMNS, JewelStrip, JEWEL_STRIP_COLUMNS);
+  //  kaleidoscope.setup(BlueStrip, BLUE_STRIP_COLUMNS, YellowStrip, YELLOW_STRIP_COLUMNS);
+  kaleidoscope.setup(JewelStrip, JEWEL_STRIP_COLUMNS, JewelStrip, JEWEL_STRIP_COLUMNS);
 }
 
 void loop()
