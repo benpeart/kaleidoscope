@@ -509,21 +509,9 @@ uint32_t blendAlpha(uint32_t colora, uint32_t colorb, uint32_t alpha)
   return ((rb1 + rb2) & 0xFF00FF) + ((g1 + g2) & 0x00FF00);
 }
 
-struct Kaleidoscope
+class Kaleidoscope
 {
-  // pointer to two dimensional arrays of color values for kaleidoscope effect
-  // https://stackoverflow.com/questions/1052818/create-a-pointer-to-two-dimensional-array
-  const uint32_t (*strip_1)[TRIANGLE_ROWS];
-  uint8_t strip_1_columns;
-  const uint32_t (*rgb_strip_2)[TRIANGLE_ROWS];
-  uint8_t strip_2_columns;
-
-  // offset into strips, used to provide movement for the kaleidoscope
-  int current_offset_1;
-  int current_offset_2;
-
-  Kaleidoscope() {} // Default constructor
-
+public:
   void setup(const uint32_t rgb_strip_1[][TRIANGLE_ROWS], int strip_1_col, const uint32_t rgb_strip_2[][TRIANGLE_ROWS], int strip_2_col)
   {
     strip_1 = rgb_strip_1;
@@ -580,6 +568,41 @@ struct Kaleidoscope
     Serial.println(rgb_strip_1[0][0], HEX);
 #endif
   }
+
+  // update the position of the strips and draw the kaleidoscope
+  void animateKaleidoscope()
+  {
+#ifdef __NDEBUG__
+    Serial.print("current_oiffset_1 = ");
+    Serial.println(current_offset_1, DEC);
+    Serial.println("test_drawKaleidoscopePixel6");
+    test_drawKaleidoscopePixel6();
+#endif
+
+#ifdef __NDEBUG__
+    Serial.print("kaleidoscope.draw(");
+    Serial.print(current_offset_1, DEC);
+    Serial.print(", ");
+    Serial.print(current_offset_2, DEC);
+    Serial.println(");");
+#endif
+    draw(current_offset_1, current_offset_2, 200);
+
+    current_offset_1 = (++current_offset_1 /*+ random(10)*/) % strip_1_columns;
+    current_offset_2 = (++current_offset_2 /*+ random(10)*/) % strip_2_columns;
+  }
+
+private:
+  // pointer to two dimensional arrays of color values for kaleidoscope effect
+  // https://stackoverflow.com/questions/1052818/create-a-pointer-to-two-dimensional-array
+  const uint32_t (*strip_1)[TRIANGLE_ROWS];
+  uint8_t strip_1_columns;
+  const uint32_t (*rgb_strip_2)[TRIANGLE_ROWS];
+  uint8_t strip_2_columns;
+
+  // offset into strips, used to provide movement for the kaleidoscope
+  int current_offset_1;
+  int current_offset_2;
 
   // this will draw the kaleidoscope starting at the given offset
   void draw(uint8_t offset_1, uint8_t offset_2, uint8_t wait)
@@ -664,29 +687,6 @@ struct Kaleidoscope
     // erase the kaleidoscope pixels
     for (int x = 0; x < LED_STRIPS; x++)
       LED_strip[x].clear();
-  }
-
-  // update the position of the strips and draw the kaleidoscope
-  void animateKaleidoscope()
-  {
-#ifdef __NDEBUG__
-    Serial.print("current_oiffset_1 = ");
-    Serial.println(current_offset_1, DEC);
-    Serial.println("test_drawKaleidoscopePixel6");
-    test_drawKaleidoscopePixel6();
-#endif
-
-#ifdef __NDEBUG__
-    Serial.print("kaleidoscope.draw(");
-    Serial.print(current_offset_1, DEC);
-    Serial.print(", ");
-    Serial.print(current_offset_2, DEC);
-    Serial.println(");");
-#endif
-    draw(current_offset_1, current_offset_2, 200);
-
-    current_offset_1 = (++current_offset_1 /*+ random(10)*/) % strip_1_columns;
-    current_offset_2 = (++current_offset_2 /*+ random(10)*/) % strip_2_columns;
   }
 };
 
