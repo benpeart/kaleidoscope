@@ -1,3 +1,6 @@
+#ifndef REALTIMECLOCK_H
+#define REALTIMECLOCK_H
+
 // Date and time functions using a DS1307 RTC connected via I2C and Wire lib
 #include "RTClib.h"
 
@@ -14,13 +17,15 @@ public:
 #ifdef __DEBUG__
             Serial.println("Couldn't find RTC");
             Serial.flush();
-#endif            
+#endif
             abort();
         }
 
         if (!rtc.isrunning())
         {
+#ifdef __DEBUG__
             Serial.println("RTC is NOT running, let's set the time!");
+#endif
             // When time needs to be set on a new device, or after a power loss, the
             // following line sets the RTC to the date & time this sketch was compiled
             rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
@@ -54,6 +59,8 @@ public:
 private:
     RTC_DS1307 rtc;
 #ifdef __DEBUG__
-    char daysOfTheWeek[7][12] = {"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"};
+    const char PROGMEM daysOfTheWeek[7][12] = {"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"};
 #endif
 };
+
+#endif // REALTIMECLOCK_H

@@ -1,8 +1,8 @@
 {
     "board": "arduino:avr:uno",
     "programmer": "arduino:avrisp",
-    "sketch": "Kaleidoscope.ino",
+    "sketch": "DigitalKaleidoscope.ino",
     "port": "COM5",
     "output": "build",
-    "debugger": "jlink"    
+    "debugger": "jlink"
 }
