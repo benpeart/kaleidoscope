@@ -467,39 +467,4 @@ void handleSegmentsHourOnes(int num, uint32_t color)
         break;
     }
 }
-
-void drawDigitalClock(uint32_t color) // Emulates a seven segment clock to display the time
-{
-    //the easiest way to draw the clock is to break the time into individual numbers and draw them 1 by 1;
-    int min;  //= time.getMin();
-    int hour; //= time.getHour();
-
-    int minOnes = min % 10;
-    int hourOnes = hour % 10;
-
-    int minTens;
-    int hourTens = 1;
-
-    //Unsure if there is a better way to do this but this works for now
-    if (min >= 0 && min < 10)
-        minTens = 0;
-    if (min >= 10 && min < 20)
-        minTens = 1;
-    else if (min >= 20 && min < 30)
-        minTens = 2;
-    else if (min >= 30 && min < 40)
-        minTens = 3;
-    else if (min >= 40 && min < 50)
-        minTens = 4;
-    else if (min >= 50 && min < 60)
-        minTens = 5;
-
-    if (hour >= 10) // Checks to see if we need to draw the 1 for the hour's tens place
-        drawHourTensOne(color);
-
-    handleSegmentsHourOnes(hourOnes, color);
-    handleSegmentsMinTens(minTens, color);
-    handleSegmentsMinOnes(minOnes, color);
-}
-
 #endif // SEVEN_SEGMENT_H
