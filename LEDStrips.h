@@ -71,6 +71,6 @@ public:
     }
 };
 
-extern LEDStrips LEDs;
+extern LEDStrips leds;
 
 #endif // LED_STRIPS_H

@@ -249,13 +249,13 @@ private:
         switch (strip)
         {
         case 0:
-            LEDs.strip[0].setPixelColor(index, c);
-            LEDs.strip[3].setPixelColor(index, c);
+            leds.strip[0].setPixelColor(index, c);
+            leds.strip[3].setPixelColor(index, c);
             break;
 
         case 1:
-            LEDs.strip[1].setPixelColor(index, c);
-            LEDs.strip[2].setPixelColor(index, c);
+            leds.strip[1].setPixelColor(index, c);
+            leds.strip[2].setPixelColor(index, c);
             break;
 #ifdef DEBUG
         default:
@@ -786,7 +786,7 @@ private:
             drawKaleidoscopePixel6(index, 0xFF); // Red
 
             for (uint8_t x = 0; x < LED_STRIPS; x++)
-                LEDs.strip[x].show();
+                leds.strip[x].show();
             delay(1000);
 
             // turn off the pixels

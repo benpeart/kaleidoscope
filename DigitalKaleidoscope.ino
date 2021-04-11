@@ -38,7 +38,7 @@ void (*renderFunc[])(void){
 #define N_MODES (sizeof(renderFunc) / sizeof(renderFunc[0]))
 uint8_t mode = 9; // FIX THIS Index of current mode in table
 
-LEDStrips LEDs;
+LEDStrips leds;
 RealTimeClock clock;
 Kaleidoscope kaleidoscope;
 
@@ -59,7 +59,7 @@ void setup()
   randomSeed(analogRead(5));
 
   // intialize the LED strips
-  LEDs.setup();
+  leds.setup();
 
   // intialize the real time clock
   clock.setup();
@@ -71,7 +71,7 @@ void setup()
 void loop()
 {
   // automatically adjust the brightness of the LED strips to match the ambient lighting
-  LEDs.adjustBrightness();
+  leds.adjustBrightness();
 
   // Read and debounce left button
   uint32_t t = millis();
@@ -127,7 +127,7 @@ void loop()
 
   // update the led strips to show the current frame
   for (int x = 0; x < LED_STRIPS; x++)
-    LEDs.strip[x].show();
+    leds.strip[x].show();
 
   //  delay(wait);
 }
@@ -138,7 +138,7 @@ void mode_off()
   DB_PRINTLN("mode_off");
 
   for (int x = 0; x < LED_STRIPS; x++)
-    LEDs.strip[x].clear();
+    leds.strip[x].clear();
 }
 
 void mode_kaleidoscope_screensaver()
@@ -183,8 +183,8 @@ void mode_HSV_wash()
   // Some example procedures showing how to display to the pixels:
   for (long x = 0; x < 65535; x += 100)
   {
-    LEDs.strip[0].fill(LEDs.strip[0].gamma32(LEDs.strip[0].ColorHSV(x)), 0, 150);
-    LEDs.strip[0].show();
+    leds.strip[0].fill(leds.strip[0].gamma32(leds.strip[0].ColorHSV(x)), 0, 150);
+    leds.strip[0].show();
     delay(50);
   }
 }
@@ -197,11 +197,11 @@ void mode_rainbow()
 
   for (j = 0; j < 256; j++)
   {
-    for (i = 0; i < LEDs.strip[0].numPixels(); i++)
+    for (i = 0; i < leds.strip[0].numPixels(); i++)
     {
-      LEDs.strip[0].setPixelColor(i, Wheel((i + j) & 255));
+      leds.strip[0].setPixelColor(i, Wheel((i + j) & 255));
     }
-    LEDs.strip[0].show();
+    leds.strip[0].show();
     delay(20);
   }
 }
@@ -216,11 +216,11 @@ void mode_rainbowCycle()
   // 5 cycles of all colors on wheel
   for (j = 0; j < 256 * 5; j++)
   {
-    for (i = 0; i < LEDs.strip[0].numPixels(); i++)
+    for (i = 0; i < leds.strip[0].numPixels(); i++)
     {
-      LEDs.strip[0].setPixelColor(i, Wheel(((i * 256 / LEDs.strip[0].numPixels()) + j) & 255));
+      leds.strip[0].setPixelColor(i, Wheel(((i * 256 / leds.strip[0].numPixels()) + j) & 255));
     }
-    LEDs.strip[0].show();
+    leds.strip[0].show();
     delay(20);
   }
 }
@@ -236,18 +236,18 @@ void mode_theaterChase()
     for (int q = 0; q < 3; q++)
     {
       // turn every third pixel on
-      for (uint16_t i = 0; i < LEDs.strip[0].numPixels(); i = i + 3)
+      for (uint16_t i = 0; i < leds.strip[0].numPixels(); i = i + 3)
       {
-        LEDs.strip[0].setPixelColor(i + q, 0x0f0f0f);
+        leds.strip[0].setPixelColor(i + q, 0x0f0f0f);
       }
-      LEDs.strip[0].show();
+      leds.strip[0].show();
 
       delay(20);
 
       // turn every third pixel off
-      for (uint16_t i = 0; i < LEDs.strip[0].numPixels(); i = i + 3)
+      for (uint16_t i = 0; i < leds.strip[0].numPixels(); i = i + 3)
       {
-        LEDs.strip[0].setPixelColor(i + q, 0);
+        leds.strip[0].setPixelColor(i + q, 0);
       }
     }
   }
@@ -264,18 +264,18 @@ void mode_theaterChaseRainbow()
     for (int q = 0; q < 3; q++)
     {
       // turn every third pixel on
-      for (uint16_t i = 0; i < LEDs.strip[0].numPixels(); i = i + 3)
+      for (uint16_t i = 0; i < leds.strip[0].numPixels(); i = i + 3)
       {
-        LEDs.strip[0].setPixelColor(i + q, Wheel((i + j) % 255));
+        leds.strip[0].setPixelColor(i + q, Wheel((i + j) % 255));
       }
-      LEDs.strip[0].show();
+      leds.strip[0].show();
 
       delay(20);
 
       // turn every third pixel off
-      for (uint16_t i = 0; i < LEDs.strip[0].numPixels(); i = i + 3)
+      for (uint16_t i = 0; i < leds.strip[0].numPixels(); i = i + 3)
       {
-        LEDs.strip[0].setPixelColor(i + q, 0);
+        leds.strip[0].setPixelColor(i + q, 0);
       }
     }
   }
@@ -288,15 +288,15 @@ uint32_t Wheel(byte WheelPos)
   WheelPos = 255 - WheelPos;
   if (WheelPos < 85)
   {
-    return LEDs.strip[0].Color(255 - WheelPos * 3, 0, WheelPos * 3);
+    return leds.strip[0].Color(255 - WheelPos * 3, 0, WheelPos * 3);
   }
   if (WheelPos < 170)
   {
     WheelPos -= 85;
-    return LEDs.strip[0].Color(0, WheelPos * 3, 255 - WheelPos * 3);
+    return leds.strip[0].Color(0, WheelPos * 3, 255 - WheelPos * 3);
   }
   WheelPos -= 170;
-  return LEDs.strip[0].Color(WheelPos * 3, 255 - WheelPos * 3, 0);
+  return leds.strip[0].Color(WheelPos * 3, 255 - WheelPos * 3, 0);
 }
 
 #endif // DEBUG
