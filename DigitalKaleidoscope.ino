@@ -1,5 +1,6 @@
-#define __DEBUG__
+#define DEBUG
 
+#include "debug.h"
 #include "LEDStrips.h"
 #include "Kaleidoscope.h"
 #include "RealTimeClock.h"
@@ -24,7 +25,7 @@ void (*renderFunc[])(void){
     mode_off, // make it obvious we're entering 'setup' modes
     mode_set_brightness,
     mode_set_clock
-#ifdef __DEBUG__
+#ifdef DEBUG
     ,
     mode_off, // make it obvious we're entering 'demo' modes
     mode_HSV_wash,
@@ -37,12 +38,13 @@ void (*renderFunc[])(void){
 #define N_MODES (sizeof(renderFunc) / sizeof(renderFunc[0]))
 uint8_t mode = 9; // FIX THIS Index of current mode in table
 
-Kaleidoscope kaleidoscope;
+LEDStrips LEDs;
 RealTimeClock clock;
+Kaleidoscope kaleidoscope;
 
 void setup()
 {
-#ifdef __DEBUG__
+#ifdef DEBUG
   // 3 second delay for recovery
   delay(3000);
 
@@ -128,27 +130,20 @@ void loop()
     LEDs.strip[x].show();
 
   //  delay(wait);
-
-  // erase the kaleidoscope
-  //  for (int x = 0; x < LED_STRIPS; x++)
-  //      LEDs.strip[x].clear();
 }
 
 // All Pixels off
 void mode_off()
 {
-#ifdef __DEBUG__
-  Serial.println("mode_off");
-#endif
+  DB_PRINTLN("mode_off");
+
   for (int x = 0; x < LED_STRIPS; x++)
     LEDs.strip[x].clear();
 }
 
 void mode_kaleidoscope_screensaver()
 {
-#ifdef __DEBUG__
-  Serial.println("mode_kaleidoscope_screensaver");
-#endif
+  DB_PRINTLN("mode_kaleidoscope_screensaver");
 
   // animate and draw the kaleidoscope
   kaleidoscope.loop();
@@ -156,46 +151,35 @@ void mode_kaleidoscope_screensaver()
 
 void mode_kaleidoscope_interactive()
 {
-#ifdef __DEBUG__
-  Serial.println("mode_kaleidoscope_interactive");
-#endif
+  DB_PRINTLN("mode_kaleidoscope_interactive");
 }
 
 void mode_color_wash()
 {
-#ifdef __DEBUG__
-  Serial.println("mode_color_wash");
-#endif
+  DB_PRINTLN("mode_color_wash");
 }
 
 void mode_snowflake()
 {
-#ifdef __DEBUG__
-  Serial.println("mode_snowflake");
-#endif
+  DB_PRINTLN("mode_snowflake");
 }
 
 void mode_set_brightness()
 {
-#ifdef __DEBUG__
-  Serial.println("mode_set_brightness");
-#endif
+  DB_PRINTLN("mode_set_brightness");
 }
 
 void mode_set_clock()
 {
-#ifdef __DEBUG__
-  Serial.println("mode_set_clock");
-#endif
+  DB_PRINTLN("mode_set_clock");
 }
 
-#ifdef __DEBUG__
+#ifdef DEBUG
 
 void mode_HSV_wash()
 {
-#ifdef __DEBUG__
-  Serial.println("mode_HSV_wash");
-#endif
+  DB_PRINTLN("mode_HSV_wash");
+
   // Some example procedures showing how to display to the pixels:
   for (long x = 0; x < 65535; x += 100)
   {
@@ -207,9 +191,8 @@ void mode_HSV_wash()
 
 void mode_rainbow()
 {
-#ifdef __DEBUG__
-  Serial.println("mode_rainbow");
-#endif
+  DB_PRINTLN("mode_rainbow");
+
   uint16_t i, j;
 
   for (j = 0; j < 256; j++)
@@ -226,9 +209,8 @@ void mode_rainbow()
 // Slightly different, this makes the rainbow equally distributed throughout
 void mode_rainbowCycle()
 {
-#ifdef __DEBUG__
-  Serial.println("mode_rainbowCycle");
-#endif
+  DB_PRINTLN("mode_rainbowCycle");
+
   uint16_t i, j;
 
   // 5 cycles of all colors on wheel
@@ -246,9 +228,8 @@ void mode_rainbowCycle()
 //Theatre-style crawling lights.
 void mode_theaterChase()
 {
-#ifdef __DEBUG__
-  Serial.println("mode_theaterChase");
-#endif
+  DB_PRINTLN("mode_theaterChase");
+
   // do 10 cycles of chasing
   for (int j = 0; j < 10; j++)
   {
@@ -275,9 +256,8 @@ void mode_theaterChase()
 //Theatre-style crawling lights with rainbow effect
 void mode_theaterChaseRainbow()
 {
-#ifdef __DEBUG__
-  Serial.println("mode_theaterChaseRainbow");
-#endif
+  DB_PRINTLN("mode_theaterChaseRainbow");
+
   // cycle all 256 colors in the wheel
   for (int j = 0; j < 256; j++)
   {
@@ -319,4 +299,4 @@ uint32_t Wheel(byte WheelPos)
   return LEDs.strip[0].Color(WheelPos * 3, 255 - WheelPos * 3, 0);
 }
 
-#endif // __DEBUG__
+#endif // DEBUG

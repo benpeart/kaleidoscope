@@ -9,19 +9,15 @@ class RealTimeClock
 public:
     void setup()
     {
-        Serial.println("RealTimeClock.setup");
+        DB_PRINTLN("RealTimeClock.setup");
         if (!rtc.begin())
         {
-#ifdef __DEBUG__
-            Serial.println("Couldn't find RTC");
-#endif
+            DB_PRINTLN("Couldn't find RTC");
         }
 
         if (!rtc.isrunning())
         {
-#ifdef __DEBUG__
-            Serial.println("RTC is NOT running, let's set the time!");
-#endif
+            DB_PRINTLN("RTC is NOT running, let's set the time!");
             // When time needs to be set on a new device, or after a power loss, the
             // following line sets the RTC to the date & time this sketch was compiled
             rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
@@ -33,29 +29,28 @@ public:
 
     void loop()
     {
-        Serial.println("RealTimeClock.loop");
+        DB_PRINTLN("RealTimeClock.loop");
         DateTime now = rtc.now();
-#ifdef __DEBUG__
-        Serial.print(now.year(), DEC);
-        Serial.print('/');
-        Serial.print(now.month(), DEC);
-        Serial.print('/');
-        Serial.print(now.day(), DEC);
-        Serial.print(" (");
-        Serial.print(daysOfTheWeek[now.dayOfTheWeek()]);
-        Serial.print(") ");
-        Serial.print(now.hour(), DEC);
-        Serial.print(':');
-        Serial.print(now.minute(), DEC);
-        Serial.print(':');
-        Serial.print(now.second(), DEC);
-        Serial.println();
-#endif
+
+        DB_PRINT(now.year(), DEC);
+        DB_PRINT('/');
+        DB_PRINT(now.month(), DEC);
+        DB_PRINT('/');
+        DB_PRINT(now.day(), DEC);
+        DB_PRINT(" (");
+        DB_PRINT(daysOfTheWeek[now.dayOfTheWeek()]);
+        DB_PRINT(") ");
+        DB_PRINT(now.hour(), DEC);
+        DB_PRINT(':');
+        DB_PRINT(now.minute(), DEC);
+        DB_PRINT(':');
+        DB_PRINT(now.second(), DEC);
+        DB_PRINTLN();
     }
 
 private:
     RTC_DS1307 rtc;
-#ifdef __DEBUG__
+#ifdef DEBUG
     const char PROGMEM daysOfTheWeek[7][12] = {"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"};
 #endif
 };

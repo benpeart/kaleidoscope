@@ -52,7 +52,7 @@ static const uint32_t PROGMEM JewelStrip[JEWEL_STRIP_COLUMNS][TRIANGLE_ROWS] =
         {JEWEL_YELLOW, JEWEL_YELLOW, JEWEL_BLUE, JEWEL_BLUE, JEWEL_BLUE, JEWEL_ORANGE, JEWEL_ORANGE},
         {JEWEL_LEAD, JEWEL_LEAD, JEWEL_LEAD, JEWEL_LEAD, JEWEL_LEAD, JEWEL_LEAD, JEWEL_LEAD}};
 
-#ifdef __DEBUG__
+#ifdef DEBUG
 #define BLUE_STRIP_COLUMNS 1
 static const uint32_t PROGMEM BlueStrip[BLUE_STRIP_COLUMNS][TRIANGLE_ROWS] =
     {{0x0000FF, 0x0000FF, 0x0000FF, 0x0000FF, 0x0000FF, 0x0000FF, 0x0000FF}};
@@ -67,8 +67,8 @@ class Kaleidoscope
 public:
     void setup()
     {
-#ifdef __NDEBUG__
-        Serial.println("Kaleidoscope.setup");
+#ifdef NDEBUG
+        DB_PRINTLN("Kaleidoscope.setup");
         strip_1 = BlueStrip;
         strip_1_columns = BLUE_STRIP_COLUMNS;
         rgb_strip_2 = YellowStrip;
@@ -84,8 +84,8 @@ public:
         current_offset_1 = random(strip_1_columns);
         current_offset_2 = random(strip_2_columns);
 
-#ifdef __NDEBUG__
-        // If you uncomment out the Serial.println below, it will corrupt memory and 'we have a problem'
+#ifdef NDEBUG
+        // If you uncomment out the DB_PRINTLN below, it will corrupt memory and 'we have a problem'
         // I'm not the only one that ran into this:
         // https://stackoverflow.com/questions/38923872/arduino-serial-parseint-data-read-corrupted-by-too-much-serial-print
         for (int y = 0; y < TRIANGLE_ROWS; y++)
@@ -96,47 +96,47 @@ public:
 
                 pixel_1 = BlueStrip[x][y];
                 pixel_2 = strip_1[x][y];
-                Serial.println(pixel_1, HEX);
-                Serial.println(pixel_2, HEX);
+                DB_PRINTLN(pixel_1, HEX);
+                DB_PRINTLN(pixel_2, HEX);
                 if (pixel_1 != pixel_2)
                 {
-                    Serial.println("Huston, we have a problem");
+                    DB_PRINTLN("Huston, we have a problem");
                     return;
                 }
             }
         }
-        Serial.println("It's all good");
+        DB_PRINTLN("It's all good");
 
-        Serial.print("BlueStrip = ");
-        Serial.println((uint32_t)BlueStrip, HEX);
-        Serial.print("strip_1 = ");
-        Serial.println((uint32_t)strip_1, HEX);
+        DB_PRINT("BlueStrip = ");
+        DB_PRINTLN((uint32_t)BlueStrip, HEX);
+        DB_PRINT("strip_1 = ");
+        DB_PRINTLN((uint32_t)strip_1, HEX);
 
-        Serial.print("BlueStrip[0][0] = 0x");
-        Serial.println(BlueStrip[0][0], HEX);
+        DB_PRINT("BlueStrip[0][0] = 0x");
+        DB_PRINTLN(BlueStrip[0][0], HEX);
 
-        Serial.print("strip_1[0][0] = 0x");
-        Serial.println(strip_1[0][0], HEX);
+        DB_PRINT("strip_1[0][0] = 0x");
+        DB_PRINTLN(strip_1[0][0], HEX);
 #endif
     }
 
     // update the position of the strips and draw the kaleidoscope
     void loop()
     {
-        Serial.println("Kaleidoscope.loop");
-#ifdef __NDEBUG__
-        Serial.print("current_oiffset_1 = ");
-        Serial.println(current_offset_1, DEC);
-        Serial.println("test_drawKaleidoscopePixel6");
+        DB_PRINTLN("Kaleidoscope.loop");
+#ifdef NDEBUG
+        DB_PRINT("current_oiffset_1 = ");
+        DB_PRINTLN(current_offset_1, DEC);
+        DB_PRINTLN("test_drawKaleidoscopePixel6");
         test_drawKaleidoscopePixel6();
 #endif
 
-#ifdef __NDEBUG__
-        Serial.print("kaleidoscope.loop(");
-        Serial.print(current_offset_1, DEC);
-        Serial.print(", ");
-        Serial.print(current_offset_2, DEC);
-        Serial.println(");");
+#ifdef NDEBUG
+        DB_PRINT("kaleidoscope.loop(");
+        DB_PRINT(current_offset_1, DEC);
+        DB_PRINT(", ");
+        DB_PRINT(current_offset_2, DEC);
+        DB_PRINTLN(");");
 #endif
         draw(current_offset_1, current_offset_2, 200);
 
@@ -174,25 +174,25 @@ private:
 
         begin = end = offset_1;
 
-#ifdef __NDEBUG__
-        Serial.print("offset_1 = ");
-        Serial.println((uint32_t)offset_1);
+#ifdef NDEBUG
+        DB_PRINT("offset_1 = ");
+        DB_PRINTLN((uint32_t)offset_1);
 
         uint32_t pixel1, pixel2;
 
         pixel1 = BlueStrip[0][0];
         pixel2 = strip_1[0][0];
 
-        Serial.print("BlueStrip = ");
-        Serial.println((uint32_t)BlueStrip, HEX);
-        Serial.print("strip_1 = ");
-        Serial.println((uint32_t)strip_1, HEX);
+        DB_PRINT("BlueStrip = ");
+        DB_PRINTLN((uint32_t)BlueStrip, HEX);
+        DB_PRINT("strip_1 = ");
+        DB_PRINTLN((uint32_t)strip_1, HEX);
 
-        Serial.print("BlueStrip(0, 0) = 0x");
-        Serial.println(pixel1, HEX);
+        DB_PRINT("BlueStrip(0, 0) = 0x");
+        DB_PRINTLN(pixel1, HEX);
 
-        Serial.print("strip_1(0, 0) = 0x");
-        Serial.println(pixel2, HEX);
+        DB_PRINT("strip_1(0, 0) = 0x");
+        DB_PRINTLN(pixel2, HEX);
 #endif
 
         // draw the kaleidoscope pixels for this 'frame'
@@ -206,13 +206,13 @@ private:
                 else if (column >= strip_1_columns)
                     column -= strip_1_columns;
                 uint32_t pixel_1 = strip_1[column][row];
-#ifdef __NDEBUG__
-                Serial.print("pixel_1[");
-                Serial.print(column);
-                Serial.print("][");
-                Serial.print(row);
-                Serial.print("] = 0x");
-                Serial.println(pixel_1, HEX);
+#ifdef NDEBUG
+                DB_PRINT("pixel_1[");
+                DB_PRINT(column);
+                DB_PRINT("][");
+                DB_PRINT(row);
+                DB_PRINT("] = 0x");
+                DB_PRINTLN(pixel_1, HEX);
 #endif
 
                 column = x + offset_2;
@@ -221,20 +221,20 @@ private:
                 else if (column >= strip_2_columns)
                     column -= strip_2_columns;
                 uint32_t pixel_2 = rgb_strip_2[column][row];
-#ifdef __NDEBUG__
-                Serial.print("pixel_2[");
-                Serial.print(column);
-                Serial.print("][");
-                Serial.print(row);
-                Serial.print("] = 0x");
-                Serial.println(pixel_2, HEX);
+#ifdef NDEBUG
+                DB_PRINT("pixel_2[");
+                DB_PRINT(column);
+                DB_PRINT("][");
+                DB_PRINT(row);
+                DB_PRINT("] = 0x");
+                DB_PRINTLN(pixel_2, HEX);
 #endif
 
                 // blend the pixels from the two strips by doing 50% transparency
                 uint32_t pixel = blendAlpha(pixel_1, pixel_2, 0x7f);
-#ifdef __NDEBUG__
-                Serial.print("blended pixel = 0x");
-                Serial.println(pixel, HEX);
+#ifdef NDEBUG
+                DB_PRINT("blended pixel = 0x");
+                DB_PRINTLN(pixel, HEX);
 #endif
                 drawKaleidoscopePixel6(viewport_index, pixel);
                 viewport_index++;
@@ -257,10 +257,10 @@ private:
             LEDs.strip[1].setPixelColor(index, c);
             LEDs.strip[2].setPixelColor(index, c);
             break;
-#ifdef __DEBUG__
+#ifdef DEBUG
         default:
-            Serial.print("MysetPixelColor: invalid strip ID = ");
-            Serial.println(strip);
+            DB_PRINT("MysetPixelColor: invalid strip ID = ");
+            DB_PRINTLN(strip);
 #endif
         }
     }
@@ -775,7 +775,7 @@ private:
         }
     }
 
-#ifdef __DEBUG__
+#ifdef DEBUG
     void test_drawKaleidoscopePixel6()
     {
         // loop through all pixels in the source triange making sure they

@@ -24,7 +24,8 @@ public:
     // initialize all LED strips
     void setup()
     {
-        Serial.println("LEDStrips.setup");
+        DB_PRINTLN("LEDStrips.setup");
+
         for (int x = 0; x < LED_STRIPS; x++)
         {
             // Parameter 1 = number of pixels in strip
@@ -44,7 +45,8 @@ public:
     // automatically adjust the brightness of the LED strips to match the ambient lighting
     void adjustBrightness()
     {
-        Serial.println("adjustBrightness");
+        DB_PRINTLN("adjustBrightness");
+
         // store the current LED brightness so we can minimize minor differences
         static int LEDbrightness = 0;
 
@@ -55,12 +57,11 @@ public:
         // adjust our brightness if it has changed significantly
         if ((newBrightness > LEDbrightness + 5) || (newBrightness < LEDbrightness - 5))
         {
-#ifdef __DEBUG__
-            Serial.print("Analog photocell reading = ");
-            Serial.println(photocellReading); // the raw analog reading
-            Serial.print("new brightness = ");
-            Serial.println(newBrightness);
-#endif
+            DB_PRINT("Analog photocell reading = ");
+            DB_PRINTLN(photocellReading); // the raw analog reading
+            DB_PRINT("new brightness = ");
+            DB_PRINTLN(newBrightness);
+
             LEDbrightness = newBrightness;
             for (int x = 0; x < LED_STRIPS; x++)
             {
@@ -69,10 +70,6 @@ public:
         }
     }
 };
-
-LEDStrips LEDs;
-
-#else // LED_STRIPS_H
 
 extern LEDStrips LEDs;
 
