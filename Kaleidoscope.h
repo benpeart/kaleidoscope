@@ -132,7 +132,7 @@ public:
 #endif
 
 #ifdef __NDEBUG__
-        Serial.print("kaleidoscope.draw(");
+        Serial.print("kaleidoscope.loop(");
         Serial.print(current_offset_1, DEC);
         Serial.print(", ");
         Serial.print(current_offset_2, DEC);
@@ -242,14 +242,6 @@ private:
             begin--;
             end++;
         }
-
-        for (int x = 0; x < LED_STRIPS; x++)
-            LEDs.strip[x].show();
-        delay(wait);
-
-        // erase the kaleidoscope pixels
-        for (int x = 0; x < LED_STRIPS; x++)
-            LEDs.strip[x].clear();
     }
 
     void MirroredSetPixelColor(int strip, int index, uint32_t c)
