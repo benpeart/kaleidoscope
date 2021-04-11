@@ -3,8 +3,8 @@
 #include "LEDStrips.h"
 
 // statically define the 'filmstrips' to use to generate the kaleidoscope
-#define TRIANGLE_ROWS 7                                             // the height of the 'viewport' triangle
-#define TRIANGLE_COLUMNS 13                                         // the width of the base of the 'viewport' triange
+#define TRIANGLE_ROWS 10                                            // the height of the 'viewport' triangle
+#define TRIANGLE_COLUMNS 19                                         // the width of the base of the 'viewport' triange
 #define TRIANGLE_COUNT (TRIANGLE_ROWS * (TRIANGLE_COLUMNS + 1) / 2) // the number of pixels in the 'viewport' triangle
 
 #define JEWEL_STRIP_COLUMNS 28
@@ -252,6 +252,27 @@ private:
             LEDs.strip[x].clear();
     }
 
+    void MirroredSetPixelColor(int strip, int index, uint32_t c)
+    {
+        switch (strip)
+        {
+        case 0:
+            LEDs.strip[0].setPixelColor(index, c);
+            LEDs.strip[3].setPixelColor(index, c);
+            break;
+
+        case 1:
+            LEDs.strip[1].setPixelColor(index, c);
+            LEDs.strip[2].setPixelColor(index, c);
+            break;
+#ifdef __DEBUG__
+        default:
+            Serial.print("MysetPixelColor: invalid strip ID = ");
+            Serial.println(strip);
+#endif
+        }
+    }
+
     // draw a pixel mirrored and rotated 6 times to emulate a kaleidoscope
     void drawKaleidoscopePixel6(uint16_t index, uint32_t c)
     {
@@ -260,401 +281,509 @@ private:
         switch (index)
         {
         case 0:
-            LEDs.strip[1].setPixelColor(11, c);
-            LEDs.strip[1].setPixelColor(10, c);
-            LEDs.strip[1].setPixelColor(9, c);
-            LEDs.strip[0].setPixelColor(134, c);
-            LEDs.strip[0].setPixelColor(133, c);
-            LEDs.strip[0].setPixelColor(132, c);
+            MirroredSetPixelColor(1, 18, c);
+            MirroredSetPixelColor(1, 19, c);
+            MirroredSetPixelColor(1, 20, c);
             break;
         case 1:
-            LEDs.strip[1].setPixelColor(13, c);
-            LEDs.strip[1].setPixelColor(37, c);
-            LEDs.strip[1].setPixelColor(38, c);
-            LEDs.strip[0].setPixelColor(105, c);
-            LEDs.strip[0].setPixelColor(106, c);
-            LEDs.strip[0].setPixelColor(130, c);
+            MirroredSetPixelColor(1, 59, c);
+            MirroredSetPixelColor(1, 58, c);
+            MirroredSetPixelColor(1, 22, c);
             break;
         case 2:
-            LEDs.strip[1].setPixelColor(12, c);
-            LEDs.strip[1].setPixelColor(36, c);
-            LEDs.strip[1].setPixelColor(8, c);
-            LEDs.strip[0].setPixelColor(135, c);
-            LEDs.strip[0].setPixelColor(107, c);
-            LEDs.strip[0].setPixelColor(131, c);
+            MirroredSetPixelColor(1, 17, c);
+            MirroredSetPixelColor(1, 57, c);
+            MirroredSetPixelColor(1, 21, c);
             break;
         case 3:
-            LEDs.strip[1].setPixelColor(34, c);
-            LEDs.strip[1].setPixelColor(35, c);
-            LEDs.strip[1].setPixelColor(7, c);
-            LEDs.strip[0].setPixelColor(136, c);
-            LEDs.strip[0].setPixelColor(108, c);
-            LEDs.strip[0].setPixelColor(109, c);
+            MirroredSetPixelColor(1, 16, c);
+            MirroredSetPixelColor(1, 56, c);
+            MirroredSetPixelColor(1, 55, c);
             break;
         case 4:
-            LEDs.strip[1].setPixelColor(15, c);
-            LEDs.strip[1].setPixelColor(58, c);
-            LEDs.strip[1].setPixelColor(57, c);
-            LEDs.strip[0].setPixelColor(86, c);
-            LEDs.strip[0].setPixelColor(85, c);
-            LEDs.strip[0].setPixelColor(128, c);
+            MirroredSetPixelColor(1, 90, c);
+            MirroredSetPixelColor(1, 91, c);
+            MirroredSetPixelColor(1, 24, c);
             break;
         case 5:
-            LEDs.strip[1].setPixelColor(14, c);
-            LEDs.strip[1].setPixelColor(89, c);
-            LEDs.strip[1].setPixelColor(39, c);
-            LEDs.strip[0].setPixelColor(104, c);
-            LEDs.strip[0].setPixelColor(84, c);
-            LEDs.strip[0].setPixelColor(129, c);
+            MirroredSetPixelColor(1, 60, c);
+            MirroredSetPixelColor(1, 92, c);
+            MirroredSetPixelColor(1, 23, c);
             break;
         case 6:
-            LEDs.strip[1].setPixelColor(32, c);
-            LEDs.strip[1].setPixelColor(60, c);
-            LEDs.strip[1].setPixelColor(40, c);
-            LEDs.strip[0].setPixelColor(103, c);
-            LEDs.strip[0].setPixelColor(85, c);
-            LEDs.strip[0].setPixelColor(111, c);
+            MirroredSetPixelColor(1, 61, c);
+            MirroredSetPixelColor(1, 93, c);
+            MirroredSetPixelColor(1, 53, c);
             break;
         case 7:
-            LEDs.strip[1].setPixelColor(33, c);
-            LEDs.strip[1].setPixelColor(61, c);
-            LEDs.strip[1].setPixelColor(6, c);
-            LEDs.strip[0].setPixelColor(137, c);
-            LEDs.strip[0].setPixelColor(82, c);
-            LEDs.strip[0].setPixelColor(110, c);
+            MirroredSetPixelColor(1, 15, c);
+            MirroredSetPixelColor(1, 94, c);
+            MirroredSetPixelColor(1, 54, c);
             break;
         case 8:
-            LEDs.strip[1].setPixelColor(63, c);
-            LEDs.strip[1].setPixelColor(62, c);
-            LEDs.strip[1].setPixelColor(5, c);
-            LEDs.strip[0].setPixelColor(131, c);
-            LEDs.strip[0].setPixelColor(81, c);
-            LEDs.strip[0].setPixelColor(80, c);
+            MirroredSetPixelColor(1, 14, c);
+            MirroredSetPixelColor(1, 95, c);
+            MirroredSetPixelColor(1, 96, c);
             break;
         case 9:
-            LEDs.strip[1].setPixelColor(17, c);
-            LEDs.strip[1].setPixelColor(85, c);
-            LEDs.strip[1].setPixelColor(86, c);
-            LEDs.strip[0].setPixelColor(57, c);
-            LEDs.strip[0].setPixelColor(58, c);
-            LEDs.strip[0].setPixelColor(126, c);
+            MirroredSetPixelColor(1, 131, c);
+            MirroredSetPixelColor(1, 130, c);
+            MirroredSetPixelColor(1, 26, c);
             break;
         case 10:
-            LEDs.strip[1].setPixelColor(16, c);
-            LEDs.strip[1].setPixelColor(84, c);
-            LEDs.strip[1].setPixelColor(56, c);
-            LEDs.strip[0].setPixelColor(87, c);
-            LEDs.strip[0].setPixelColor(59, c);
-            LEDs.strip[0].setPixelColor(127, c);
+            MirroredSetPixelColor(1, 89, c);
+            MirroredSetPixelColor(1, 129, c);
+            MirroredSetPixelColor(1, 25, c);
             break;
         case 11:
-            LEDs.strip[1].setPixelColor(30, c);
-            LEDs.strip[1].setPixelColor(83, c);
-            LEDs.strip[1].setPixelColor(55, c);
-            LEDs.strip[0].setPixelColor(88, c);
-            LEDs.strip[0].setPixelColor(60, c);
-            LEDs.strip[0].setPixelColor(113, c);
+            MirroredSetPixelColor(1, 88, c);
+            MirroredSetPixelColor(1, 128, c);
+            MirroredSetPixelColor(1, 51, c);
             break;
         case 12:
-            LEDs.strip[1].setPixelColor(31, c);
-            LEDs.strip[1].setPixelColor(82, c);
-            LEDs.strip[1].setPixelColor(41, c);
-            LEDs.strip[0].setPixelColor(102, c);
-            LEDs.strip[0].setPixelColor(61, c);
-            LEDs.strip[0].setPixelColor(112, c);
+            MirroredSetPixelColor(1, 62, c);
+            MirroredSetPixelColor(1, 127, c);
+            MirroredSetPixelColor(1, 52, c);
             break;
         case 13:
-            LEDs.strip[1].setPixelColor(65, c);
-            LEDs.strip[1].setPixelColor(81, c);
-            LEDs.strip[1].setPixelColor(42, c);
-            LEDs.strip[0].setPixelColor(101, c);
-            LEDs.strip[0].setPixelColor(62, c);
-            LEDs.strip[0].setPixelColor(78, c);
+            MirroredSetPixelColor(1, 63, c);
+            MirroredSetPixelColor(1, 126, c);
+            MirroredSetPixelColor(1, 98, c);
             break;
         case 14:
-            LEDs.strip[1].setPixelColor(64, c);
-            LEDs.strip[1].setPixelColor(80, c);
-            LEDs.strip[1].setPixelColor(4, c);
-            LEDs.strip[0].setPixelColor(139, c);
-            LEDs.strip[0].setPixelColor(63, c);
-            LEDs.strip[0].setPixelColor(79, c);
+            MirroredSetPixelColor(1, 13, c);
+            MirroredSetPixelColor(1, 125, c);
+            MirroredSetPixelColor(1, 97, c);
             break;
         case 15:
-            LEDs.strip[1].setPixelColor(78, c);
-            LEDs.strip[1].setPixelColor(79, c);
-            LEDs.strip[1].setPixelColor(3, c);
-            LEDs.strip[0].setPixelColor(140, c);
-            LEDs.strip[0].setPixelColor(64, c);
-            LEDs.strip[0].setPixelColor(65, c);
+            MirroredSetPixelColor(1, 12, c);
+            MirroredSetPixelColor(1, 124, c);
+            MirroredSetPixelColor(1, 123, c);
             break;
         case 16:
-            LEDs.strip[1].setPixelColor(19, c);
-            LEDs.strip[1].setPixelColor(98, c);
-            LEDs.strip[1].setPixelColor(97, c);
-            LEDs.strip[0].setPixelColor(96, c);
-            LEDs.strip[0].setPixelColor(95, c);
-            LEDs.strip[0].setPixelColor(124, c);
+            MirroredSetPixelColor(0, 10, c);
+            MirroredSetPixelColor(0, 11, c);
+            MirroredSetPixelColor(1, 28, c);
             break;
         case 17:
-            LEDs.strip[1].setPixelColor(18, c);
-            LEDs.strip[1].setPixelColor(99, c);
-            LEDs.strip[1].setPixelColor(87, c);
-            LEDs.strip[0].setPixelColor(56, c);
-            LEDs.strip[0].setPixelColor(99, c);
-            LEDs.strip[0].setPixelColor(125, c);
+            MirroredSetPixelColor(1, 132, c);
+            MirroredSetPixelColor(0, 12, c);
+            MirroredSetPixelColor(1, 27, c);
             break;
         case 18:
-            LEDs.strip[1].setPixelColor(28, c);
-            LEDs.strip[1].setPixelColor(100, c);
-            LEDs.strip[1].setPixelColor(88, c);
-            LEDs.strip[0].setPixelColor(55, c);
-            LEDs.strip[0].setPixelColor(43, c);
-            LEDs.strip[0].setPixelColor(115, c);
+            MirroredSetPixelColor(1, 133, c);
+            MirroredSetPixelColor(0, 13, c);
+            MirroredSetPixelColor(1, 49, c);
             break;
         case 19:
-            LEDs.strip[1].setPixelColor(29, c);
-            LEDs.strip[1].setPixelColor(101, c);
-            LEDs.strip[1].setPixelColor(54, c);
-            LEDs.strip[0].setPixelColor(89, c);
-            LEDs.strip[0].setPixelColor(42, c);
-            LEDs.strip[0].setPixelColor(114, c);
+            MirroredSetPixelColor(1, 87, c);
+            MirroredSetPixelColor(0, 14, c);
+            MirroredSetPixelColor(1, 50, c);
             break;
         case 20:
-            LEDs.strip[1].setPixelColor(67, c);
-            LEDs.strip[1].setPixelColor(102, c);
-            LEDs.strip[1].setPixelColor(53, c);
-            LEDs.strip[0].setPixelColor(90, c);
-            LEDs.strip[0].setPixelColor(81, c);
-            LEDs.strip[0].setPixelColor(76, c);
+            MirroredSetPixelColor(1, 86, c);
+            MirroredSetPixelColor(0, 15, c);
+            MirroredSetPixelColor(1, 100, c);
             break;
         case 21:
-            LEDs.strip[1].setPixelColor(66, c);
-            LEDs.strip[1].setPixelColor(103, c);
-            LEDs.strip[1].setPixelColor(43, c);
-            LEDs.strip[0].setPixelColor(100, c);
-            LEDs.strip[0].setPixelColor(40, c);
-            LEDs.strip[0].setPixelColor(77, c);
+            MirroredSetPixelColor(1, 64, c);
+            MirroredSetPixelColor(0, 16, c);
+            MirroredSetPixelColor(1, 99, c);
             break;
         case 22:
-            LEDs.strip[1].setPixelColor(76, c);
-            LEDs.strip[1].setPixelColor(104, c);
-            LEDs.strip[1].setPixelColor(44, c);
-            LEDs.strip[0].setPixelColor(99, c);
-            LEDs.strip[0].setPixelColor(39, c);
-            LEDs.strip[0].setPixelColor(67, c);
+            MirroredSetPixelColor(1, 65, c);
+            MirroredSetPixelColor(0, 17, c);
+            MirroredSetPixelColor(1, 121, c);
             break;
         case 23:
-            LEDs.strip[1].setPixelColor(77, c);
-            LEDs.strip[1].setPixelColor(105, c);
-            LEDs.strip[1].setPixelColor(2, c);
-            LEDs.strip[0].setPixelColor(141, c);
-            LEDs.strip[0].setPixelColor(38, c);
-            LEDs.strip[0].setPixelColor(66, c);
+            MirroredSetPixelColor(1, 11, c);
+            MirroredSetPixelColor(0, 18, c);
+            MirroredSetPixelColor(1, 122, c);
             break;
         case 24:
-            LEDs.strip[1].setPixelColor(107, c);
-            LEDs.strip[1].setPixelColor(106, c);
-            LEDs.strip[1].setPixelColor(1, c);
-            LEDs.strip[0].setPixelColor(142, c);
-            LEDs.strip[0].setPixelColor(37, c);
-            LEDs.strip[0].setPixelColor(36, c);
+            MirroredSetPixelColor(1, 10, c);
+            MirroredSetPixelColor(0, 19, c);
+            MirroredSetPixelColor(0, 20, c);
             break;
         case 25:
-            LEDs.strip[1].setPixelColor(21, c);
-            LEDs.strip[1].setPixelColor(125, c);
-            LEDs.strip[1].setPixelColor(126, c);
-            LEDs.strip[0].setPixelColor(17, c);
-            LEDs.strip[0].setPixelColor(18, c);
-            LEDs.strip[0].setPixelColor(122, c);
+            MirroredSetPixelColor(0, 51, c);
+            MirroredSetPixelColor(0, 50, c);
+            MirroredSetPixelColor(1, 30, c);
             break;
         case 26:
-            LEDs.strip[1].setPixelColor(20, c);
-            LEDs.strip[1].setPixelColor(124, c);
-            LEDs.strip[1].setPixelColor(96, c);
-            LEDs.strip[0].setPixelColor(97, c);
-            LEDs.strip[0].setPixelColor(19, c);
-            LEDs.strip[0].setPixelColor(123, c);
+            MirroredSetPixelColor(0, 9, c);
+            MirroredSetPixelColor(0, 49, c);
+            MirroredSetPixelColor(1, 29, c);
             break;
         case 27:
-            LEDs.strip[1].setPixelColor(26, c);
-            LEDs.strip[1].setPixelColor(123, c);
-            LEDs.strip[1].setPixelColor(95, c);
-            LEDs.strip[0].setPixelColor(48, c);
-            LEDs.strip[0].setPixelColor(20, c);
-            LEDs.strip[0].setPixelColor(117, c);
+            MirroredSetPixelColor(0, 8, c);
+            MirroredSetPixelColor(0, 48, c);
+            MirroredSetPixelColor(1, 47, c);
             break;
         case 28:
-            LEDs.strip[1].setPixelColor(27, c);
-            LEDs.strip[1].setPixelColor(122, c);
-            LEDs.strip[1].setPixelColor(89, c);
-            LEDs.strip[0].setPixelColor(54, c);
-            LEDs.strip[0].setPixelColor(21, c);
-            LEDs.strip[0].setPixelColor(116, c);
+            MirroredSetPixelColor(1, 134, c);
+            MirroredSetPixelColor(0, 47, c);
+            MirroredSetPixelColor(1, 48, c);
             break;
         case 29:
-            LEDs.strip[1].setPixelColor(69, c);
-            LEDs.strip[1].setPixelColor(121, c);
-            LEDs.strip[1].setPixelColor(90, c);
-            LEDs.strip[0].setPixelColor(53, c);
-            LEDs.strip[0].setPixelColor(22, c);
-            LEDs.strip[0].setPixelColor(74, c);
+            MirroredSetPixelColor(1, 135, c);
+            MirroredSetPixelColor(0, 46, c);
+            MirroredSetPixelColor(1, 102, c);
             break;
         case 30:
-            LEDs.strip[1].setPixelColor(68, c);
-            LEDs.strip[1].setPixelColor(120, c);
-            LEDs.strip[1].setPixelColor(52, c);
-            LEDs.strip[0].setPixelColor(91, c);
-            LEDs.strip[0].setPixelColor(23, c);
-            LEDs.strip[0].setPixelColor(75, c);
+            MirroredSetPixelColor(1, 85, c);
+            MirroredSetPixelColor(0, 45, c);
+            MirroredSetPixelColor(1, 101, c);
             break;
         case 31:
-            LEDs.strip[1].setPixelColor(74, c);
-            LEDs.strip[1].setPixelColor(119, c);
-            LEDs.strip[1].setPixelColor(51, c);
-            LEDs.strip[0].setPixelColor(92, c);
-            LEDs.strip[0].setPixelColor(24, c);
-            LEDs.strip[0].setPixelColor(69, c);
+            MirroredSetPixelColor(1, 84, c);
+            MirroredSetPixelColor(0, 44, c);
+            MirroredSetPixelColor(1, 119, c);
             break;
         case 32:
-            LEDs.strip[1].setPixelColor(75, c);
-            LEDs.strip[1].setPixelColor(118, c);
-            LEDs.strip[1].setPixelColor(45, c);
-            LEDs.strip[0].setPixelColor(98, c);
-            LEDs.strip[0].setPixelColor(25, c);
-            LEDs.strip[0].setPixelColor(68, c);
+            MirroredSetPixelColor(1, 66, c);
+            MirroredSetPixelColor(0, 43, c);
+            MirroredSetPixelColor(1, 120, c);
             break;
         case 33:
-            LEDs.strip[1].setPixelColor(109, c);
-            LEDs.strip[1].setPixelColor(117, c);
-            LEDs.strip[1].setPixelColor(46, c);
-            LEDs.strip[0].setPixelColor(97, c);
-            LEDs.strip[0].setPixelColor(26, c);
-            LEDs.strip[0].setPixelColor(34, c);
+            MirroredSetPixelColor(1, 67, c);
+            MirroredSetPixelColor(0, 42, c);
+            MirroredSetPixelColor(0, 22, c);
             break;
         case 34:
-            LEDs.strip[1].setPixelColor(108, c);
-            LEDs.strip[1].setPixelColor(116, c);
-            LEDs.strip[1].setPixelColor(0, c);
-            LEDs.strip[0].setPixelColor(143, c);
-            LEDs.strip[0].setPixelColor(27, c);
-            LEDs.strip[0].setPixelColor(35, c);
+            MirroredSetPixelColor(1, 9, c);
+            MirroredSetPixelColor(0, 41, c);
+            MirroredSetPixelColor(0, 21, c);
             break;
         case 35:
-            LEDs.strip[1].setPixelColor(114, c);
-            LEDs.strip[1].setPixelColor(115, c);
-            LEDs.strip[0].setPixelColor(149, c);
-            LEDs.strip[0].setPixelColor(144, c);
-            LEDs.strip[0].setPixelColor(28, c);
-            LEDs.strip[0].setPixelColor(29, c);
+            MirroredSetPixelColor(1, 8, c);
+            MirroredSetPixelColor(0, 40, c);
+            MirroredSetPixelColor(0, 39, c);
             break;
         case 36:
-            LEDs.strip[1].setPixelColor(23, c);
-            LEDs.strip[1].setPixelColor(130, c);
-            LEDs.strip[1].setPixelColor(129, c);
-            LEDs.strip[0].setPixelColor(14, c);
-            LEDs.strip[0].setPixelColor(13, c);
-            LEDs.strip[0].setPixelColor(120, c);
+            MirroredSetPixelColor(0, 66, c);
+            MirroredSetPixelColor(0, 67, c);
+            MirroredSetPixelColor(1, 32, c);
             break;
         case 37:
-            LEDs.strip[1].setPixelColor(22, c);
-            LEDs.strip[1].setPixelColor(131, c);
-            LEDs.strip[1].setPixelColor(127, c);
-            LEDs.strip[0].setPixelColor(16, c);
-            LEDs.strip[0].setPixelColor(12, c);
-            LEDs.strip[0].setPixelColor(121, c);
+            MirroredSetPixelColor(0, 52, c);
+            MirroredSetPixelColor(0, 68, c);
+            MirroredSetPixelColor(1, 31, c);
             break;
         case 38:
-            LEDs.strip[1].setPixelColor(24, c);
-            LEDs.strip[1].setPixelColor(132, c);
-            LEDs.strip[1].setPixelColor(128, c);
-            LEDs.strip[0].setPixelColor(15, c);
-            LEDs.strip[0].setPixelColor(11, c);
-            LEDs.strip[0].setPixelColor(119, c);
+            MirroredSetPixelColor(0, 53, c);
+            MirroredSetPixelColor(0, 69, c);
+            MirroredSetPixelColor(1, 45, c);
             break;
         case 39:
-            LEDs.strip[1].setPixelColor(25, c);
-            LEDs.strip[1].setPixelColor(133, c);
-            LEDs.strip[1].setPixelColor(94, c);
-            LEDs.strip[0].setPixelColor(47, c);
-            LEDs.strip[0].setPixelColor(10, c);
-            LEDs.strip[0].setPixelColor(118, c);
+            MirroredSetPixelColor(0, 7, c);
+            MirroredSetPixelColor(0, 70, c);
+            MirroredSetPixelColor(1, 46, c);
             break;
         case 40:
-            LEDs.strip[1].setPixelColor(71, c);
-            LEDs.strip[1].setPixelColor(134, c);
-            LEDs.strip[1].setPixelColor(93, c);
-            LEDs.strip[0].setPixelColor(50, c);
-            LEDs.strip[0].setPixelColor(9, c);
-            LEDs.strip[0].setPixelColor(72, c);
+            MirroredSetPixelColor(0, 6, c);
+            MirroredSetPixelColor(0, 71, c);
+            MirroredSetPixelColor(1, 104, c);
             break;
         case 41:
-            LEDs.strip[1].setPixelColor(70, c);
-            LEDs.strip[1].setPixelColor(135, c);
-            LEDs.strip[1].setPixelColor(91, c);
-            LEDs.strip[0].setPixelColor(52, c);
-            LEDs.strip[0].setPixelColor(8, c);
-            LEDs.strip[0].setPixelColor(73, c);
+            MirroredSetPixelColor(1, 136, c);
+            MirroredSetPixelColor(0, 72, c);
+            MirroredSetPixelColor(1, 103, c);
             break;
         case 42:
-            LEDs.strip[1].setPixelColor(72, c);
-            LEDs.strip[1].setPixelColor(136, c);
-            LEDs.strip[1].setPixelColor(92, c);
-            LEDs.strip[0].setPixelColor(51, c);
-            LEDs.strip[0].setPixelColor(7, c);
-            LEDs.strip[0].setPixelColor(70, c);
+            MirroredSetPixelColor(1, 137, c);
+            MirroredSetPixelColor(0, 73, c);
+            MirroredSetPixelColor(1, 117, c);
             break;
         case 43:
-            LEDs.strip[1].setPixelColor(73, c);
-            LEDs.strip[1].setPixelColor(137, c);
-            LEDs.strip[1].setPixelColor(50, c);
-            LEDs.strip[0].setPixelColor(93, c);
-            LEDs.strip[0].setPixelColor(6, c);
-            LEDs.strip[0].setPixelColor(70, c);
+            MirroredSetPixelColor(1, 83, c);
+            MirroredSetPixelColor(0, 71, c);
+            MirroredSetPixelColor(1, 118, c);
             break;
         case 44:
-            LEDs.strip[1].setPixelColor(111, c);
-            LEDs.strip[1].setPixelColor(138, c);
-            LEDs.strip[1].setPixelColor(49, c);
-            LEDs.strip[0].setPixelColor(94, c);
-            LEDs.strip[0].setPixelColor(5, c);
-            LEDs.strip[0].setPixelColor(32, c);
+            MirroredSetPixelColor(1, 62, c);
+            MirroredSetPixelColor(0, 75, c);
+            MirroredSetPixelColor(0, 24, c);
             break;
         case 45:
-            LEDs.strip[1].setPixelColor(110, c);
-            LEDs.strip[1].setPixelColor(139, c);
-            LEDs.strip[1].setPixelColor(47, c);
-            LEDs.strip[0].setPixelColor(96, c);
-            LEDs.strip[0].setPixelColor(4, c);
-            LEDs.strip[0].setPixelColor(33, c);
+            MirroredSetPixelColor(1, 68, c);
+            MirroredSetPixelColor(0, 76, c);
+            MirroredSetPixelColor(0, 23, c);
             break;
         case 46:
-            LEDs.strip[1].setPixelColor(112, c);
-            LEDs.strip[1].setPixelColor(140, c);
-            LEDs.strip[1].setPixelColor(48, c);
-            LEDs.strip[0].setPixelColor(95, c);
-            LEDs.strip[0].setPixelColor(3, c);
-            LEDs.strip[0].setPixelColor(31, c);
+            MirroredSetPixelColor(1, 69, c);
+            MirroredSetPixelColor(0, 77, c);
+            MirroredSetPixelColor(0, 37, c);
             break;
         case 47:
-            LEDs.strip[1].setPixelColor(43, c);
-            LEDs.strip[1].setPixelColor(181, c);
-            LEDs.strip[0].setPixelColor(148, c);
-            LEDs.strip[0].setPixelColor(145, c);
-            LEDs.strip[0].setPixelColor(2, c);
-            LEDs.strip[0].setPixelColor(30, c);
+            MirroredSetPixelColor(1, 7, c);
+            MirroredSetPixelColor(0, 78, c);
+            MirroredSetPixelColor(0, 38, c);
             break;
         case 48:
-            LEDs.strip[1].setPixelColor(143, c);
-            LEDs.strip[1].setPixelColor(142, c);
-            LEDs.strip[0].setPixelColor(147, c);
-            LEDs.strip[0].setPixelColor(146, c);
-            LEDs.strip[0].setPixelColor(1, c);
-            LEDs.strip[0].setPixelColor(0, c);
+            MirroredSetPixelColor(1, 6, c);
+            MirroredSetPixelColor(0, 79, c);
+            MirroredSetPixelColor(0, 80, c);
+            break;
+        case 49:
+            MirroredSetPixelColor(0, 107, c);
+            MirroredSetPixelColor(0, 106, c);
+            MirroredSetPixelColor(1, 34, c);
+            break;
+        case 50:
+            MirroredSetPixelColor(0, 65, c);
+            MirroredSetPixelColor(0, 105, c);
+            MirroredSetPixelColor(1, 33, c);
+            break;
+        case 51:
+            MirroredSetPixelColor(0, 64, c);
+            MirroredSetPixelColor(0, 104, c);
+            MirroredSetPixelColor(1, 43, c);
+            break;
+        case 52:
+            MirroredSetPixelColor(0, 54, c);
+            MirroredSetPixelColor(0, 103, c);
+            MirroredSetPixelColor(1, 44, c);
+            break;
+        case 53:
+            MirroredSetPixelColor(0, 55, c);
+            MirroredSetPixelColor(0, 102, c);
+            MirroredSetPixelColor(1, 106, c);
+            break;
+        case 54:
+            MirroredSetPixelColor(0, 5, c);
+            MirroredSetPixelColor(0, 101, c);
+            MirroredSetPixelColor(1, 105, c);
+            break;
+        case 55:
+            MirroredSetPixelColor(0, 4, c);
+            MirroredSetPixelColor(0, 100, c);
+            MirroredSetPixelColor(1, 115, c);
+            break;
+        case 56:
+            MirroredSetPixelColor(1, 138, c);
+            MirroredSetPixelColor(0, 99, c);
+            MirroredSetPixelColor(1, 116, c);
+            break;
+        case 57:
+            MirroredSetPixelColor(1, 139, c);
+            MirroredSetPixelColor(0, 98, c);
+            MirroredSetPixelColor(0, 26, c);
+            break;
+        case 58:
+            MirroredSetPixelColor(1, 81, c);
+            MirroredSetPixelColor(0, 97, c);
+            MirroredSetPixelColor(0, 25, c);
+            break;
+        case 59:
+            MirroredSetPixelColor(1, 80, c);
+            MirroredSetPixelColor(0, 96, c);
+            MirroredSetPixelColor(0, 35, c);
+            break;
+        case 60:
+            MirroredSetPixelColor(1, 70, c);
+            MirroredSetPixelColor(0, 95, c);
+            MirroredSetPixelColor(0, 36, c);
+            break;
+        case 61:
+            MirroredSetPixelColor(1, 71, c);
+            MirroredSetPixelColor(0, 94, c);
+            MirroredSetPixelColor(0, 82, c);
+            break;
+        case 62:
+            MirroredSetPixelColor(1, 5, c);
+            MirroredSetPixelColor(0, 93, c);
+            MirroredSetPixelColor(0, 81, c);
+            break;
+        case 63:
+            MirroredSetPixelColor(1, 4, c);
+            MirroredSetPixelColor(0, 92, c);
+            MirroredSetPixelColor(0, 91, c);
+            break;
+        case 64:
+            MirroredSetPixelColor(0, 114, c);
+            MirroredSetPixelColor(0, 115, c);
+            MirroredSetPixelColor(1, 36, c);
+            break;
+        case 65:
+            MirroredSetPixelColor(0, 108, c);
+            MirroredSetPixelColor(0, 116, c);
+            MirroredSetPixelColor(1, 35, c);
+            break;
+        case 66:
+            MirroredSetPixelColor(0, 109, c);
+            MirroredSetPixelColor(0, 117, c);
+            MirroredSetPixelColor(1, 41, c);
+            break;
+        case 67:
+            MirroredSetPixelColor(0, 63, c);
+            MirroredSetPixelColor(0, 118, c);
+            MirroredSetPixelColor(1, 42, c);
+            break;
+        case 68:
+            MirroredSetPixelColor(0, 62, c);
+            MirroredSetPixelColor(0, 119, c);
+            MirroredSetPixelColor(1, 108, c);
+            break;
+        case 69:
+            MirroredSetPixelColor(0, 56, c);
+            MirroredSetPixelColor(0, 120, c);
+            MirroredSetPixelColor(1, 107, c);
+            break;
+        case 70:
+            MirroredSetPixelColor(0, 57, c);
+            MirroredSetPixelColor(0, 121, c);
+            MirroredSetPixelColor(1, 113, c);
+            break;
+        case 71:
+            MirroredSetPixelColor(0, 3, c);
+            MirroredSetPixelColor(0, 122, c);
+            MirroredSetPixelColor(1, 114, c);
+            break;
+        case 72:
+            MirroredSetPixelColor(0, 2, c);
+            MirroredSetPixelColor(0, 123, c);
+            MirroredSetPixelColor(0, 28, c);
+            break;
+        case 73:
+            MirroredSetPixelColor(1, 140, c);
+            MirroredSetPixelColor(0, 124, c);
+            MirroredSetPixelColor(0, 27, c);
+            break;
+        case 74:
+            MirroredSetPixelColor(1, 141, c);
+            MirroredSetPixelColor(0, 125, c);
+            MirroredSetPixelColor(0, 33, c);
+            break;
+        case 75:
+            MirroredSetPixelColor(1, 79, c);
+            MirroredSetPixelColor(0, 126, c);
+            MirroredSetPixelColor(0, 34, c);
+            break;
+        case 76:
+            MirroredSetPixelColor(1, 78, c);
+            MirroredSetPixelColor(0, 127, c);
+            MirroredSetPixelColor(0, 84, c);
+            break;
+        case 77:
+            MirroredSetPixelColor(1, 72, c);
+            MirroredSetPixelColor(0, 128, c);
+            MirroredSetPixelColor(0, 83, c);
+            break;
+        case 78:
+            MirroredSetPixelColor(1, 73, c);
+            MirroredSetPixelColor(0, 129, c);
+            MirroredSetPixelColor(0, 89, c);
+            break;
+        case 79:
+            MirroredSetPixelColor(1, 3, c);
+            MirroredSetPixelColor(0, 130, c);
+            MirroredSetPixelColor(0, 90, c);
+            break;
+        case 80:
+            MirroredSetPixelColor(1, 2, c);
+            MirroredSetPixelColor(0, 131, c);
+            MirroredSetPixelColor(0, 132, c);
+            break;
+        case 81:
+            MirroredSetPixelColor(0, 155, c);
+            MirroredSetPixelColor(0, 154, c);
+            MirroredSetPixelColor(1, 38, c);
+            break;
+        case 82:
+            MirroredSetPixelColor(0, 113, c);
+            MirroredSetPixelColor(0, 153, c);
+            MirroredSetPixelColor(1, 37, c);
+            break;
+        case 83:
+            MirroredSetPixelColor(0, 112, c);
+            MirroredSetPixelColor(0, 152, c);
+            MirroredSetPixelColor(1, 39, c);
+            break;
+        case 84:
+            MirroredSetPixelColor(0, 110, c);
+            MirroredSetPixelColor(0, 151, c);
+            MirroredSetPixelColor(1, 40, c);
+            break;
+        case 85:
+            MirroredSetPixelColor(0, 111, c);
+            MirroredSetPixelColor(0, 150, c);
+            MirroredSetPixelColor(1, 110, c);
+            break;
+        case 86:
+            MirroredSetPixelColor(0, 61, c);
+            MirroredSetPixelColor(0, 149, c);
+            MirroredSetPixelColor(1, 109, c);
+            break;
+        case 87:
+            MirroredSetPixelColor(0, 60, c);
+            MirroredSetPixelColor(0, 148, c);
+            MirroredSetPixelColor(1, 111, c);
+            break;
+        case 88:
+            MirroredSetPixelColor(0, 58, c);
+            MirroredSetPixelColor(0, 149, c);
+            MirroredSetPixelColor(1, 112, c);
+            break;
+        case 89:
+            MirroredSetPixelColor(0, 59, c);
+            MirroredSetPixelColor(0, 146, c);
+            MirroredSetPixelColor(0, 30, c);
+            break;
+        case 90:
+            MirroredSetPixelColor(0, 1, c);
+            MirroredSetPixelColor(0, 145, c);
+            MirroredSetPixelColor(0, 29, c);
+            break;
+        case 91:
+            MirroredSetPixelColor(0, 0, c);
+            MirroredSetPixelColor(0, 144, c);
+            MirroredSetPixelColor(0, 31, c);
+            break;
+        case 92:
+            MirroredSetPixelColor(1, 142, c);
+            MirroredSetPixelColor(0, 143, c);
+            MirroredSetPixelColor(0, 32, c);
+            break;
+        case 93:
+            MirroredSetPixelColor(1, 143, c);
+            MirroredSetPixelColor(0, 142, c);
+            MirroredSetPixelColor(0, 86, c);
+            break;
+        case 94:
+            MirroredSetPixelColor(1, 77, c);
+            MirroredSetPixelColor(0, 141, c);
+            MirroredSetPixelColor(0, 85, c);
+            break;
+        case 95:
+            MirroredSetPixelColor(1, 76, c);
+            MirroredSetPixelColor(0, 140, c);
+            MirroredSetPixelColor(0, 87, c);
+            break;
+        case 96:
+            MirroredSetPixelColor(1, 74, c);
+            MirroredSetPixelColor(0, 139, c);
+            MirroredSetPixelColor(0, 88, c);
+            break;
+        case 97:
+            MirroredSetPixelColor(1, 75, c);
+            MirroredSetPixelColor(0, 136, c);
+            MirroredSetPixelColor(0, 134, c);
+            break;
+        case 98:
+            MirroredSetPixelColor(1, 1, c);
+            MirroredSetPixelColor(0, 137, c);
+            MirroredSetPixelColor(0, 133, c);
+            break;
+        case 99:
+            MirroredSetPixelColor(1, 0, c);
+            MirroredSetPixelColor(0, 136, c);
+            MirroredSetPixelColor(0, 135, c);
             break;
         }
     }
 
-#ifdef __NDEBUG__
+#ifdef __DEBUG__
     void test_drawKaleidoscopePixel6()
     {
         // loop through all pixels in the source triange making sure they
@@ -662,7 +791,7 @@ private:
         for (int index = 0; index < TRIANGLE_COUNT; index++)
         {
             // turn on the pixels
-            drawKaleidoscopePixel6(index, LEDs.strip[0].Color(255, 0, 0)); // Red
+            drawKaleidoscopePixel6(index, 0xFF); // Red
 
             for (uint8_t x = 0; x < LED_STRIPS; x++)
                 LEDs.strip[x].show();

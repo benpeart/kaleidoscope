@@ -7,11 +7,11 @@
 // and minimize distance between Arduino and first pixel.  Avoid connecting
 // on a live circuit...if you must, connect GND first.
 
-#define PIN_BASE 6
-#define LED_STRIPS 2
+#define PIN_BASE 7
+#define LED_STRIPS 4
 #define PIXELS_PER_STRIP 150
 
-#define PHOTOCELL_PIN 0 // the cell and 10K pulldown are connected to a0
+#define PHOTOCELL_PIN 1 // the cell and 10K pulldown are connected to a0
 
 // define a  class for the LED strips
 // I tried to make this a proper singleton class but apparently the Arduino tools don't support that
@@ -44,7 +44,7 @@ public:
     // automatically adjust the brightness of the LED strips to match the ambient lighting
     void adjustBrightness()
     {
-        Serial.println("LEDStrips.adjustBrightness");
+        Serial.println("adjustBrightness");
         // store the current LED brightness so we can minimize minor differences
         static int LEDbrightness = 0;
 

@@ -38,18 +38,18 @@ void loop()
 {
   // automatically adjust the brightness of the LED strips to match the ambient lighting
   LEDs.adjustBrightness();
-
-  // animate and draw the kaleidoscope 
+#ifndef __DEMO__
+  // animate and draw the kaleidoscope
   kaleidoscope.loop();
 
   // update the clock display
   clock.loop();
 
-#ifdef __NDEBUG__
+#else
   // Some example procedures showing how to display to the pixels:
   for (long x = 0; x < 65535; x += 100)
   {
-    LEDs.strip[0].fill(LEDs.strip[0].gamma32(LEDs.strip[0].ColorHSV(x)), 0, 16);
+    LEDs.strip[0].fill(LEDs.strip[0].gamma32(LEDs.strip[0].ColorHSV(x)), 0, 150);
     LEDs.strip[0].show();
     delay(50);
   }
@@ -65,7 +65,7 @@ void loop()
 #endif
 }
 
-#ifdef __NDEBUG__
+#ifdef __DEBUG__
 
 // Fill the dots one after the other with a color
 void colorWipe(uint32_t c, uint8_t wait)
