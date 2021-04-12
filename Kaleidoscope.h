@@ -257,11 +257,11 @@ private:
             leds.strip[1].setPixelColor(index, c);
             leds.strip[2].setPixelColor(index, c);
             break;
-#ifdef DEBUG
+
         default:
             DB_PRINT("MysetPixelColor: invalid strip ID = ");
             DB_PRINTLN(strip);
-#endif
+            break;
         }
     }
 

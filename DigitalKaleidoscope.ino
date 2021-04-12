@@ -33,10 +33,10 @@ void (*renderFunc[])(void){
     mode_rainbowCycle,
     mode_theaterChase,
     mode_theaterChaseRainbow
-#endif    
-    };
+#endif
+};
 #define N_MODES (sizeof(renderFunc) / sizeof(renderFunc[0]))
-uint8_t mode = 9; // FIX THIS Index of current mode in table
+uint8_t mode = 10; // FIX THIS Index of current mode in table
 
 LEDStrips leds;
 RealTimeClock clock;
@@ -129,7 +129,7 @@ void loop()
   for (int x = 0; x < LED_STRIPS; x++)
     leds.strip[x].show();
 
-  //  delay(wait);
+  delay(20);
 }
 
 // All Pixels off
@@ -180,30 +180,28 @@ void mode_HSV_wash()
 {
   DB_PRINTLN("mode_HSV_wash");
 
-  // Some example procedures showing how to display to the pixels:
-  for (long x = 0; x < 65535; x += 100)
-  {
-    leds.strip[0].fill(leds.strip[0].gamma32(leds.strip[0].ColorHSV(x)), 0, 150);
-    leds.strip[0].show();
-    delay(50);
-  }
+  static long x = 0;
+
+  leds.strip[0].fill(leds.strip[0].gamma32(leds.strip[0].ColorHSV(x)), 0, 150);
+  x += 100;
+  if (x >= 65535)
+    x = 0;
 }
 
 void mode_rainbow()
 {
   DB_PRINTLN("mode_rainbow");
 
-  uint16_t i, j;
+  static uint16_t j = 0;
 
-  for (j = 0; j < 256; j++)
+  for (uint16_t i = 0; i < leds.strip[0].numPixels(); i++)
   {
-    for (i = 0; i < leds.strip[0].numPixels(); i++)
-    {
-      leds.strip[0].setPixelColor(i, Wheel((i + j) & 255));
-    }
-    leds.strip[0].show();
-    delay(20);
+    leds.strip[0].setPixelColor(i, Wheel((i + j) & 255));
   }
+
+  j++;
+  if (j >= 256)
+    j = 0;
 }
 
 // Slightly different, this makes the rainbow equally distributed throughout
@@ -211,18 +209,16 @@ void mode_rainbowCycle()
 {
   DB_PRINTLN("mode_rainbowCycle");
 
-  uint16_t i, j;
+  static uint16_t j;
 
-  // 5 cycles of all colors on wheel
-  for (j = 0; j < 256 * 5; j++)
+  for (uint16_t i = 0; i < leds.strip[0].numPixels(); i++)
   {
-    for (i = 0; i < leds.strip[0].numPixels(); i++)
-    {
-      leds.strip[0].setPixelColor(i, Wheel(((i * 256 / leds.strip[0].numPixels()) + j) & 255));
-    }
-    leds.strip[0].show();
-    delay(20);
+    leds.strip[0].setPixelColor(i, Wheel(((i * 256 / leds.strip[0].numPixels()) + j) & 255));
   }
+
+  j++;
+  if (j >= 256 * 5)
+    j = 0;
 }
 
 //Theatre-style crawling lights.
