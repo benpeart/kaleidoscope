@@ -29,23 +29,30 @@ public:
 
     void loop()
     {
-        DB_PRINTLN("RealTimeClock.loop");
+        static int lastSecond = -99;
+
         DateTime now = rtc.now();
 
-        DB_PRINT(now.year(), DEC);
-        DB_PRINT('/');
-        DB_PRINT(now.month(), DEC);
-        DB_PRINT('/');
-        DB_PRINT(now.day(), DEC);
-        DB_PRINT(" (");
-        DB_PRINT(daysOfTheWeek[now.dayOfTheWeek()]);
-        DB_PRINT(") ");
-        DB_PRINT(now.hour(), DEC);
-        DB_PRINT(':');
-        DB_PRINT(now.minute(), DEC);
-        DB_PRINT(':');
-        DB_PRINT(now.second(), DEC);
-        DB_PRINTLN();
+        // only display the time every second
+        if (lastSecond != now.second())
+        {
+            lastSecond = now.second();
+
+            DB_PRINT(now.year(), DEC);
+            DB_PRINT('/');
+            DB_PRINT(now.month(), DEC);
+            DB_PRINT('/');
+            DB_PRINT(now.day(), DEC);
+            DB_PRINT(" (");
+            DB_PRINT(daysOfTheWeek[now.dayOfTheWeek()]);
+            DB_PRINT(") ");
+            DB_PRINT(now.hour(), DEC);
+            DB_PRINT(':');
+            DB_PRINT(now.minute(), DEC);
+            DB_PRINT(':');
+            DB_PRINT(now.second(), DEC);
+            DB_PRINTLN();
+        }
     }
 
 private:
@@ -57,12 +64,12 @@ extern RealTimeClock clock;
 
 void mode_select_clock_face()
 {
-  DB_PRINTLN("mode_select_clock_face");
+    DB_PRINTLN("mode_select_clock_face");
 }
 
 void mode_set_clock()
 {
-  DB_PRINTLN("mode_set_clock");
+    DB_PRINTLN("mode_set_clock");
 }
 
 #endif // REALTIMECLOCK_H

@@ -123,7 +123,6 @@ public:
     // update the position of the strips and draw the kaleidoscope
     void loop()
     {
-        DB_PRINTLN("Kaleidoscope.loop");
 #ifdef NDEBUG
         DB_PRINT("current_oiffset_1 = ");
         DB_PRINTLN(current_offset_1, DEC);
@@ -800,8 +799,6 @@ extern Kaleidoscope kaleidoscope;
 
 void mode_kaleidoscope_screensaver()
 {
-    DB_PRINTLN("mode_kaleidoscope_screensaver");
-
     static uint32_t lastFrame = 0;
 
     // only draw a frame every 250 ms
@@ -816,7 +813,6 @@ void mode_kaleidoscope_screensaver()
 
 void mode_kaleidoscope_interactive()
 {
-    DB_PRINTLN("mode_kaleidoscope_interactive");
     kaleidoscope.loop();
 }
 

@@ -69,7 +69,6 @@ boolean prevStateLeft, prevStateRight;
 uint32_t lastChangeTimeLeft = 0, lastChangeTimeRight = 0;
 #define DEBOUNCE_MS 15 // Button debounce time, in milliseconds
 
-
 // global instances of objects
 LEDStrips leds;
 RealTimeClock clock;
@@ -201,8 +200,6 @@ void loop()
 // All Pixels off
 void mode_off()
 {
-  DB_PRINTLN("mode_off");
-
   for (int x = 0; x < LED_STRIPS; x++)
     leds.strip[x].clear();
 }
@@ -226,8 +223,6 @@ void mode_set_brightness()
 
 void mode_HSV_wash()
 {
-  DB_PRINTLN("mode_HSV_wash");
-
   static long x = 0;
 
   leds.strip[0].fill(leds.strip[0].gamma32(leds.strip[0].ColorHSV(x)), 0, 150);
@@ -238,8 +233,6 @@ void mode_HSV_wash()
 
 void mode_rainbow()
 {
-  DB_PRINTLN("mode_rainbow");
-
   static uint16_t j = 0;
 
   for (uint16_t i = 0; i < leds.strip[0].numPixels(); i++)
@@ -255,8 +248,6 @@ void mode_rainbow()
 // Slightly different, this makes the rainbow equally distributed throughout
 void mode_rainbowCycle()
 {
-  DB_PRINTLN("mode_rainbowCycle");
-
   static uint16_t j;
 
   for (uint16_t i = 0; i < leds.strip[0].numPixels(); i++)

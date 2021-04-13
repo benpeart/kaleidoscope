@@ -39,8 +39,6 @@ public:
     // automatically adjust the brightness of the LED strips to match the ambient lighting
     void adjustBrightness()
     {
-        DB_PRINTLN("adjustBrightness");
-
         // store the current LED brightness so we can minimize minor differences
         static int LEDbrightness = 0;
 
