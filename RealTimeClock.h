@@ -50,9 +50,19 @@ public:
 
 private:
     RTC_DS1307 rtc;
-#ifdef DEBUG
     const char PROGMEM daysOfTheWeek[7][12] = {"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"};
-#endif
 };
+
+extern RealTimeClock clock;
+
+void mode_select_clock_face()
+{
+  DB_PRINTLN("mode_select_clock_face");
+}
+
+void mode_set_clock()
+{
+  DB_PRINTLN("mode_set_clock");
+}
 
 #endif // REALTIMECLOCK_H

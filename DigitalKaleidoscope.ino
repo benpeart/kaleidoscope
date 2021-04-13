@@ -1,4 +1,27 @@
+#include <Encoder.h>
+
 #define DEBUG
+
+//
+// GLOBAL PIN DECLARATIONS -------------------------------------------------
+//
+
+#define PHOTOCELL_PIN 1 // the cell and 10K pulldown are connected to a0
+
+// Change these pin numbers to the pins connected to your encoder.
+//   Best Performance: CLK and DT pins have interrupt capability
+//   Good Performance: only CLK pins have interrupt capability
+//   Low Performance:  neither pin has interrupt capability
+#define ENCODER_CLK_PIN_RIGHT 2 // the CLK pins neeed to be on iterrupts (pins 2 and 3 for Arduino UNO)
+#define ENCODER_CLK_PIN_LEFT 3
+#define ENCODER_DIRECTION_PIN_RIGHT 4
+#define ENCODER_DIRECTION_PIN_LEFT 5
+
+#define ENCODER_BUTTON_PIN_RIGHT 6
+#define ENCODER_BUTTON_PIN_LEFT 7
+#define LED_STRIPS_PIN_BASE 8
+#define LED_STRIPS 4
+#define PIXELS_PER_STRIP 150
 
 #include "debug.h"
 #include "LEDStrips.h"
@@ -6,42 +29,55 @@
 #include "RealTimeClock.h"
 #include "seven-segment.h"
 
+// This array lists each of the display/animation drawing functions
+// (which appear later in this code) in the order they're selected with
+// the right button.  Some functions appear repeatedly...for example,
+// we return to "mode_off" at several points in the sequence.
+void (*renderFunc[])(void){
+    mode_kaleidoscope_screensaver,
+    mode_kaleidoscope_interactive,
+    mode_color_wash,
+    mode_snowflake,
+    mode_off, // make it obvious we're entering 'setup' modes
+    mode_kaleidoscope_select_disks,
+    mode_select_clock_face,
+    mode_set_clock,
+    mode_set_brightness,
+#ifdef DEBUG
+    mode_off, // make it obvious we're entering 'demo' modes
+    mode_HSV_wash,
+    mode_rainbow,
+    mode_rainbowCycle,
+//    mode_theaterChase,  // comment out these two as they are not interactive
+//    mode_theaterChaseRainbow,
+#endif
+    mode_off // make it obvious we're entering 'regular' modes
+};
+#define N_MODES (sizeof(renderFunc) / sizeof(renderFunc[0]))
+uint8_t mode = 0; // Index of current mode in table
+
+//
+// GLOBAL VARIABLES --------------------------------------------------------
+//
+
+Encoder knobRight(ENCODER_CLK_PIN_RIGHT, ENCODER_DIRECTION_PIN_RIGHT);
+Encoder knobLeft(ENCODER_CLK_PIN_LEFT, ENCODER_DIRECTION_PIN_LEFT);
+
 // These are used for 'debouncing' the left & right button inputs,
 // for switching between modes.
 boolean prevStateLeft, prevStateRight;
 uint32_t lastChangeTimeLeft = 0, lastChangeTimeRight = 0;
 #define DEBOUNCE_MS 15 // Button debounce time, in milliseconds
 
-// This array lists each of the display/animation drawing functions
-// (which appear later in this code) in the order they're selected with
-// the right button.  Some functions appear repeatedly...for example,
-// we return to "mode_off" at several points in the sequence.
-void (*renderFunc[])(void){
-    mode_off, // Starts here, with LEDs off
-    mode_kaleidoscope_screensaver,
-    mode_kaleidoscope_interactive,
-    mode_color_wash,
-    mode_snowflake,
-    mode_off, // make it obvious we're entering 'setup' modes
-    mode_set_brightness,
-    mode_set_clock
-#ifdef DEBUG
-    ,
-    mode_off, // make it obvious we're entering 'demo' modes
-    mode_HSV_wash,
-    mode_rainbow,
-    mode_rainbowCycle,
-    mode_theaterChase,
-    mode_theaterChaseRainbow
-#endif
-};
-#define N_MODES (sizeof(renderFunc) / sizeof(renderFunc[0]))
-uint8_t mode = 10; // FIX THIS Index of current mode in table
 
+// global instances of objects
 LEDStrips leds;
 RealTimeClock clock;
 Kaleidoscope kaleidoscope;
 
+//
+// SETUP FUNCTION -- RUNS ONCE AT PROGRAM START ----------------------------
+//
 void setup()
 {
 #ifdef DEBUG
@@ -58,6 +94,12 @@ void setup()
   // initialize the random number generator using noise from analog pin 5
   randomSeed(analogRead(5));
 
+  // initialize the rotary encoder buttons
+  pinMode(ENCODER_BUTTON_PIN_RIGHT, INPUT);
+  digitalWrite(ENCODER_BUTTON_PIN_RIGHT, HIGH); //turn pullup resistor on
+  pinMode(ENCODER_BUTTON_PIN_LEFT, INPUT);
+  digitalWrite(ENCODER_BUTTON_PIN_LEFT, HIGH); //turn pullup resistor on
+
   // intialize the LED strips
   leds.setup();
 
@@ -68,8 +110,15 @@ void setup()
   kaleidoscope.setup();
 }
 
+//
+// LOOP FUNCTION -- RUNS OVER AND OVER FOREVER -----------------------------
+//
 void loop()
 {
+  static long positionLeft = -9999;
+  static long positionRight = -9999;
+  long newLeft, newRight;
+
   // automatically adjust the brightness of the LED strips to match the ambient lighting
   leds.adjustBrightness();
 
@@ -77,11 +126,13 @@ void loop()
   uint32_t t = millis();
   if ((t - lastChangeTimeLeft) >= DEBOUNCE_MS)
   {
-    boolean b = 0; /*// FIX THIS CircuitPlayground.leftButton();*/
+    int temp = digitalRead(ENCODER_BUTTON_PIN_LEFT);
+    boolean b = temp ? false : true;
 
     // Left button state changed?
     if (b != prevStateLeft)
     {
+      DB_PRINTLN("b != prevStateLeft");
       prevStateLeft = b;
       lastChangeTimeLeft = t;
 
@@ -99,11 +150,12 @@ void loop()
   // Read and debounce right button
   if ((t - lastChangeTimeRight) >= DEBOUNCE_MS)
   {
-    boolean b = 0; /*FIX THIS CircuitPlayground.rightButton();*/
+    boolean b = !digitalRead(ENCODER_BUTTON_PIN_RIGHT);
 
     // Right button state changed?
     if (b != prevStateRight)
     {
+      DB_PRINTLN("b != prevStateRight");
       prevStateRight = b;
       lastChangeTimeRight = t;
 
@@ -118,18 +170,32 @@ void loop()
     }
   }
 
-  // Render one frame in current mode
+  // read and report on the knobs
+  newLeft = knobLeft.read();
+  newRight = knobRight.read();
+  if (newLeft != positionLeft || newRight != positionRight)
+  {
+    DB_PRINT("Left = ");
+    DB_PRINT(newLeft);
+    DB_PRINT(", Right = ");
+    DB_PRINT(newRight);
+    DB_PRINTLN();
+    positionLeft = newLeft;
+    positionRight = newRight;
+  }
+
+  // Render one frame in current mode. To control the speed of updates, save the time the frame
+  // was last displayed and only display the next frame when enough time has elapsed. See
+  // mode_kaleidoscope_screensaver for an example.
   (*renderFunc[mode])();
 
   // render any overlay
   // update the clock display
-  //  clock.loop();
+  clock.loop();
 
   // update the led strips to show the current frame
   for (int x = 0; x < LED_STRIPS; x++)
     leds.strip[x].show();
-
-  delay(20);
 }
 
 // All Pixels off
@@ -139,19 +205,6 @@ void mode_off()
 
   for (int x = 0; x < LED_STRIPS; x++)
     leds.strip[x].clear();
-}
-
-void mode_kaleidoscope_screensaver()
-{
-  DB_PRINTLN("mode_kaleidoscope_screensaver");
-
-  // animate and draw the kaleidoscope
-  kaleidoscope.loop();
-}
-
-void mode_kaleidoscope_interactive()
-{
-  DB_PRINTLN("mode_kaleidoscope_interactive");
 }
 
 void mode_color_wash()
@@ -167,11 +220,6 @@ void mode_snowflake()
 void mode_set_brightness()
 {
   DB_PRINTLN("mode_set_brightness");
-}
-
-void mode_set_clock()
-{
-  DB_PRINTLN("mode_set_clock");
 }
 
 #ifdef DEBUG

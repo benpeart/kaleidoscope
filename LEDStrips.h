@@ -7,12 +7,6 @@
 // and minimize distance between Arduino and first pixel.  Avoid connecting
 // on a live circuit...if you must, connect GND first.
 
-#define PIN_BASE 7
-#define LED_STRIPS 4
-#define PIXELS_PER_STRIP 150
-
-#define PHOTOCELL_PIN 1 // the cell and 10K pulldown are connected to a0
-
 // define a  class for the LED strips
 // I tried to make this a proper singleton class but apparently the Arduino tools don't support that
 //  LED_strips.h:46: undefined reference to `LEDStrips::instance'
@@ -36,7 +30,7 @@ public:
             //   NEO_GRB     Pixels are wired for GRB bitstream (most NeoPixel products)
             //   NEO_RGB     Pixels are wired for RGB bitstream (v1 FLORA pixels, not v2)
             //   NEO_RGBW    Pixels are wired for RGBW bitstream (NeoPixel RGBW products)
-            strip[x] = Adafruit_NeoPixel(PIXELS_PER_STRIP, PIN_BASE + x, NEO_GRB + NEO_KHZ800);
+            strip[x] = Adafruit_NeoPixel(PIXELS_PER_STRIP, LED_STRIPS_PIN_BASE + x, NEO_GRB + NEO_KHZ800);
             strip[x].begin();
             strip[x].clear();
         }

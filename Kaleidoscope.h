@@ -796,4 +796,33 @@ private:
 #endif
 };
 
+extern Kaleidoscope kaleidoscope;
+
+void mode_kaleidoscope_screensaver()
+{
+    DB_PRINTLN("mode_kaleidoscope_screensaver");
+
+    static uint32_t lastFrame = 0;
+
+    // only draw a frame every 250 ms
+    uint32_t t = millis();
+    if ((t - lastFrame) >= 250)
+    {
+        // animate and draw the kaleidoscope
+        kaleidoscope.loop();
+        lastFrame = t;
+    }
+}
+
+void mode_kaleidoscope_interactive()
+{
+    DB_PRINTLN("mode_kaleidoscope_interactive");
+    kaleidoscope.loop();
+}
+
+void mode_kaleidoscope_select_disks()
+{
+    DB_PRINTLN("mode_kaleidoscope_select_disks");
+}
+
 #endif // KALEIDOSCOPE_H
