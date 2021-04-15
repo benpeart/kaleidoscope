@@ -48,8 +48,8 @@ void (*renderFunc[])(void){
     mode_HSV_wash,
     mode_rainbow,
     mode_rainbowCycle,
-//    mode_theaterChase,  // comment out these two as they are not interactive
-//    mode_theaterChaseRainbow,
+    //    mode_theaterChase,  // comment out these two as they are not interactive
+    //    mode_theaterChaseRainbow,
     mode_kaleidoscope_test,
 #endif
     mode_off // make it obvious we're entering 'regular' modes
@@ -143,6 +143,10 @@ void loop()
           mode--; // Go to prior mode
         else
           mode = N_MODES - 1; // or "wrap around" to last mode
+
+        // clear the led strips for the new mode
+        for (int x = 0; x < LED_STRIPS; x++)
+          leds.strip[x].clear();
       }
     }
   }
@@ -166,6 +170,10 @@ void loop()
           mode++; // Advance to next mode
         else
           mode = 0; // or "wrap around" to start
+
+        // clear the led strips for the new mode
+        for (int x = 0; x < LED_STRIPS; x++)
+          leds.strip[x].clear();
       }
     }
   }
@@ -201,8 +209,7 @@ void loop()
 // All Pixels off
 void mode_off()
 {
-  for (int x = 0; x < LED_STRIPS; x++)
-    leds.strip[x].clear();
+  // nothing to see here... (the pixels got cleared by the button press)
 }
 
 void mode_color_wash()
