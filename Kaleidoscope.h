@@ -634,12 +634,10 @@ private:
     int current_offset_1;
     int current_offset_2;
 
-    // this will draw the kaleidoscope starting at the given offset
+    // this will blend two colors from the given stips/offsets and draw the kaleidoscope
     void draw(uint8_t offset_1, uint8_t offset_2)
     {
-        int begin, end, viewport_index = 0;
-
-        begin = end = offset_1;
+        int begin = 0, end = 0, viewport_index = 0;
 
 #ifdef NDEBUG
         DB_PRINT("offset_1 = ");
@@ -667,11 +665,15 @@ private:
         {
             for (int x = begin; x <= end; x++)
             {
-                int column = x;
+                int column;
+
+                // the column number must wrap around as needed to stay within the number
+                // of columns available in the strip
+                column = x + offset_1;
                 if (column < 0)
-                    column += strip_1_columns;
-                else if (column >= strip_1_columns)
-                    column -= strip_1_columns;
+                    column = (column % strip_1_columns) + strip_1_columns - 1;
+                else
+                    column = column % strip_1_columns;
 
                 // since the strips are stored in PROGMEM, we must read them into SRAM before using them
                 uint32_t pixel_1 = pgm_read_dword_near(&JewelStrip[column][row]);
@@ -684,15 +686,17 @@ private:
                 DB_PRINTLN(pixel_1, HEX);
 #endif
 
+                // the column number must wrap around as needed to stay within the number
+                // of columns available in the strip
                 column = x + offset_2;
                 if (column < 0)
-                    column += strip_2_columns;
-                else if (column >= strip_2_columns)
-                    column -= strip_2_columns;
+                    column = (column % strip_2_columns) + strip_2_columns - 1;
+                else
+                    column = column % strip_2_columns;
 
                 // since the strips are stored in PROGMEM, we must read them into SRAM before using them
                 uint32_t pixel_2 = pgm_read_dword_near(&JewelStrip[column][row]);
-#ifdef DEBUG
+#ifdef NDEBUG
                 DB_PRINT("pixel_2[");
                 DB_PRINT(column);
                 DB_PRINT("][");
@@ -703,7 +707,7 @@ private:
 
                 // blend the pixels from the two strips by doing 50% transparency
                 uint32_t pixel = blendAlpha(pixel_1, pixel_2, 0x7f);
-#ifdef DEBUG
+#ifdef NDEBUG
                 DB_PRINT("blended pixel = 0x");
                 DB_PRINTLN(pixel, HEX);
 #endif
