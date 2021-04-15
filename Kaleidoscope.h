@@ -54,12 +54,14 @@ static const PROGMEM uint32_t JewelStrip[JEWEL_STRIP_COLUMNS][TRIANGLE_ROWS] =
 
 #ifdef DEBUG
 #define BLUE_STRIP_COLUMNS 1
-static const PROGMEM uint32_t BlueStrip[BLUE_STRIP_COLUMNS][TRIANGLE_ROWS] =
-    {{0x0000FF, 0x0000FF, 0x0000FF, 0x0000FF, 0x0000FF, 0x0000FF, 0x0000FF, 0x0000FF, 0x0000FF, 0x0000FF}};
+static const PROGMEM uint32_t BlueStrip[][TRIANGLE_ROWS] =
+    {{0x0000FF, 0x0000FF, 0x0000FF, 0x0000FF, 0x0000FF, 0x0000FF, 0x0000FF, 0x0000FF, 0x0000FF, 0x0000FF},
+     {0x0000FF, 0x0000FF, 0x0000FF, 0x0000FF, 0x0000FF, 0x0000FF, 0x0000FF, 0x0000FF, 0x0000FF, 0x0000FF}};
 
-#define YELLOW_STRIP_COLUMNS 1
-static const PROGMEM uint32_t YellowStrip[YELLOW_STRIP_COLUMNS][TRIANGLE_ROWS] =
-    {{0xFFFF00, 0xFFFF00, 0xFFFF00, 0xFFFF00, 0xFFFF00, 0xFFFF00, 0xFFFF00, 0xFFFF00, 0xFFFF00, 0xFFFF00}};
+#define RED_STRIP_COLUMNS 1
+static const PROGMEM uint32_t RedStrip[][TRIANGLE_ROWS] =
+    {{0xFF0000, 0xFF0000, 0xFF0000, 0xFF0000, 0xFF0000, 0xFF0000, 0xFF0000, 0xFF0000, 0xFF0000, 0xFF0000},
+     {0xFF0000, 0xFF0000, 0xFF0000, 0xFF0000, 0xFF0000, 0xFF0000, 0xFF0000, 0xFF0000, 0xFF0000, 0xFF0000}};
 #endif
 
 class Kaleidoscope
@@ -71,8 +73,8 @@ public:
         DB_PRINTLN("Kaleidoscope.setup");
         rgb_strip_1 = BlueStrip;
         strip_1_columns = BLUE_STRIP_COLUMNS;
-        rgb_strip_2 = YellowStrip;
-        strip_2_columns = YELLOW_STRIP_COLUMNS;
+        rgb_strip_2 = RedStrip;
+        strip_2_columns = RED_STRIP_COLUMNS;
 #else
         rgb_strip_1 = JewelStrip;
         strip_1_columns = JEWEL_STRIP_COLUMNS;
@@ -639,27 +641,6 @@ private:
     {
         int begin = 0, end = 0, viewport_index = 0;
 
-#ifdef NDEBUG
-        DB_PRINT("offset_1 = ");
-        DB_PRINTLN((uint32_t)offset_1);
-
-        uint32_t pixel1, pixel2;
-
-        pixel1 = BlueStrip[0][0];
-        pixel2 = strip_1[0][0];
-
-        DB_PRINT("BlueStrip = ");
-        DB_PRINTLN((uint32_t)BlueStrip, HEX);
-        DB_PRINT("strip_1 = ");
-        DB_PRINTLN((uint32_t)strip_1, HEX);
-
-        DB_PRINT("BlueStrip(0, 0) = 0x");
-        DB_PRINTLN(pixel1, HEX);
-
-        DB_PRINT("strip_1(0, 0) = 0x");
-        DB_PRINTLN(pixel2, HEX);
-#endif
-
         // draw the kaleidoscope pixels for this 'frame'
         for (int row = 0; row < TRIANGLE_ROWS; row++)
         {
@@ -676,8 +657,8 @@ private:
                     column = column % strip_1_columns;
 
                 // since the strips are stored in PROGMEM, we must read them into SRAM before using them
-                uint32_t pixel_1 = pgm_read_dword_near(&JewelStrip[column][row]);
-#ifdef DEBUG
+                uint32_t pixel_1 = pgm_read_dword_near(&rgb_strip_1[column][row]);
+#ifdef NDEBUG
                 DB_PRINT("pixel_1[");
                 DB_PRINT(column);
                 DB_PRINT("][");
@@ -695,7 +676,7 @@ private:
                     column = column % strip_2_columns;
 
                 // since the strips are stored in PROGMEM, we must read them into SRAM before using them
-                uint32_t pixel_2 = pgm_read_dword_near(&JewelStrip[column][row]);
+                uint32_t pixel_2 = pgm_read_dword_near(&rgb_strip_2[column][row]);
 #ifdef NDEBUG
                 DB_PRINT("pixel_2[");
                 DB_PRINT(column);
