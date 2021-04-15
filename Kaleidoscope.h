@@ -18,7 +18,7 @@
 
 // TODO: optimize the strip array to only require 2 bytes per pixel (16 bit color)
 // store the strip RGB values in program memory (flash) to save SRAM
-static const uint32_t PROGMEM JewelStrip[JEWEL_STRIP_COLUMNS][TRIANGLE_ROWS] =
+static const PROGMEM uint32_t JewelStrip[JEWEL_STRIP_COLUMNS][TRIANGLE_ROWS] =
     {
         {JEWEL_RED, JEWEL_RED, JEWEL_RED, JEWEL_RED, JEWEL_RED, JEWEL_RED, JEWEL_RED},
         {JEWEL_RED, JEWEL_RED, JEWEL_RED, JEWEL_RED, JEWEL_RED, JEWEL_RED, JEWEL_RED},
@@ -54,12 +54,12 @@ static const uint32_t PROGMEM JewelStrip[JEWEL_STRIP_COLUMNS][TRIANGLE_ROWS] =
 
 #ifdef DEBUG
 #define BLUE_STRIP_COLUMNS 1
-static const uint32_t PROGMEM BlueStrip[BLUE_STRIP_COLUMNS][TRIANGLE_ROWS] =
-    {{0x0000FF, 0x0000FF, 0x0000FF, 0x0000FF, 0x0000FF, 0x0000FF, 0x0000FF}};
+static const PROGMEM uint32_t BlueStrip[BLUE_STRIP_COLUMNS][TRIANGLE_ROWS] =
+    {{0x0000FF, 0x0000FF, 0x0000FF, 0x0000FF, 0x0000FF, 0x0000FF, 0x0000FF, 0x0000FF, 0x0000FF, 0x0000FF}};
 
 #define YELLOW_STRIP_COLUMNS 1
-static const uint32_t PROGMEM YellowStrip[YELLOW_STRIP_COLUMNS][TRIANGLE_ROWS] =
-    {{0xFFFF00, 0xFFFF00, 0xFFFF00, 0xFFFF00, 0xFFFF00, 0xFFFF00, 0xFFFF00}};
+static const PROGMEM uint32_t YellowStrip[YELLOW_STRIP_COLUMNS][TRIANGLE_ROWS] =
+    {{0xFFFF00, 0xFFFF00, 0xFFFF00, 0xFFFF00, 0xFFFF00, 0xFFFF00, 0xFFFF00, 0xFFFF00, 0xFFFF00, 0xFFFF00}};
 #endif
 
 class Kaleidoscope
@@ -69,12 +69,12 @@ public:
     {
 #ifdef NDEBUG
         DB_PRINTLN("Kaleidoscope.setup");
-        strip_1 = BlueStrip;
+        rgb_strip_1 = BlueStrip;
         strip_1_columns = BLUE_STRIP_COLUMNS;
         rgb_strip_2 = YellowStrip;
         strip_2_columns = YELLOW_STRIP_COLUMNS;
 #else
-        strip_1 = JewelStrip;
+        rgb_strip_1 = JewelStrip;
         strip_1_columns = JEWEL_STRIP_COLUMNS;
         rgb_strip_2 = JewelStrip;
         strip_2_columns = JEWEL_STRIP_COLUMNS;
@@ -83,53 +83,11 @@ public:
         // start with random offsets to provide more variety
         current_offset_1 = random(strip_1_columns);
         current_offset_2 = random(strip_2_columns);
-
-#ifdef NDEBUG
-        // If you uncomment out the DB_PRINTLN below, it will corrupt memory and 'we have a problem'
-        // I'm not the only one that ran into this:
-        // https://stackoverflow.com/questions/38923872/arduino-serial-parseint-data-read-corrupted-by-too-much-serial-print
-        for (int y = 0; y < TRIANGLE_ROWS; y++)
-        {
-            for (int x = 0; x < strip_1_columns; x++)
-            {
-                uint32_t pixel_1, pixel_2;
-
-                pixel_1 = BlueStrip[x][y];
-                pixel_2 = strip_1[x][y];
-                DB_PRINTLN(pixel_1, HEX);
-                DB_PRINTLN(pixel_2, HEX);
-                if (pixel_1 != pixel_2)
-                {
-                    DB_PRINTLN("Huston, we have a problem");
-                    return;
-                }
-            }
-        }
-        DB_PRINTLN("It's all good");
-
-        DB_PRINT("BlueStrip = ");
-        DB_PRINTLN((uint32_t)BlueStrip, HEX);
-        DB_PRINT("strip_1 = ");
-        DB_PRINTLN((uint32_t)strip_1, HEX);
-
-        DB_PRINT("BlueStrip[0][0] = 0x");
-        DB_PRINTLN(BlueStrip[0][0], HEX);
-
-        DB_PRINT("strip_1[0][0] = 0x");
-        DB_PRINTLN(strip_1[0][0], HEX);
-#endif
     }
 
     // update the position of the strips and draw the kaleidoscope
     void loop()
     {
-#ifdef NDEBUG
-        DB_PRINT("current_oiffset_1 = ");
-        DB_PRINTLN(current_offset_1, DEC);
-        DB_PRINTLN("test_drawKaleidoscopePixel6");
-        test_drawKaleidoscopePixel6();
-#endif
-
 #ifdef NDEBUG
         DB_PRINT("kaleidoscope.loop(");
         DB_PRINT(current_offset_1, DEC);
@@ -137,7 +95,7 @@ public:
         DB_PRINT(current_offset_2, DEC);
         DB_PRINTLN(");");
 #endif
-        draw(current_offset_1, current_offset_2, 200);
+        draw(current_offset_1, current_offset_2);
 
         current_offset_1 = (++current_offset_1 /*+ random(10)*/) % strip_1_columns;
         current_offset_2 = (++current_offset_2 /*+ random(10)*/) % strip_2_columns;
@@ -152,116 +110,6 @@ public:
         uint32_t g2 = (alpha * (colorb & 0x00FF00)) >> 8;
 
         return ((rb1 + rb2) & 0xFF00FF) + ((g1 + g2) & 0x00FF00);
-    }
-
-private:
-    // pointer to two dimensional arrays of color values for kaleidoscope effect
-    // https://stackoverflow.com/questions/1052818/create-a-pointer-to-two-dimensional-array
-    const uint32_t (*strip_1)[TRIANGLE_ROWS];
-    uint8_t strip_1_columns;
-    const uint32_t (*rgb_strip_2)[TRIANGLE_ROWS];
-    uint8_t strip_2_columns;
-
-    // offset into strips, used to provide movement for the kaleidoscope
-    int current_offset_1;
-    int current_offset_2;
-
-    // this will draw the kaleidoscope starting at the given offset
-    void draw(uint8_t offset_1, uint8_t offset_2, uint8_t wait)
-    {
-        int begin, end, viewport_index = 0;
-
-        begin = end = offset_1;
-
-#ifdef NDEBUG
-        DB_PRINT("offset_1 = ");
-        DB_PRINTLN((uint32_t)offset_1);
-
-        uint32_t pixel1, pixel2;
-
-        pixel1 = BlueStrip[0][0];
-        pixel2 = strip_1[0][0];
-
-        DB_PRINT("BlueStrip = ");
-        DB_PRINTLN((uint32_t)BlueStrip, HEX);
-        DB_PRINT("strip_1 = ");
-        DB_PRINTLN((uint32_t)strip_1, HEX);
-
-        DB_PRINT("BlueStrip(0, 0) = 0x");
-        DB_PRINTLN(pixel1, HEX);
-
-        DB_PRINT("strip_1(0, 0) = 0x");
-        DB_PRINTLN(pixel2, HEX);
-#endif
-
-        // draw the kaleidoscope pixels for this 'frame'
-        for (int row = 0; row < TRIANGLE_ROWS; row++)
-        {
-            for (int x = begin; x <= end; x++)
-            {
-                int column = x;
-                if (column < 0)
-                    column += strip_1_columns;
-                else if (column >= strip_1_columns)
-                    column -= strip_1_columns;
-                uint32_t pixel_1 = strip_1[column][row];
-#ifdef NDEBUG
-                DB_PRINT("pixel_1[");
-                DB_PRINT(column);
-                DB_PRINT("][");
-                DB_PRINT(row);
-                DB_PRINT("] = 0x");
-                DB_PRINTLN(pixel_1, HEX);
-#endif
-
-                column = x + offset_2;
-                if (column < 0)
-                    column += strip_2_columns;
-                else if (column >= strip_2_columns)
-                    column -= strip_2_columns;
-                uint32_t pixel_2 = rgb_strip_2[column][row];
-#ifdef NDEBUG
-                DB_PRINT("pixel_2[");
-                DB_PRINT(column);
-                DB_PRINT("][");
-                DB_PRINT(row);
-                DB_PRINT("] = 0x");
-                DB_PRINTLN(pixel_2, HEX);
-#endif
-
-                // blend the pixels from the two strips by doing 50% transparency
-                uint32_t pixel = blendAlpha(pixel_1, pixel_2, 0x7f);
-#ifdef NDEBUG
-                DB_PRINT("blended pixel = 0x");
-                DB_PRINTLN(pixel, HEX);
-#endif
-                drawKaleidoscopePixel6(viewport_index, pixel);
-                viewport_index++;
-            }
-            begin--;
-            end++;
-        }
-    }
-
-    void MirroredSetPixelColor(int strip, int index, uint32_t c)
-    {
-        switch (strip)
-        {
-        case 0:
-            leds.strip[0].setPixelColor(index, c);
-            leds.strip[3].setPixelColor(index, c);
-            break;
-
-        case 1:
-            leds.strip[1].setPixelColor(index, c);
-            leds.strip[2].setPixelColor(index, c);
-            break;
-
-        default:
-            DB_PRINT("MysetPixelColor: invalid strip ID = ");
-            DB_PRINTLN(strip);
-            break;
-        }
     }
 
     // draw a pixel mirrored and rotated 6 times to emulate a kaleidoscope
@@ -774,25 +622,119 @@ private:
         }
     }
 
-#ifdef DEBUG
-    void test_drawKaleidoscopePixel6()
+private:
+    // pointer to two dimensional arrays of color values for kaleidoscope effect
+    // https://stackoverflow.com/questions/1052818/create-a-pointer-to-two-dimensional-array
+    const uint32_t (*rgb_strip_1)[TRIANGLE_ROWS];
+    uint8_t strip_1_columns;
+    const uint32_t (*rgb_strip_2)[TRIANGLE_ROWS];
+    uint8_t strip_2_columns;
+
+    // offset into strips, used to provide movement for the kaleidoscope
+    int current_offset_1;
+    int current_offset_2;
+
+    // this will draw the kaleidoscope starting at the given offset
+    void draw(uint8_t offset_1, uint8_t offset_2)
     {
-        // loop through all pixels in the source triange making sure they
-        // get reflected and mirrored properly
-        for (int index = 0; index < TRIANGLE_COUNT; index++)
+        int begin, end, viewport_index = 0;
+
+        begin = end = offset_1;
+
+#ifdef NDEBUG
+        DB_PRINT("offset_1 = ");
+        DB_PRINTLN((uint32_t)offset_1);
+
+        uint32_t pixel1, pixel2;
+
+        pixel1 = BlueStrip[0][0];
+        pixel2 = strip_1[0][0];
+
+        DB_PRINT("BlueStrip = ");
+        DB_PRINTLN((uint32_t)BlueStrip, HEX);
+        DB_PRINT("strip_1 = ");
+        DB_PRINTLN((uint32_t)strip_1, HEX);
+
+        DB_PRINT("BlueStrip(0, 0) = 0x");
+        DB_PRINTLN(pixel1, HEX);
+
+        DB_PRINT("strip_1(0, 0) = 0x");
+        DB_PRINTLN(pixel2, HEX);
+#endif
+
+        // draw the kaleidoscope pixels for this 'frame'
+        for (int row = 0; row < TRIANGLE_ROWS; row++)
         {
-            // turn on the pixels
-            drawKaleidoscopePixel6(index, 0xFF); // Red
+            for (int x = begin; x <= end; x++)
+            {
+                int column = x;
+                if (column < 0)
+                    column += strip_1_columns;
+                else if (column >= strip_1_columns)
+                    column -= strip_1_columns;
 
-            for (uint8_t x = 0; x < LED_STRIPS; x++)
-                leds.strip[x].show();
-            delay(1000);
+                // since the strips are stored in PROGMEM, we must read them into SRAM before using them
+                uint32_t pixel_1 = pgm_read_dword_near(&JewelStrip[column][row]);
+#ifdef DEBUG
+                DB_PRINT("pixel_1[");
+                DB_PRINT(column);
+                DB_PRINT("][");
+                DB_PRINT(row);
+                DB_PRINT("] = 0x");
+                DB_PRINTLN(pixel_1, HEX);
+#endif
 
-            // turn off the pixels
-            drawKaleidoscopePixel6(index, 0);
+                column = x + offset_2;
+                if (column < 0)
+                    column += strip_2_columns;
+                else if (column >= strip_2_columns)
+                    column -= strip_2_columns;
+
+                // since the strips are stored in PROGMEM, we must read them into SRAM before using them
+                uint32_t pixel_2 = pgm_read_dword_near(&JewelStrip[column][row]);
+#ifdef DEBUG
+                DB_PRINT("pixel_2[");
+                DB_PRINT(column);
+                DB_PRINT("][");
+                DB_PRINT(row);
+                DB_PRINT("] = 0x");
+                DB_PRINTLN(pixel_2, HEX);
+#endif
+
+                // blend the pixels from the two strips by doing 50% transparency
+                uint32_t pixel = blendAlpha(pixel_1, pixel_2, 0x7f);
+#ifdef DEBUG
+                DB_PRINT("blended pixel = 0x");
+                DB_PRINTLN(pixel, HEX);
+#endif
+                drawKaleidoscopePixel6(viewport_index, pixel);
+                viewport_index++;
+            }
+            begin--;
+            end++;
         }
     }
-#endif
+
+    void MirroredSetPixelColor(int strip, int index, uint32_t c)
+    {
+        switch (strip)
+        {
+        case 0:
+            leds.strip[0].setPixelColor(index, c);
+            leds.strip[3].setPixelColor(index, c);
+            break;
+
+        case 1:
+            leds.strip[1].setPixelColor(index, c);
+            leds.strip[2].setPixelColor(index, c);
+            break;
+
+        default:
+            DB_PRINT("MysetPixelColor: invalid strip ID = ");
+            DB_PRINTLN(strip);
+            break;
+        }
+    }
 };
 
 extern Kaleidoscope kaleidoscope;
@@ -815,6 +757,34 @@ void mode_kaleidoscope_interactive()
 {
     kaleidoscope.loop();
 }
+
+#ifdef DEBUG
+void mode_kaleidoscope_test()
+{
+    static uint32_t lastFrame = 0, index = -1;
+
+    // only draw a frame every 250 ms
+    uint32_t t = millis();
+    if ((t - lastFrame) >= 250)
+    {
+        lastFrame = t;
+
+        // loop through all pixels in the source triange making sure they
+        // get reflected and mirrored properly
+
+        // erase the last pixel
+        kaleidoscope.drawKaleidoscopePixel6(index, 0);    // off
+
+        // move to the next pixel
+        if (++index >= TRIANGLE_COUNT)
+            index = 0;
+        DB_PRINTLN(index);
+
+        // light up the next pixel
+        kaleidoscope.drawKaleidoscopePixel6(index, 0xFF0000); // Red
+    }
+}
+#endif
 
 void mode_kaleidoscope_select_disks()
 {

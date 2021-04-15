@@ -50,6 +50,7 @@ void (*renderFunc[])(void){
     mode_rainbowCycle,
 //    mode_theaterChase,  // comment out these two as they are not interactive
 //    mode_theaterChaseRainbow,
+    mode_kaleidoscope_test,
 #endif
     mode_off // make it obvious we're entering 'regular' modes
 };
