@@ -52,7 +52,7 @@ static const PROGMEM uint32_t JewelStrip[JEWEL_STRIP_COLUMNS][TRIANGLE_ROWS] =
         {JEWEL_YELLOW, JEWEL_YELLOW, JEWEL_YELLOW, JEWEL_BLUE, JEWEL_BLUE, JEWEL_BLUE, JEWEL_BLUE, JEWEL_ORANGE, JEWEL_ORANGE, JEWEL_ORANGE},
         {JEWEL_LEAD, JEWEL_LEAD, JEWEL_LEAD, JEWEL_LEAD, JEWEL_LEAD, JEWEL_LEAD, JEWEL_LEAD, JEWEL_LEAD, JEWEL_LEAD, JEWEL_LEAD}};
 
-#ifdef DEBUG
+#ifdef NDEBUG
 #define BLUE_STRIP_COLUMNS 1
 static const PROGMEM uint32_t BlueStrip[][TRIANGLE_ROWS] =
     {{0x0000FF, 0x0000FF, 0x0000FF, 0x0000FF, 0x0000FF, 0x0000FF, 0x0000FF, 0x0000FF, 0x0000FF, 0x0000FF},
@@ -69,8 +69,8 @@ class Kaleidoscope
 public:
     void setup()
     {
+        DB_PRINTLN(F("Kaleidoscope.setup"));
 #ifdef NDEBUG
-        DB_PRINTLN("Kaleidoscope.setup");
         rgb_strip_1 = BlueStrip;
         strip_1_columns = BLUE_STRIP_COLUMNS;
         rgb_strip_2 = RedStrip;
@@ -90,13 +90,6 @@ public:
     // update the position of the strips and draw the kaleidoscope
     void loop()
     {
-#ifdef NDEBUG
-        DB_PRINT("kaleidoscope.loop(");
-        DB_PRINT(current_offset_1, DEC);
-        DB_PRINT(", ");
-        DB_PRINT(current_offset_2, DEC);
-        DB_PRINTLN(");");
-#endif
         draw(current_offset_1, current_offset_2);
 
         current_offset_1 = (++current_offset_1 /*+ random(10)*/) % strip_1_columns;
@@ -659,11 +652,11 @@ private:
                 // since the strips are stored in PROGMEM, we must read them into SRAM before using them
                 uint32_t pixel_1 = pgm_read_dword_near(&rgb_strip_1[column][row]);
 #ifdef NDEBUG
-                DB_PRINT("pixel_1[");
+                DB_PRINT(F("pixel_1["));
                 DB_PRINT(column);
-                DB_PRINT("][");
+                DB_PRINT(F("]["));
                 DB_PRINT(row);
-                DB_PRINT("] = 0x");
+                DB_PRINT(F("] = 0x"));
                 DB_PRINTLN(pixel_1, HEX);
 #endif
 
@@ -678,18 +671,18 @@ private:
                 // since the strips are stored in PROGMEM, we must read them into SRAM before using them
                 uint32_t pixel_2 = pgm_read_dword_near(&rgb_strip_2[column][row]);
 #ifdef NDEBUG
-                DB_PRINT("pixel_2[");
+                DB_PRINT(F("pixel_2["));
                 DB_PRINT(column);
-                DB_PRINT("][");
+                DB_PRINT(F("]["));
                 DB_PRINT(row);
-                DB_PRINT("] = 0x");
+                DB_PRINT(F("] = 0x"));
                 DB_PRINTLN(pixel_2, HEX);
 #endif
 
                 // blend the pixels from the two strips by doing 50% transparency
-                uint32_t pixel = blendAlpha(pixel_1, pixel_2, 0x7f);
+                uint32_t pixel = blend(pixel_1, pixel_2, 0x7f);
 #ifdef NDEBUG
-                DB_PRINT("blended pixel = 0x");
+                DB_PRINT(F("blended pixel = 0x"));
                 DB_PRINTLN(pixel, HEX);
 #endif
                 drawKaleidoscopePixel6(viewport_index, pixel);
@@ -705,17 +698,19 @@ private:
         switch (strip)
         {
         case 0:
-            leds.strip[0].setPixelColor(index, c);
-            leds.strip[3].setPixelColor(index, c);
+            leds.strip[0][index] = c;
+            // FIX THIS (when we have more space)!
+            //            leds.strip[3][index] = c;
             break;
 
         case 1:
-            leds.strip[1].setPixelColor(index, c);
-            leds.strip[2].setPixelColor(index, c);
+            // FIX THIS (when we have more space)!
+            //            leds.strip[1][index] = c;
+            //            leds.strip[2][index] = c;
             break;
 
         default:
-            DB_PRINT("MysetPixelColor: invalid strip ID = ");
+            DB_PRINT(F("MysetPixelColor: invalid strip ID = "));
             DB_PRINTLN(strip);
             break;
         }
@@ -726,15 +721,10 @@ extern Kaleidoscope kaleidoscope;
 
 void mode_kaleidoscope_screensaver()
 {
-    static uint32_t lastFrame = 0;
-
-    // only draw a frame every 250 ms
-    uint32_t t = millis();
-    if ((t - lastFrame) >= 250)
+    EVERY_N_MILLISECONDS(250)
     {
         // animate and draw the kaleidoscope
         kaleidoscope.loop();
-        lastFrame = t;
     }
 }
 
@@ -744,21 +734,16 @@ void mode_kaleidoscope_interactive()
 }
 
 #ifdef DEBUG
+// loop through all pixels in the source triange making sure they
+// get reflected and mirrored properly
 void mode_kaleidoscope_test()
 {
-    static uint32_t lastFrame = 0, index = -1;
+    static uint32_t index = -1;
 
-    // only draw a frame every 250 ms
-    uint32_t t = millis();
-    if ((t - lastFrame) >= 250)
+    EVERY_N_MILLISECONDS(100)
     {
-        lastFrame = t;
-
-        // loop through all pixels in the source triange making sure they
-        // get reflected and mirrored properly
-
         // erase the last pixel
-        kaleidoscope.drawKaleidoscopePixel6(index, 0);    // off
+        kaleidoscope.drawKaleidoscopePixel6(index, 0); // off
 
         // move to the next pixel
         if (++index >= TRIANGLE_COUNT)
@@ -773,7 +758,7 @@ void mode_kaleidoscope_test()
 
 void mode_kaleidoscope_select_disks()
 {
-    DB_PRINTLN("mode_kaleidoscope_select_disks");
+    DB_PRINTLN(F("mode_kaleidoscope_select_disks"));
 }
 
 #endif // KALEIDOSCOPE_H

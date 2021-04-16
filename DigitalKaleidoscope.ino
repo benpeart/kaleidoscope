@@ -1,11 +1,12 @@
+
 // https://github.com/PaulStoffregen/Encoder
 #include <Encoder.h>
 
 // https://github.com/thomasfredericks/Bounce2
 #include <Bounce2.h>
 
-// https://github.com/adafruit/Adafruit_NeoPixel
-#include <Adafruit_NeoPixel.h>
+// https://github.com/FastLED/FastLED
+#include <FastLED.h>
 
 // https://github.com/adafruit/RTClib
 #include <RTClib.h>
@@ -30,8 +31,8 @@
 #define ENCODER_BUTTON_PIN_RIGHT 6
 #define ENCODER_BUTTON_PIN_LEFT 7
 #define LED_STRIPS_PIN_BASE 8
-#define LED_STRIPS 4
-#define PIXELS_PER_STRIP 150
+#define LED_STRIPS 1 // FIX THIS (when we have more space)!
+#define LEDS_PER_STRIP 150
 
 #include "debug.h"
 #include "LEDStrips.h"
@@ -55,11 +56,11 @@ void (*renderFunc[])(void){
     mode_set_brightness,
 #ifdef DEBUG
     mode_off, // make it obvious we're entering 'demo' modes
-    mode_HSV_wash,
+    mode_blendWave,
     mode_rainbow,
-    mode_rainbowCycle,
-    //    mode_theaterChase,  // comment out these two as they are not interactive
-    //    mode_theaterChaseRainbow,
+    mode_rainbowMarch,
+    mode_sawTooth,
+    mode_plasma,
     mode_kaleidoscope_test,
 #endif
     mode_off // make it obvious we're entering 'regular' modes
@@ -137,7 +138,7 @@ void loop()
   // Handle button pressed?
   if (leftButton.pressed())
   {
-    DB_PRINTLN("leftButton.pressed");
+    DB_PRINTLN(F("leftButton.pressed"));
 
     if (mode)
       mode--; // Go to prior mode
@@ -145,14 +146,13 @@ void loop()
       mode = N_MODES - 1; // or "wrap around" to last mode
 
     // clear the led strips for the new mode
-    for (int x = 0; x < LED_STRIPS; x++)
-      leds.strip[x].clear();
+    FastLED.clear();
   }
 
   // Right button pressed?
   if (rightButton.pressed())
   {
-    DB_PRINTLN("rightButton.pressed");
+    DB_PRINTLN(F("rightButton.pressed"));
 
     if (mode < (N_MODES - 1))
       mode++; // Advance to next mode
@@ -160,8 +160,7 @@ void loop()
       mode = 0; // or "wrap around" to start
 
     // clear the led strips for the new mode
-    for (int x = 0; x < LED_STRIPS; x++)
-      leds.strip[x].clear();
+    FastLED.clear();
   }
 
   // read and report on the knobs
@@ -171,9 +170,9 @@ void loop()
   long newRight = knobRight.read();
   if (newLeft != positionLeft || newRight != positionRight)
   {
-    DB_PRINT("Left = ");
+    DB_PRINT(F("Left = "));
     DB_PRINT(newLeft);
-    DB_PRINT(", Right = ");
+    DB_PRINT(F(", Right = "));
     DB_PRINT(newRight);
     DB_PRINTLN();
     positionLeft = newLeft;
@@ -190,8 +189,7 @@ void loop()
   clock.loop();
 
   // update the led strips to show the current frame
-  for (int x = 0; x < LED_STRIPS; x++)
-    leds.strip[x].show();
+  FastLED.show();
 }
 
 // All Pixels off
@@ -202,132 +200,128 @@ void mode_off()
 
 void mode_color_wash()
 {
-  DB_PRINTLN("mode_color_wash");
+  DB_PRINTLN(F("mode_color_wash"));
 }
 
 void mode_snowflake()
 {
-  DB_PRINTLN("mode_snowflake");
+  DB_PRINTLN(F("mode_snowflake"));
 }
 
 void mode_set_brightness()
 {
-  DB_PRINTLN("mode_set_brightness");
+  DB_PRINTLN(F("mode_set_brightness"));
 }
 
 #ifdef DEBUG
 
-void mode_HSV_wash()
+// https://github.com/atuline/FastLED-Demos/blob/master/blendwave/blendwave.ino
+void mode_blendWave()
 {
-  static long x = 0;
+  //DB_PRINTLN(F("mode_blendWave"));
 
-  leds.strip[0].fill(leds.strip[0].gamma32(leds.strip[0].ColorHSV(x)), 0, 150);
-  x += 100;
-  if (x >= 65535)
-    x = 0;
+  static CRGB clr1;
+  static CRGB clr2;
+  static uint8_t speed;
+  static uint8_t loc1;
+  static uint8_t loc2;
+  static uint8_t ran1;
+  static uint8_t ran2;
+
+  speed = beatsin8(6, 0, 255);
+
+  clr1 = blend(CHSV(beatsin8(3, 0, 255), 255, 255), CHSV(beatsin8(4, 0, 255), 255, 255), speed);
+  clr2 = blend(CHSV(beatsin8(4, 0, 255), 255, 255), CHSV(beatsin8(3, 0, 255), 255, 255), speed);
+
+  loc1 = beatsin8(10, 0, LEDS_PER_STRIP - 1);
+
+  fill_gradient_RGB(leds.strip[0], 0, clr2, loc1, clr1);
+  fill_gradient_RGB(leds.strip[0], loc1, clr2, LEDS_PER_STRIP - 1, clr1);
 }
 
 void mode_rainbow()
 {
-  static uint16_t j = 0;
+  //DB_PRINTLN(F("mode_rainbow"));
 
-  for (uint16_t i = 0; i < leds.strip[0].numPixels(); i++)
-  {
-    leds.strip[0].setPixelColor(i, Wheel((i + j) & 255));
-  }
-
-  j++;
-  if (j >= 256)
-    j = 0;
+  fill_rainbow(leds.strip[0], LEDS_PER_STRIP, 0, 10);
 }
 
-// Slightly different, this makes the rainbow equally distributed throughout
-void mode_rainbowCycle()
+// https://github.com/atuline/FastLED-Demos/blob/master/rainbow_march/rainbow_march.ino
+void mode_rainbowMarch()
 {
-  static uint16_t j;
+  //DB_PRINTLN(F("mode_rainbowMarch"));
 
-  for (uint16_t i = 0; i < leds.strip[0].numPixels(); i++)
-  {
-    leds.strip[0].setPixelColor(i, Wheel(((i * 256 / leds.strip[0].numPixels()) + j) & 255));
-  }
+  uint8_t thisdelay = 200, deltahue = 10;
+  uint8_t thishue = millis() * (255 - thisdelay) / 255; // To change the rate, add a beat or something to the result. 'thisdelay' must be a fixed value.
 
-  j++;
-  if (j >= 256 * 5)
-    j = 0;
+  // thishue = beat8(50);                                       // This uses a FastLED sawtooth generator. Again, the '50' should not change on the fly.
+  // thishue = beatsin8(50,0,255);                              // This can change speeds on the fly. You can also add these to each other.
+
+  fill_rainbow(leds.strip[0], LEDS_PER_STRIP, thishue, deltahue);
 }
 
-//Theatre-style crawling lights.
-void mode_theaterChase()
+// https://github.com/atuline/FastLED-Demos/blob/master/sawtooth/sawtooth.ino
+void mode_sawTooth()
 {
-  DB_PRINTLN("mode_theaterChase");
+  //DB_PRINTLN(F("mode_sawTooth"));
 
-  // do 10 cycles of chasing
-  for (int j = 0; j < 10; j++)
-  {
-    for (int q = 0; q < 3; q++)
+  // Palette definitions
+  static CRGBPalette16 currentPalette = PartyColors_p;
+  static CRGBPalette16 targetPalette = PartyColors_p;
+  static TBlendType currentBlending = LINEARBLEND; // NOBLEND or LINEARBLEND
+
+  int bpm = 60;
+  int ms_per_beat = 60000 / bpm; // 500ms per beat, where 60,000 = 60 seconds * 1000 ms
+  int ms_per_led = 60000 / bpm / LEDS_PER_STRIP;
+
+  int cur_led = ((millis() % ms_per_beat) / ms_per_led) % (LEDS_PER_STRIP); // Using millis to count up the strand, with %NUM_LEDS at the end as a safety factor.
+
+  if (cur_led == 0)
+    fill_solid(leds.strip[0], LEDS_PER_STRIP, CRGB::Black);
+  else
+    leds.strip[0][cur_led] = ColorFromPalette(currentPalette, 0, 255, currentBlending); // I prefer to use palettes instead of CHSV or CRGB assignments.
+}
+
+// https://github.com/atuline/FastLED-Demos/blob/master/plasma/plasma.ino
+
+// Use qsuba for smooth pixel colouring and qsubd for non-smooth pixel colouring
+#define qsubd(x, b) ((x > b) ? b : 0)     // Digital unsigned subtraction macro. if result <0, then => 0. Otherwise, take on fixed value.
+#define qsuba(x, b) ((x > b) ? x - b : 0) // Analog Unsigned subtraction macro. if result <0, then => 0
+
+void mode_plasma()
+{
+  //DB_PRINTLN(F("mode_plasma"));
+
+  static CRGBPalette16 currentPalette = OceanColors_p; // Palette definitions
+  static CRGBPalette16 targetPalette;
+  static TBlendType currentBlending = LINEARBLEND;
+
+  EVERY_N_MILLISECONDS(50)
+  {                                       // FastLED based non-blocking delay to update/display the sequence.
+    int thisPhase = beatsin8(6, -64, 64); // Setting phase change for a couple of waves.
+    int thatPhase = beatsin8(7, -64, 64);
+
+    for (int k = 0; k < LEDS_PER_STRIP; k++)
     {
-      // turn every third pixel on
-      for (uint16_t i = 0; i < leds.strip[0].numPixels(); i = i + 3)
-      {
-        leds.strip[0].setPixelColor(i + q, 0x0f0f0f);
-      }
-      leds.strip[0].show();
+      // For each of the LED's in the strand, set a brightness based on a wave as follows:
+      int colorIndex = cubicwave8((k * 23) + thisPhase) / 2 + cos8((k * 15) + thatPhase) / 2; // Create a wave and add a phase change and add another wave with its own phase change.. Hey, you can even change the frequencies if you wish.
+      int thisBright = qsuba(colorIndex, beatsin8(7, 0, 96));                                 // qsub gives it a bit of 'black' dead space by setting sets a minimum value. If colorIndex < current value of beatsin8(), then bright = 0. Otherwise, bright = colorIndex..
 
-      delay(20);
-
-      // turn every third pixel off
-      for (uint16_t i = 0; i < leds.strip[0].numPixels(); i = i + 3)
-      {
-        leds.strip[0].setPixelColor(i + q, 0);
-      }
+      leds.strip[0][k] = ColorFromPalette(currentPalette, colorIndex, thisBright, currentBlending); // Let's now add the foreground colour.
     }
   }
-}
 
-//Theatre-style crawling lights with rainbow effect
-void mode_theaterChaseRainbow()
-{
-  DB_PRINTLN("mode_theaterChaseRainbow");
-
-  // cycle all 256 colors in the wheel
-  for (int j = 0; j < 256; j++)
+  EVERY_N_MILLISECONDS(100)
   {
-    for (int q = 0; q < 3; q++)
-    {
-      // turn every third pixel on
-      for (uint16_t i = 0; i < leds.strip[0].numPixels(); i = i + 3)
-      {
-        leds.strip[0].setPixelColor(i + q, Wheel((i + j) % 255));
-      }
-      leds.strip[0].show();
-
-      delay(20);
-
-      // turn every third pixel off
-      for (uint16_t i = 0; i < leds.strip[0].numPixels(); i = i + 3)
-      {
-        leds.strip[0].setPixelColor(i + q, 0);
-      }
-    }
+    uint8_t maxChanges = 24;
+    nblendPaletteTowardPalette(currentPalette, targetPalette, maxChanges); // AWESOME palette blending capability.
   }
-}
 
-// Input a value 0 to 255 to get a color value.
-// The colours are a transition r - g - b - back to r.
-uint32_t Wheel(byte WheelPos)
-{
-  WheelPos = 255 - WheelPos;
-  if (WheelPos < 85)
-  {
-    return leds.strip[0].Color(255 - WheelPos * 3, 0, WheelPos * 3);
+  EVERY_N_SECONDS(5)
+  {                            // Change the target palette to a random one every 5 seconds.
+    uint8_t baseC = random8(); // You can use this as a baseline colour if you want similar hues in the next line.
+    targetPalette = CRGBPalette16(CHSV(baseC + random8(32), 192, random8(128, 255)), CHSV(baseC + random8(32), 255, random8(128, 255)), CHSV(baseC + random8(32), 192, random8(128, 255)), CHSV(baseC + random8(32), 255, random8(128, 255)));
   }
-  if (WheelPos < 170)
-  {
-    WheelPos -= 85;
-    return leds.strip[0].Color(0, WheelPos * 3, 255 - WheelPos * 3);
-  }
-  WheelPos -= 170;
-  return leds.strip[0].Color(WheelPos * 3, 255 - WheelPos * 3, 0);
 }
 
 #endif // DEBUG

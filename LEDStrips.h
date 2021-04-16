@@ -12,27 +12,18 @@
 class LEDStrips
 {
 public:
-    Adafruit_NeoPixel strip[LED_STRIPS];
+    CRGB strip[LED_STRIPS][LEDS_PER_STRIP];
 
     // initialize all LED strips
     void setup()
     {
-        DB_PRINTLN("LEDStrips.setup");
+        DB_PRINTLN(F("LEDStrips.setup"));
 
-        for (int x = 0; x < LED_STRIPS; x++)
-        {
-            // Parameter 1 = number of pixels in strip
-            // Parameter 2 = Arduino pin number (most are valid)
-            // Parameter 3 = pixel type flags, add together as needed:
-            //   NEO_KHZ800  800 KHz bitstream (most NeoPixel products w/WS2812 LEDs)
-            //   NEO_KHZ400  400 KHz (classic 'v1' (not v2) FLORA pixels, WS2811 drivers)
-            //   NEO_GRB     Pixels are wired for GRB bitstream (most NeoPixel products)
-            //   NEO_RGB     Pixels are wired for RGB bitstream (v1 FLORA pixels, not v2)
-            //   NEO_RGBW    Pixels are wired for RGBW bitstream (NeoPixel RGBW products)
-            strip[x] = Adafruit_NeoPixel(PIXELS_PER_STRIP, LED_STRIPS_PIN_BASE + x, NEO_GRB + NEO_KHZ800);
-            strip[x].begin();
-            strip[x].clear();
-        }
+        FastLED.addLeds<WS2812B, LED_STRIPS_PIN_BASE + 0, GRB>(strip[0], LEDS_PER_STRIP);
+        // FIX THIS (when we have more space)!
+        /*FastLED.addLeds<WS2812B, LED_STRIPS_PIN_BASE + 1, GRB>(strip[1], LEDS_PER_STRIP);
+        FastLED.addLeds<WS2812B, LED_STRIPS_PIN_BASE + 2, GRB>(strip[2], LEDS_PER_STRIP);
+        FastLED.addLeds<WS2812B, LED_STRIPS_PIN_BASE + 3, GRB>(strip[3], LEDS_PER_STRIP);*/
     };
 
     // automatically adjust the brightness of the LED strips to match the ambient lighting
@@ -48,16 +39,13 @@ public:
         // adjust our brightness if it has changed significantly
         if ((newBrightness > LEDbrightness + 5) || (newBrightness < LEDbrightness - 5))
         {
-            DB_PRINT("Analog photocell reading = ");
+            DB_PRINT(F("Analog photocell reading = "));
             DB_PRINTLN(photocellReading); // the raw analog reading
-            DB_PRINT("new brightness = ");
+            DB_PRINT(F("new brightness = "));
             DB_PRINTLN(newBrightness);
 
             LEDbrightness = newBrightness;
-            for (int x = 0; x < LED_STRIPS; x++)
-            {
-                strip[x].setBrightness(LEDbrightness);
-            }
+            FastLED.setBrightness(LEDbrightness);
         }
     }
 };

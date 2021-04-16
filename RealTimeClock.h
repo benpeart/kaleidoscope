@@ -7,15 +7,15 @@ class RealTimeClock
 public:
     void setup()
     {
-        DB_PRINTLN("RealTimeClock.setup");
+        DB_PRINTLN(F("RealTimeClock.setup"));
         if (!rtc.begin())
         {
-            DB_PRINTLN("Couldn't find RTC");
+            DB_PRINTLN(F("Couldn't find RTC"));
         }
 
         if (!rtc.isrunning())
         {
-            DB_PRINTLN("RTC is NOT running, let's set the time!");
+            DB_PRINTLN(F("RTC is NOT running, let's set the time!"));
             // When time needs to be set on a new device, or after a power loss, the
             // following line sets the RTC to the date & time this sketch was compiled
             rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
@@ -41,9 +41,9 @@ public:
             DB_PRINT(now.month(), DEC);
             DB_PRINT('/');
             DB_PRINT(now.day(), DEC);
-            DB_PRINT(" (");
+            DB_PRINT(F(" ("));
             DB_PRINT(daysOfTheWeek[now.dayOfTheWeek()]);
-            DB_PRINT(") ");
+            DB_PRINT(F(") "));
             DB_PRINT(now.hour(), DEC);
             DB_PRINT(':');
             DB_PRINT(now.minute(), DEC);
@@ -55,19 +55,19 @@ public:
 
 private:
     RTC_DS1307 rtc;
-    const char PROGMEM daysOfTheWeek[7][12] = {"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"};
+    const char daysOfTheWeek[7][12] = {"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"};
 };
 
 extern RealTimeClock clock;
 
 void mode_select_clock_face()
 {
-    DB_PRINTLN("mode_select_clock_face");
+    DB_PRINTLN(F("mode_select_clock_face"));
 }
 
 void mode_set_clock()
 {
-    DB_PRINTLN("mode_set_clock");
+    DB_PRINTLN(F("mode_set_clock"));
 }
 
 #endif // REALTIMECLOCK_H

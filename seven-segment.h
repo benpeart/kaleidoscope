@@ -27,16 +27,16 @@
 
 void drawHourTensOne(uint32_t color) //this will only ever be a 1
 {
-    leds.strip[0].setPixelColor(18, color);
-    leds.strip[0].setPixelColor(19, color);
-    leds.strip[0].setPixelColor(20, color);
-    leds.strip[0].setPixelColor(21, color);
-    leds.strip[0].setPixelColor(22, color);
-    leds.strip[0].setPixelColor(23, color);
-    leds.strip[0].setPixelColor(24, color);
-    leds.strip[0].setPixelColor(25, color);
-    leds.strip[0].setPixelColor(26, color);
-    leds.strip[0].setPixelColor(27, color);
+    leds.strip[0][18] = color;
+    leds.strip[0][19] = color;
+    leds.strip[0][20] = color;
+    leds.strip[0][21] = color;
+    leds.strip[0][22] = color;
+    leds.strip[0][23] = color;
+    leds.strip[0][24] = color;
+    leds.strip[0][25] = color;
+    leds.strip[0][26] = color;
+    leds.strip[0][27] = color;
 }
 
 ////////////////////////////////////////////
@@ -44,205 +44,205 @@ void drawHourTensOne(uint32_t color) //this will only ever be a 1
 //HourOnes
 void drawHourOnesOne(uint32_t color)
 {
-    leds.strip[1].setPixelColor(88, color);
-    leds.strip[1].setPixelColor(87, color);
-    leds.strip[1].setPixelColor(86, color);
-    leds.strip[1].setPixelColor(85, color);
-    leds.strip[1].setPixelColor(84, color);
-    leds.strip[1].setPixelColor(83, color);
-    leds.strip[1].setPixelColor(82, color);
-    leds.strip[1].setPixelColor(81, color);
-    leds.strip[1].setPixelColor(80, color);
-    leds.strip[1].setPixelColor(79, color);
+    leds.strip[1][88] = color;
+    leds.strip[1][87] = color;
+    leds.strip[1][86] = color;
+    leds.strip[1][85] = color;
+    leds.strip[1][84] = color;
+    leds.strip[1][83] = color;
+    leds.strip[1][82] = color;
+    leds.strip[1][81] = color;
+    leds.strip[1][80] = color;
+    leds.strip[1][79] = color;
 }
 
 void drawHourOnesSegmentOne(uint32_t color)
 {
-    leds.strip[0].setPixelColor(57, color);
-    leds.strip[0].setPixelColor(87, color);
-    leds.strip[0].setPixelColor(88, color);
-    leds.strip[0].setPixelColor(102, color);
+    leds.strip[0][57] = color;
+    leds.strip[0][87] = color;
+    leds.strip[0][88] = color;
+    leds.strip[0][102] = color;
 }
 
 void drawHourOnesSegmentTwo(uint32_t color)
 {
-    leds.strip[0].setPixelColor(58, color);
-    leds.strip[0].setPixelColor(59, color);
-    leds.strip[0].setPixelColor(60, color);
-    leds.strip[0].setPixelColor(61, color);
+    leds.strip[0][58] = color;
+    leds.strip[0][59] = color;
+    leds.strip[0][60] = color;
+    leds.strip[0][61] = color;
 }
 
 void drawHourOnesSegmentThree(uint32_t color)
 {
-    leds.strip[0].setPixelColor(103, color);
-    leds.strip[0].setPixelColor(104, color);
-    leds.strip[0].setPixelColor(105, color);
-    leds.strip[0].setPixelColor(106, color);
+    leds.strip[0][103] = color;
+    leds.strip[0][104] = color;
+    leds.strip[0][105] = color;
+    leds.strip[0][106] = color;
 }
 
 void drawHourOnesSegmentFour(uint32_t color)
 {
-    leds.strip[0].setPixelColor(84, color);
-    leds.strip[0].setPixelColor(85, color);
+    leds.strip[0][84] = color;
+    leds.strip[0][85] = color;
 }
 
 void drawHourOnesSegmentFive(uint32_t color)
 {
-    leds.strip[0].setPixelColor(62, color);
-    leds.strip[0].setPixelColor(63, color);
-    leds.strip[0].setPixelColor(64, color);
-    leds.strip[0].setPixelColor(65, color);
+    leds.strip[0][62] = color;
+    leds.strip[0][63] = color;
+    leds.strip[0][64] = color;
+    leds.strip[0][65] = color;
 }
 
 void drawHourOnesSegmentSix(uint32_t color)
 {
-    leds.strip[0].setPixelColor(107, color);
-    leds.strip[0].setPixelColor(108, color);
-    leds.strip[0].setPixelColor(109, color);
+    leds.strip[0][107] = color;
+    leds.strip[0][108] = color;
+    leds.strip[0][109] = color;
 }
 
 void drawHourOnesSegmentSeven(uint32_t color)
 {
-    leds.strip[0].setPixelColor(79, color);
-    leds.strip[0].setPixelColor(80, color);
-    leds.strip[0].setPixelColor(110, color);
+    leds.strip[0][79] = color;
+    leds.strip[0][80] = color;
+    leds.strip[0][110] = color;
 }
 ////////////////////////////////////// HourOnes^
 
 //MinTens
 void drawMinTensOne(uint32_t color)
 {
-    leds.strip[1].setPixelColor(55, color);
-    leds.strip[1].setPixelColor(56, color);
-    leds.strip[1].setPixelColor(57, color);
-    leds.strip[1].setPixelColor(58, color);
-    leds.strip[1].setPixelColor(59, color);
-    leds.strip[1].setPixelColor(60, color);
-    leds.strip[1].setPixelColor(61, color);
-    leds.strip[1].setPixelColor(62, color);
-    leds.strip[1].setPixelColor(63, color);
-    leds.strip[1].setPixelColor(64, color);
+    leds.strip[1][55] = color;
+    leds.strip[1][56] = color;
+    leds.strip[1][57] = color;
+    leds.strip[1][58] = color;
+    leds.strip[1][59] = color;
+    leds.strip[1][60] = color;
+    leds.strip[1][61] = color;
+    leds.strip[1][62] = color;
+    leds.strip[1][63] = color;
+    leds.strip[1][64] = color;
 }
 
 void drawMinTensSegmentOne(uint32_t color)
 {
-    leds.strip[1].setPixelColor(41, color);
-    leds.strip[1].setPixelColor(55, color);
-    leds.strip[1].setPixelColor(56, color);
-    leds.strip[1].setPixelColor(86, color);
+    leds.strip[1][41] = color;
+    leds.strip[1][55] = color;
+    leds.strip[1][56] = color;
+    leds.strip[1][86] = color;
 }
 
 void drawMinTensSegmentTwo(uint32_t color)
 {
-    leds.strip[1].setPixelColor(40, color);
-    leds.strip[1].setPixelColor(39, color);
-    leds.strip[1].setPixelColor(38, color);
-    leds.strip[1].setPixelColor(37, color);
+    leds.strip[1][40] = color;
+    leds.strip[1][39] = color;
+    leds.strip[1][38] = color;
+    leds.strip[1][37] = color;
 }
 
 void drawMinTensSegmentThree(uint32_t color)
 {
-    leds.strip[1].setPixelColor(85, color);
-    leds.strip[1].setPixelColor(84, color);
-    leds.strip[1].setPixelColor(83, color);
-    leds.strip[1].setPixelColor(82, color);
+    leds.strip[1][85] = color;
+    leds.strip[1][84] = color;
+    leds.strip[1][83] = color;
+    leds.strip[1][82] = color;
 }
 
 void drawMinTensSegmentFour(uint32_t color)
 {
-    leds.strip[1].setPixelColor(59, color);
-    leds.strip[1].setPixelColor(60, color);
+    leds.strip[1][59] = color;
+    leds.strip[1][60] = color;
 }
 
 void drawMinTensSegmentFive(uint32_t color)
 {
-    leds.strip[1].setPixelColor(36, color);
-    leds.strip[1].setPixelColor(35, color);
-    leds.strip[1].setPixelColor(34, color);
-    leds.strip[1].setPixelColor(33, color);
+    leds.strip[1][36] = color;
+    leds.strip[1][35] = color;
+    leds.strip[1][34] = color;
+    leds.strip[1][33] = color;
 }
 
 void drawMinTensSegmentSix(uint32_t color)
 {
-    leds.strip[1].setPixelColor(81, color);
-    leds.strip[1].setPixelColor(80, color);
-    leds.strip[1].setPixelColor(79, color);
+    leds.strip[1][81] = color;
+    leds.strip[1][80] = color;
+    leds.strip[1][79] = color;
 }
 
 void drawMinTensSegmentSeven(uint32_t color)
 {
-    leds.strip[1].setPixelColor(63, color);
-    leds.strip[1].setPixelColor(74, color);
-    leds.strip[1].setPixelColor(78, color);
+    leds.strip[1][63] = color;
+    leds.strip[1][74] = color;
+    leds.strip[1][78] = color;
 }
 ////////////////////////////////////// MinTens^
 
 //MinOnes
 void drawMinOnesOne(uint32_t color)
 {
-    leds.strip[1].setPixelColor(125, color);
-    leds.strip[1].setPixelColor(124, color);
-    leds.strip[1].setPixelColor(123, color);
-    leds.strip[1].setPixelColor(122, color);
-    leds.strip[1].setPixelColor(121, color);
-    leds.strip[1].setPixelColor(120, color);
-    leds.strip[1].setPixelColor(119, color);
-    leds.strip[1].setPixelColor(118, color);
-    leds.strip[1].setPixelColor(117, color);
-    leds.strip[1].setPixelColor(116, color);
+    leds.strip[1][125] = color;
+    leds.strip[1][124] = color;
+    leds.strip[1][123] = color;
+    leds.strip[1][122] = color;
+    leds.strip[1][121] = color;
+    leds.strip[1][120] = color;
+    leds.strip[1][119] = color;
+    leds.strip[1][118] = color;
+    leds.strip[1][117] = color;
+    leds.strip[1][116] = color;
 }
 
 void drawMinOnesSegmentOne(uint32_t color)
 {
 
-    leds.strip[1].setPixelColor(98, color);
-    leds.strip[1].setPixelColor(124, color);
-    leds.strip[1].setPixelColor(125, color);
-    leds.strip[1].setPixelColor(131, color);
+    leds.strip[1][98] = color;
+    leds.strip[1][124] = color;
+    leds.strip[1][125] = color;
+    leds.strip[1][131] = color;
 }
 
 void drawMinOnesSegmentTwo(uint32_t color)
 {
-    leds.strip[1].setPixelColor(99, color);
-    leds.strip[1].setPixelColor(100, color);
-    leds.strip[1].setPixelColor(101, color);
-    leds.strip[1].setPixelColor(102, color);
+    leds.strip[1][99] = color;
+    leds.strip[1][100] = color;
+    leds.strip[1][101] = color;
+    leds.strip[1][102] = color;
 }
 
 void drawMinOnesSegmentThree(uint32_t color)
 {
-    leds.strip[1].setPixelColor(132, color);
-    leds.strip[1].setPixelColor(133, color);
-    leds.strip[1].setPixelColor(134, color);
-    leds.strip[1].setPixelColor(135, color);
+    leds.strip[1][132] = color;
+    leds.strip[1][133] = color;
+    leds.strip[1][134] = color;
+    leds.strip[1][135] = color;
 }
 
 void drawMinOnesSegmentFour(uint32_t color)
 {
-    leds.strip[1].setPixelColor(120, color);
-    leds.strip[1].setPixelColor(121, color);
+    leds.strip[1][120] = color;
+    leds.strip[1][121] = color;
 }
 
 void drawMinOnesSegmentFive(uint32_t color)
 {
-    leds.strip[1].setPixelColor(103, color);
-    leds.strip[1].setPixelColor(104, color);
-    leds.strip[1].setPixelColor(105, color);
-    leds.strip[1].setPixelColor(106, color);
+    leds.strip[1][103] = color;
+    leds.strip[1][104] = color;
+    leds.strip[1][105] = color;
+    leds.strip[1][106] = color;
 }
 
 void drawMinOnesSegmentSix(uint32_t color)
 {
-    leds.strip[1].setPixelColor(136, color);
-    leds.strip[1].setPixelColor(137, color);
-    leds.strip[1].setPixelColor(138, color);
+    leds.strip[1][136] = color;
+    leds.strip[1][137] = color;
+    leds.strip[1][138] = color;
 }
 
 void drawMinOnesSegmentSeven(uint32_t color)
 {
-    leds.strip[1].setPixelColor(116, color);
-    leds.strip[1].setPixelColor(117, color);
-    leds.strip[1].setPixelColor(139, color);
+    leds.strip[1][116] = color;
+    leds.strip[1][117] = color;
+    leds.strip[1][139] = color;
 }
 ////////////////////////////////////// MinOnes
 
