@@ -1,5 +1,9 @@
 #include <Encoder.h>
 
+// Include the Bounce2 library found here :
+// https://github.com/thomasfredericks/Bounce2
+#include <Bounce2.h>
+
 #define DEBUG
 
 //
@@ -61,19 +65,19 @@ uint8_t mode = 0; // Index of current mode in table
 // GLOBAL VARIABLES --------------------------------------------------------
 //
 
-Encoder knobRight(ENCODER_CLK_PIN_RIGHT, ENCODER_DIRECTION_PIN_RIGHT);
-Encoder knobLeft(ENCODER_CLK_PIN_LEFT, ENCODER_DIRECTION_PIN_LEFT);
-
-// These are used for 'debouncing' the left & right button inputs,
-// for switching between modes.
-boolean prevStateLeft, prevStateRight;
-uint32_t lastChangeTimeLeft = 0, lastChangeTimeRight = 0;
-#define DEBOUNCE_MS 15 // Button debounce time, in milliseconds
-
 // global instances of objects
 LEDStrips leds;
 RealTimeClock clock;
 Kaleidoscope kaleidoscope;
+
+// Instantiate Button objects from the Bounce2 namespace
+Bounce2::Button leftButton = Bounce2::Button();
+Bounce2::Button rightButton = Bounce2::Button();
+#define DEBOUNCE_MS 5 // Button debounce time, in milliseconds
+
+// Instantiate rotary encoder knob objects
+Encoder knobRight(ENCODER_CLK_PIN_RIGHT, ENCODER_DIRECTION_PIN_RIGHT);
+Encoder knobLeft(ENCODER_CLK_PIN_LEFT, ENCODER_DIRECTION_PIN_LEFT);
 
 //
 // SETUP FUNCTION -- RUNS ONCE AT PROGRAM START ----------------------------
@@ -94,11 +98,13 @@ void setup()
   // initialize the random number generator using noise from analog pin 5
   randomSeed(analogRead(5));
 
-  // initialize the rotary encoder buttons
-  pinMode(ENCODER_BUTTON_PIN_RIGHT, INPUT);
-  digitalWrite(ENCODER_BUTTON_PIN_RIGHT, HIGH); //turn pullup resistor on
-  pinMode(ENCODER_BUTTON_PIN_LEFT, INPUT);
-  digitalWrite(ENCODER_BUTTON_PIN_LEFT, HIGH); //turn pullup resistor on
+  // initialize the rotary encoder buttons using the pullup resistor
+  leftButton.attach(ENCODER_BUTTON_PIN_LEFT, INPUT_PULLUP);
+  leftButton.interval(DEBOUNCE_MS);
+  leftButton.setPressedState(LOW);
+  rightButton.attach(ENCODER_BUTTON_PIN_RIGHT, INPUT_PULLUP);
+  rightButton.interval(DEBOUNCE_MS);
+  rightButton.setPressedState(LOW);
 
   // intialize the LED strips
   leds.setup();
@@ -115,72 +121,48 @@ void setup()
 //
 void loop()
 {
-  static long positionLeft = -9999;
-  static long positionRight = -9999;
-  long newLeft, newRight;
-
   // automatically adjust the brightness of the LED strips to match the ambient lighting
   leds.adjustBrightness();
 
-  // Read and debounce left button
-  uint32_t t = millis();
-  if ((t - lastChangeTimeLeft) >= DEBOUNCE_MS)
+  // Update the buttons
+  leftButton.update();
+  rightButton.update();
+
+  // Handle button pressed?
+  if (leftButton.pressed())
   {
-    int temp = digitalRead(ENCODER_BUTTON_PIN_LEFT);
-    boolean b = temp ? false : true;
+    DB_PRINTLN("leftButton.pressed");
 
-    // Left button state changed?
-    if (b != prevStateLeft)
-    {
-      DB_PRINTLN("b != prevStateLeft");
-      prevStateLeft = b;
-      lastChangeTimeLeft = t;
+    if (mode)
+      mode--; // Go to prior mode
+    else
+      mode = N_MODES - 1; // or "wrap around" to last mode
 
-      // Left button pressed?
-      if (b)
-      {
-        if (mode)
-          mode--; // Go to prior mode
-        else
-          mode = N_MODES - 1; // or "wrap around" to last mode
-
-        // clear the led strips for the new mode
-        for (int x = 0; x < LED_STRIPS; x++)
-          leds.strip[x].clear();
-      }
-    }
+    // clear the led strips for the new mode
+    for (int x = 0; x < LED_STRIPS; x++)
+      leds.strip[x].clear();
   }
 
-  // Read and debounce right button
-  if ((t - lastChangeTimeRight) >= DEBOUNCE_MS)
+  // Right button pressed?
+  if (rightButton.pressed())
   {
-    boolean b = !digitalRead(ENCODER_BUTTON_PIN_RIGHT);
+    DB_PRINTLN("rightButton.pressed");
 
-    // Right button state changed?
-    if (b != prevStateRight)
-    {
-      DB_PRINTLN("b != prevStateRight");
-      prevStateRight = b;
-      lastChangeTimeRight = t;
+    if (mode < (N_MODES - 1))
+      mode++; // Advance to next mode
+    else
+      mode = 0; // or "wrap around" to start
 
-      // Right button pressed?
-      if (b)
-      {
-        if (mode < (N_MODES - 1))
-          mode++; // Advance to next mode
-        else
-          mode = 0; // or "wrap around" to start
-
-        // clear the led strips for the new mode
-        for (int x = 0; x < LED_STRIPS; x++)
-          leds.strip[x].clear();
-      }
-    }
+    // clear the led strips for the new mode
+    for (int x = 0; x < LED_STRIPS; x++)
+      leds.strip[x].clear();
   }
 
   // read and report on the knobs
-  newLeft = knobLeft.read();
-  newRight = knobRight.read();
+  static long positionLeft = -9999;
+  static long positionRight = -9999;
+  long newLeft = knobLeft.read();
+  long newRight = knobRight.read();
   if (newLeft != positionLeft || newRight != positionRight)
   {
     DB_PRINT("Left = ");
