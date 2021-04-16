@@ -92,8 +92,8 @@ public:
     {
         draw(current_offset_1, current_offset_2);
 
-        current_offset_1 = (++current_offset_1 /*+ random(10)*/) % strip_1_columns;
-        current_offset_2 = (++current_offset_2 /*+ random(10)*/) % strip_2_columns;
+        current_offset_1 = (++current_offset_1) % strip_1_columns;
+        current_offset_2 = (++current_offset_2) % strip_2_columns;
     }
 
     // https://stackoverflow.com/questions/1102692/how-to-alpha-blend-rgba-unsigned-byte-color-fast
@@ -680,7 +680,7 @@ private:
 #endif
 
                 // blend the pixels from the two strips by doing 50% transparency
-                uint32_t pixel = blend(pixel_1, pixel_2, 0x7f);
+                uint32_t pixel = blendAlpha(pixel_1, pixel_2, 0x7f);
 #ifdef NDEBUG
                 DB_PRINT(F("blended pixel = 0x"));
                 DB_PRINTLN(pixel, HEX);
@@ -695,6 +695,15 @@ private:
 
     void MirroredSetPixelColor(int strip, int index, uint32_t c)
     {
+#ifdef DEBUG
+        if (index >= LEDS_PER_STRIP)
+        {
+            DB_PRINT(F("MysetPixelColor: requested index ("));
+            DB_PRINT(index);
+            DB_PRINTLN(F(") exceeds number of LEDs in a strip."));
+            return;
+        }
+#endif
         switch (strip)
         {
         case 0:

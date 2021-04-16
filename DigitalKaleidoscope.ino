@@ -57,7 +57,6 @@ void (*renderFunc[])(void){
 #ifdef DEBUG
     mode_off, // make it obvious we're entering 'demo' modes
     mode_blendWave,
-    mode_rainbow,
     mode_rainbowMarch,
     mode_sawTooth,
     mode_plasma,
@@ -239,13 +238,6 @@ void mode_blendWave()
   fill_gradient_RGB(leds.strip[0], loc1, clr2, LEDS_PER_STRIP - 1, clr1);
 }
 
-void mode_rainbow()
-{
-  //DB_PRINTLN(F("mode_rainbow"));
-
-  fill_rainbow(leds.strip[0], LEDS_PER_STRIP, 0, 10);
-}
-
 // https://github.com/atuline/FastLED-Demos/blob/master/rainbow_march/rainbow_march.ino
 void mode_rainbowMarch()
 {
@@ -292,7 +284,7 @@ void mode_plasma()
 {
   //DB_PRINTLN(F("mode_plasma"));
 
-  static CRGBPalette16 currentPalette = OceanColors_p; // Palette definitions
+  static CRGBPalette16 currentPalette = ForestColors_p; // Palette definitions
   static CRGBPalette16 targetPalette;
   static TBlendType currentBlending = LINEARBLEND;
 
