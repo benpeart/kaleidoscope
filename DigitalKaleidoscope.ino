@@ -1,8 +1,14 @@
+// https://github.com/PaulStoffregen/Encoder
 #include <Encoder.h>
 
-// Include the Bounce2 library found here :
 // https://github.com/thomasfredericks/Bounce2
 #include <Bounce2.h>
+
+// https://github.com/adafruit/Adafruit_NeoPixel
+#include <Adafruit_NeoPixel.h>
+
+// https://github.com/adafruit/RTClib
+#include <RTClib.h>
 
 #define DEBUG
 

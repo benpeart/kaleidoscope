@@ -1,8 +1,6 @@
 #ifndef REALTIMECLOCK_H
 #define REALTIMECLOCK_H
 
-// Date and time functions using a DS1307 RTC connected via I2C and Wire lib
-#include "RTClib.h"
 
 class RealTimeClock
 {

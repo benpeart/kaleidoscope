@@ -1,6 +1,5 @@
 #ifndef LED_STRIPS_H
 #define LED_STRIPS_H
-#include <Adafruit_NeoPixel.h>
 
 // IMPORTANT: To reduce NeoPixel burnout risk, add 1000 uF capacitor across
 // pixel power leads, add 300 - 500 Ohm resistor on first pixel's data input
