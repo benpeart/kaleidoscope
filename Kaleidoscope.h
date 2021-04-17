@@ -64,6 +64,123 @@ static const PROGMEM uint32_t RedStrip[][TRIANGLE_ROWS] =
      {0xFF0000, 0xFF0000, 0xFF0000, 0xFF0000, 0xFF0000, 0xFF0000, 0xFF0000, 0xFF0000, 0xFF0000, 0xFF0000}};
 #endif
 
+// create a lookup table where the index is the number of the triangle and the result is
+// three pairs of {strip, index} that can be passed to MirroredSetPixelColor so they are
+// mirrored to the other 3 axis
+struct Pixel
+{
+    uint8_t strip;
+    uint8_t index;
+};
+
+struct Strips
+{
+    Pixel strips[3];
+};
+
+static const PROGMEM Strips KaleidoscopeLookupTable[TRIANGLE_COUNT] =
+    {
+        {{{1, 18}, {1, 19}, {1, 20}}},
+        {{{1, 59}, {1, 58}, {1, 22}}},
+        {{{1, 17}, {1, 57}, {1, 21}}},
+        {{{1, 16}, {1, 56}, {1, 55}}},
+        {{{1, 90}, {1, 91}, {1, 24}}},
+        {{{1, 60}, {1, 92}, {1, 23}}},
+        {{{1, 61}, {1, 93}, {1, 53}}},
+        {{{1, 15}, {1, 94}, {1, 54}}},
+        {{{1, 14}, {1, 95}, {1, 96}}},
+        {{{1, 131}, {1, 130}, {1, 26}}},
+        {{{1, 89}, {1, 129}, {1, 25}}},
+        {{{1, 88}, {1, 128}, {1, 51}}},
+        {{{1, 62}, {1, 127}, {1, 52}}},
+        {{{1, 63}, {1, 126}, {1, 98}}},
+        {{{1, 13}, {1, 125}, {1, 97}}},
+        {{{1, 12}, {1, 124}, {1, 123}}},
+        {{{0, 10}, {0, 11}, {1, 28}}},
+        {{{1, 132}, {0, 12}, {1, 27}}},
+        {{{1, 133}, {0, 13}, {1, 49}}},
+        {{{1, 87}, {0, 14}, {1, 50}}},
+        {{{1, 86}, {0, 15}, {1, 100}}},
+        {{{1, 64}, {0, 16}, {1, 99}}},
+        {{{1, 65}, {0, 17}, {1, 121}}},
+        {{{1, 11}, {0, 18}, {1, 122}}},
+        {{{1, 10}, {0, 19}, {0, 20}}},
+        {{{0, 51}, {0, 50}, {1, 30}}},
+        {{{0, 9}, {0, 49}, {1, 29}}},
+        {{{0, 8}, {0, 48}, {1, 47}}},
+        {{{1, 134}, {0, 47}, {1, 48}}},
+        {{{1, 135}, {0, 46}, {1, 102}}},
+        {{{1, 85}, {0, 45}, {1, 101}}},
+        {{{1, 84}, {0, 44}, {1, 119}}},
+        {{{1, 66}, {0, 43}, {1, 120}}},
+        {{{1, 67}, {0, 42}, {0, 22}}},
+        {{{1, 9}, {0, 41}, {0, 21}}},
+        {{{1, 8}, {0, 40}, {0, 39}}},
+        {{{0, 66}, {0, 67}, {1, 32}}},
+        {{{0, 52}, {0, 68}, {1, 31}}},
+        {{{0, 53}, {0, 69}, {1, 45}}},
+        {{{0, 7}, {0, 70}, {1, 46}}},
+        {{{0, 6}, {0, 71}, {1, 104}}},
+        {{{1, 136}, {0, 72}, {1, 103}}},
+        {{{1, 137}, {0, 73}, {1, 117}}},
+        {{{1, 83}, {0, 71}, {1, 118}}},
+        {{{1, 62}, {0, 75}, {0, 24}}},
+        {{{1, 68}, {0, 76}, {0, 23}}},
+        {{{1, 69}, {0, 77}, {0, 37}}},
+        {{{1, 7}, {0, 78}, {0, 38}}},
+        {{{1, 6}, {0, 79}, {0, 80}}},
+        {{{0, 107}, {0, 106}, {1, 34}}},
+        {{{0, 65}, {0, 105}, {1, 33}}},
+        {{{0, 64}, {0, 104}, {1, 43}}},
+        {{{0, 54}, {0, 103}, {1, 44}}},
+        {{{0, 55}, {0, 102}, {1, 106}}},
+        {{{0, 5}, {0, 101}, {1, 105}}},
+        {{{0, 4}, {0, 100}, {1, 115}}},
+        {{{1, 138}, {0, 99}, {1, 116}}},
+        {{{1, 139}, {0, 98}, {0, 26}}},
+        {{{1, 81}, {0, 97}, {0, 25}}},
+        {{{1, 80}, {0, 96}, {0, 35}}},
+        {{{1, 70}, {0, 95}, {0, 36}}},
+        {{{1, 71}, {0, 94}, {0, 82}}},
+        {{{1, 5}, {0, 93}, {0, 81}}},
+        {{{1, 4}, {0, 92}, {0, 91}}},
+        {{{0, 114}, {0, 115}, {1, 36}}},
+        {{{0, 108}, {0, 116}, {1, 35}}},
+        {{{0, 109}, {0, 117}, {1, 41}}},
+        {{{0, 63}, {0, 118}, {1, 42}}},
+        {{{0, 62}, {0, 119}, {1, 108}}},
+        {{{0, 56}, {0, 120}, {1, 107}}},
+        {{{0, 57}, {0, 121}, {1, 113}}},
+        {{{0, 3}, {0, 122}, {1, 114}}},
+        {{{0, 2}, {0, 123}, {0, 28}}},
+        {{{1, 140}, {0, 124}, {0, 27}}},
+        {{{1, 141}, {0, 125}, {0, 33}}},
+        {{{1, 79}, {0, 126}, {0, 34}}},
+        {{{1, 78}, {0, 127}, {0, 84}}},
+        {{{1, 72}, {0, 128}, {0, 83}}},
+        {{{1, 73}, {0, 129}, {0, 89}}},
+        {{{1, 3}, {0, 130}, {0, 90}}},
+        {{{1, 2}, {0, 131}, {0, 132}}},
+        {{{0, 155}, {0, 154}, {1, 38}}},
+        {{{0, 113}, {0, 153}, {1, 37}}},
+        {{{0, 112}, {0, 152}, {1, 39}}},
+        {{{0, 110}, {0, 151}, {1, 40}}},
+        {{{0, 111}, {0, 150}, {1, 110}}},
+        {{{0, 61}, {0, 149}, {1, 109}}},
+        {{{0, 60}, {0, 148}, {1, 111}}},
+        {{{0, 58}, {0, 149}, {1, 112}}},
+        {{{0, 59}, {0, 146}, {0, 30}}},
+        {{{0, 1}, {0, 145}, {0, 29}}},
+        {{{0, 0}, {0, 144}, {0, 31}}},
+        {{{1, 142}, {0, 143}, {0, 32}}},
+        {{{1, 143}, {0, 142}, {0, 86}}},
+        {{{1, 77}, {0, 141}, {0, 85}}},
+        {{{1, 76}, {0, 140}, {0, 87}}},
+        {{{1, 74}, {0, 139}, {0, 88}}},
+        {{{1, 75}, {0, 136}, {0, 134}}},
+        {{{1, 1}, {0, 137}, {0, 133}}},
+        {{{1, 0}, {0, 136}, {0, 135}}}};
+
 class Kaleidoscope
 {
 public:
@@ -108,513 +225,11 @@ public:
     }
 
     // draw a pixel mirrored and rotated 6 times to emulate a kaleidoscope
-    void drawKaleidoscopePixel6(uint16_t index, uint32_t c)
+    void drawKaleidoscopePixel6(uint8_t index, uint32_t c)
     {
-        // The index assumes we itterate through the bottom triange top to bottom, left to right.
-        // To keep the LED_strips together, rotate around the hexagon in counter-clockwise order
-        switch (index)
-        {
-        case 0:
-            MirroredSetPixelColor(1, 18, c);
-            MirroredSetPixelColor(1, 19, c);
-            MirroredSetPixelColor(1, 20, c);
-            break;
-        case 1:
-            MirroredSetPixelColor(1, 59, c);
-            MirroredSetPixelColor(1, 58, c);
-            MirroredSetPixelColor(1, 22, c);
-            break;
-        case 2:
-            MirroredSetPixelColor(1, 17, c);
-            MirroredSetPixelColor(1, 57, c);
-            MirroredSetPixelColor(1, 21, c);
-            break;
-        case 3:
-            MirroredSetPixelColor(1, 16, c);
-            MirroredSetPixelColor(1, 56, c);
-            MirroredSetPixelColor(1, 55, c);
-            break;
-        case 4:
-            MirroredSetPixelColor(1, 90, c);
-            MirroredSetPixelColor(1, 91, c);
-            MirroredSetPixelColor(1, 24, c);
-            break;
-        case 5:
-            MirroredSetPixelColor(1, 60, c);
-            MirroredSetPixelColor(1, 92, c);
-            MirroredSetPixelColor(1, 23, c);
-            break;
-        case 6:
-            MirroredSetPixelColor(1, 61, c);
-            MirroredSetPixelColor(1, 93, c);
-            MirroredSetPixelColor(1, 53, c);
-            break;
-        case 7:
-            MirroredSetPixelColor(1, 15, c);
-            MirroredSetPixelColor(1, 94, c);
-            MirroredSetPixelColor(1, 54, c);
-            break;
-        case 8:
-            MirroredSetPixelColor(1, 14, c);
-            MirroredSetPixelColor(1, 95, c);
-            MirroredSetPixelColor(1, 96, c);
-            break;
-        case 9:
-            MirroredSetPixelColor(1, 131, c);
-            MirroredSetPixelColor(1, 130, c);
-            MirroredSetPixelColor(1, 26, c);
-            break;
-        case 10:
-            MirroredSetPixelColor(1, 89, c);
-            MirroredSetPixelColor(1, 129, c);
-            MirroredSetPixelColor(1, 25, c);
-            break;
-        case 11:
-            MirroredSetPixelColor(1, 88, c);
-            MirroredSetPixelColor(1, 128, c);
-            MirroredSetPixelColor(1, 51, c);
-            break;
-        case 12:
-            MirroredSetPixelColor(1, 62, c);
-            MirroredSetPixelColor(1, 127, c);
-            MirroredSetPixelColor(1, 52, c);
-            break;
-        case 13:
-            MirroredSetPixelColor(1, 63, c);
-            MirroredSetPixelColor(1, 126, c);
-            MirroredSetPixelColor(1, 98, c);
-            break;
-        case 14:
-            MirroredSetPixelColor(1, 13, c);
-            MirroredSetPixelColor(1, 125, c);
-            MirroredSetPixelColor(1, 97, c);
-            break;
-        case 15:
-            MirroredSetPixelColor(1, 12, c);
-            MirroredSetPixelColor(1, 124, c);
-            MirroredSetPixelColor(1, 123, c);
-            break;
-        case 16:
-            MirroredSetPixelColor(0, 10, c);
-            MirroredSetPixelColor(0, 11, c);
-            MirroredSetPixelColor(1, 28, c);
-            break;
-        case 17:
-            MirroredSetPixelColor(1, 132, c);
-            MirroredSetPixelColor(0, 12, c);
-            MirroredSetPixelColor(1, 27, c);
-            break;
-        case 18:
-            MirroredSetPixelColor(1, 133, c);
-            MirroredSetPixelColor(0, 13, c);
-            MirroredSetPixelColor(1, 49, c);
-            break;
-        case 19:
-            MirroredSetPixelColor(1, 87, c);
-            MirroredSetPixelColor(0, 14, c);
-            MirroredSetPixelColor(1, 50, c);
-            break;
-        case 20:
-            MirroredSetPixelColor(1, 86, c);
-            MirroredSetPixelColor(0, 15, c);
-            MirroredSetPixelColor(1, 100, c);
-            break;
-        case 21:
-            MirroredSetPixelColor(1, 64, c);
-            MirroredSetPixelColor(0, 16, c);
-            MirroredSetPixelColor(1, 99, c);
-            break;
-        case 22:
-            MirroredSetPixelColor(1, 65, c);
-            MirroredSetPixelColor(0, 17, c);
-            MirroredSetPixelColor(1, 121, c);
-            break;
-        case 23:
-            MirroredSetPixelColor(1, 11, c);
-            MirroredSetPixelColor(0, 18, c);
-            MirroredSetPixelColor(1, 122, c);
-            break;
-        case 24:
-            MirroredSetPixelColor(1, 10, c);
-            MirroredSetPixelColor(0, 19, c);
-            MirroredSetPixelColor(0, 20, c);
-            break;
-        case 25:
-            MirroredSetPixelColor(0, 51, c);
-            MirroredSetPixelColor(0, 50, c);
-            MirroredSetPixelColor(1, 30, c);
-            break;
-        case 26:
-            MirroredSetPixelColor(0, 9, c);
-            MirroredSetPixelColor(0, 49, c);
-            MirroredSetPixelColor(1, 29, c);
-            break;
-        case 27:
-            MirroredSetPixelColor(0, 8, c);
-            MirroredSetPixelColor(0, 48, c);
-            MirroredSetPixelColor(1, 47, c);
-            break;
-        case 28:
-            MirroredSetPixelColor(1, 134, c);
-            MirroredSetPixelColor(0, 47, c);
-            MirroredSetPixelColor(1, 48, c);
-            break;
-        case 29:
-            MirroredSetPixelColor(1, 135, c);
-            MirroredSetPixelColor(0, 46, c);
-            MirroredSetPixelColor(1, 102, c);
-            break;
-        case 30:
-            MirroredSetPixelColor(1, 85, c);
-            MirroredSetPixelColor(0, 45, c);
-            MirroredSetPixelColor(1, 101, c);
-            break;
-        case 31:
-            MirroredSetPixelColor(1, 84, c);
-            MirroredSetPixelColor(0, 44, c);
-            MirroredSetPixelColor(1, 119, c);
-            break;
-        case 32:
-            MirroredSetPixelColor(1, 66, c);
-            MirroredSetPixelColor(0, 43, c);
-            MirroredSetPixelColor(1, 120, c);
-            break;
-        case 33:
-            MirroredSetPixelColor(1, 67, c);
-            MirroredSetPixelColor(0, 42, c);
-            MirroredSetPixelColor(0, 22, c);
-            break;
-        case 34:
-            MirroredSetPixelColor(1, 9, c);
-            MirroredSetPixelColor(0, 41, c);
-            MirroredSetPixelColor(0, 21, c);
-            break;
-        case 35:
-            MirroredSetPixelColor(1, 8, c);
-            MirroredSetPixelColor(0, 40, c);
-            MirroredSetPixelColor(0, 39, c);
-            break;
-        case 36:
-            MirroredSetPixelColor(0, 66, c);
-            MirroredSetPixelColor(0, 67, c);
-            MirroredSetPixelColor(1, 32, c);
-            break;
-        case 37:
-            MirroredSetPixelColor(0, 52, c);
-            MirroredSetPixelColor(0, 68, c);
-            MirroredSetPixelColor(1, 31, c);
-            break;
-        case 38:
-            MirroredSetPixelColor(0, 53, c);
-            MirroredSetPixelColor(0, 69, c);
-            MirroredSetPixelColor(1, 45, c);
-            break;
-        case 39:
-            MirroredSetPixelColor(0, 7, c);
-            MirroredSetPixelColor(0, 70, c);
-            MirroredSetPixelColor(1, 46, c);
-            break;
-        case 40:
-            MirroredSetPixelColor(0, 6, c);
-            MirroredSetPixelColor(0, 71, c);
-            MirroredSetPixelColor(1, 104, c);
-            break;
-        case 41:
-            MirroredSetPixelColor(1, 136, c);
-            MirroredSetPixelColor(0, 72, c);
-            MirroredSetPixelColor(1, 103, c);
-            break;
-        case 42:
-            MirroredSetPixelColor(1, 137, c);
-            MirroredSetPixelColor(0, 73, c);
-            MirroredSetPixelColor(1, 117, c);
-            break;
-        case 43:
-            MirroredSetPixelColor(1, 83, c);
-            MirroredSetPixelColor(0, 71, c);
-            MirroredSetPixelColor(1, 118, c);
-            break;
-        case 44:
-            MirroredSetPixelColor(1, 62, c);
-            MirroredSetPixelColor(0, 75, c);
-            MirroredSetPixelColor(0, 24, c);
-            break;
-        case 45:
-            MirroredSetPixelColor(1, 68, c);
-            MirroredSetPixelColor(0, 76, c);
-            MirroredSetPixelColor(0, 23, c);
-            break;
-        case 46:
-            MirroredSetPixelColor(1, 69, c);
-            MirroredSetPixelColor(0, 77, c);
-            MirroredSetPixelColor(0, 37, c);
-            break;
-        case 47:
-            MirroredSetPixelColor(1, 7, c);
-            MirroredSetPixelColor(0, 78, c);
-            MirroredSetPixelColor(0, 38, c);
-            break;
-        case 48:
-            MirroredSetPixelColor(1, 6, c);
-            MirroredSetPixelColor(0, 79, c);
-            MirroredSetPixelColor(0, 80, c);
-            break;
-        case 49:
-            MirroredSetPixelColor(0, 107, c);
-            MirroredSetPixelColor(0, 106, c);
-            MirroredSetPixelColor(1, 34, c);
-            break;
-        case 50:
-            MirroredSetPixelColor(0, 65, c);
-            MirroredSetPixelColor(0, 105, c);
-            MirroredSetPixelColor(1, 33, c);
-            break;
-        case 51:
-            MirroredSetPixelColor(0, 64, c);
-            MirroredSetPixelColor(0, 104, c);
-            MirroredSetPixelColor(1, 43, c);
-            break;
-        case 52:
-            MirroredSetPixelColor(0, 54, c);
-            MirroredSetPixelColor(0, 103, c);
-            MirroredSetPixelColor(1, 44, c);
-            break;
-        case 53:
-            MirroredSetPixelColor(0, 55, c);
-            MirroredSetPixelColor(0, 102, c);
-            MirroredSetPixelColor(1, 106, c);
-            break;
-        case 54:
-            MirroredSetPixelColor(0, 5, c);
-            MirroredSetPixelColor(0, 101, c);
-            MirroredSetPixelColor(1, 105, c);
-            break;
-        case 55:
-            MirroredSetPixelColor(0, 4, c);
-            MirroredSetPixelColor(0, 100, c);
-            MirroredSetPixelColor(1, 115, c);
-            break;
-        case 56:
-            MirroredSetPixelColor(1, 138, c);
-            MirroredSetPixelColor(0, 99, c);
-            MirroredSetPixelColor(1, 116, c);
-            break;
-        case 57:
-            MirroredSetPixelColor(1, 139, c);
-            MirroredSetPixelColor(0, 98, c);
-            MirroredSetPixelColor(0, 26, c);
-            break;
-        case 58:
-            MirroredSetPixelColor(1, 81, c);
-            MirroredSetPixelColor(0, 97, c);
-            MirroredSetPixelColor(0, 25, c);
-            break;
-        case 59:
-            MirroredSetPixelColor(1, 80, c);
-            MirroredSetPixelColor(0, 96, c);
-            MirroredSetPixelColor(0, 35, c);
-            break;
-        case 60:
-            MirroredSetPixelColor(1, 70, c);
-            MirroredSetPixelColor(0, 95, c);
-            MirroredSetPixelColor(0, 36, c);
-            break;
-        case 61:
-            MirroredSetPixelColor(1, 71, c);
-            MirroredSetPixelColor(0, 94, c);
-            MirroredSetPixelColor(0, 82, c);
-            break;
-        case 62:
-            MirroredSetPixelColor(1, 5, c);
-            MirroredSetPixelColor(0, 93, c);
-            MirroredSetPixelColor(0, 81, c);
-            break;
-        case 63:
-            MirroredSetPixelColor(1, 4, c);
-            MirroredSetPixelColor(0, 92, c);
-            MirroredSetPixelColor(0, 91, c);
-            break;
-        case 64:
-            MirroredSetPixelColor(0, 114, c);
-            MirroredSetPixelColor(0, 115, c);
-            MirroredSetPixelColor(1, 36, c);
-            break;
-        case 65:
-            MirroredSetPixelColor(0, 108, c);
-            MirroredSetPixelColor(0, 116, c);
-            MirroredSetPixelColor(1, 35, c);
-            break;
-        case 66:
-            MirroredSetPixelColor(0, 109, c);
-            MirroredSetPixelColor(0, 117, c);
-            MirroredSetPixelColor(1, 41, c);
-            break;
-        case 67:
-            MirroredSetPixelColor(0, 63, c);
-            MirroredSetPixelColor(0, 118, c);
-            MirroredSetPixelColor(1, 42, c);
-            break;
-        case 68:
-            MirroredSetPixelColor(0, 62, c);
-            MirroredSetPixelColor(0, 119, c);
-            MirroredSetPixelColor(1, 108, c);
-            break;
-        case 69:
-            MirroredSetPixelColor(0, 56, c);
-            MirroredSetPixelColor(0, 120, c);
-            MirroredSetPixelColor(1, 107, c);
-            break;
-        case 70:
-            MirroredSetPixelColor(0, 57, c);
-            MirroredSetPixelColor(0, 121, c);
-            MirroredSetPixelColor(1, 113, c);
-            break;
-        case 71:
-            MirroredSetPixelColor(0, 3, c);
-            MirroredSetPixelColor(0, 122, c);
-            MirroredSetPixelColor(1, 114, c);
-            break;
-        case 72:
-            MirroredSetPixelColor(0, 2, c);
-            MirroredSetPixelColor(0, 123, c);
-            MirroredSetPixelColor(0, 28, c);
-            break;
-        case 73:
-            MirroredSetPixelColor(1, 140, c);
-            MirroredSetPixelColor(0, 124, c);
-            MirroredSetPixelColor(0, 27, c);
-            break;
-        case 74:
-            MirroredSetPixelColor(1, 141, c);
-            MirroredSetPixelColor(0, 125, c);
-            MirroredSetPixelColor(0, 33, c);
-            break;
-        case 75:
-            MirroredSetPixelColor(1, 79, c);
-            MirroredSetPixelColor(0, 126, c);
-            MirroredSetPixelColor(0, 34, c);
-            break;
-        case 76:
-            MirroredSetPixelColor(1, 78, c);
-            MirroredSetPixelColor(0, 127, c);
-            MirroredSetPixelColor(0, 84, c);
-            break;
-        case 77:
-            MirroredSetPixelColor(1, 72, c);
-            MirroredSetPixelColor(0, 128, c);
-            MirroredSetPixelColor(0, 83, c);
-            break;
-        case 78:
-            MirroredSetPixelColor(1, 73, c);
-            MirroredSetPixelColor(0, 129, c);
-            MirroredSetPixelColor(0, 89, c);
-            break;
-        case 79:
-            MirroredSetPixelColor(1, 3, c);
-            MirroredSetPixelColor(0, 130, c);
-            MirroredSetPixelColor(0, 90, c);
-            break;
-        case 80:
-            MirroredSetPixelColor(1, 2, c);
-            MirroredSetPixelColor(0, 131, c);
-            MirroredSetPixelColor(0, 132, c);
-            break;
-        case 81:
-            MirroredSetPixelColor(0, 155, c);
-            MirroredSetPixelColor(0, 154, c);
-            MirroredSetPixelColor(1, 38, c);
-            break;
-        case 82:
-            MirroredSetPixelColor(0, 113, c);
-            MirroredSetPixelColor(0, 153, c);
-            MirroredSetPixelColor(1, 37, c);
-            break;
-        case 83:
-            MirroredSetPixelColor(0, 112, c);
-            MirroredSetPixelColor(0, 152, c);
-            MirroredSetPixelColor(1, 39, c);
-            break;
-        case 84:
-            MirroredSetPixelColor(0, 110, c);
-            MirroredSetPixelColor(0, 151, c);
-            MirroredSetPixelColor(1, 40, c);
-            break;
-        case 85:
-            MirroredSetPixelColor(0, 111, c);
-            MirroredSetPixelColor(0, 150, c);
-            MirroredSetPixelColor(1, 110, c);
-            break;
-        case 86:
-            MirroredSetPixelColor(0, 61, c);
-            MirroredSetPixelColor(0, 149, c);
-            MirroredSetPixelColor(1, 109, c);
-            break;
-        case 87:
-            MirroredSetPixelColor(0, 60, c);
-            MirroredSetPixelColor(0, 148, c);
-            MirroredSetPixelColor(1, 111, c);
-            break;
-        case 88:
-            MirroredSetPixelColor(0, 58, c);
-            MirroredSetPixelColor(0, 149, c);
-            MirroredSetPixelColor(1, 112, c);
-            break;
-        case 89:
-            MirroredSetPixelColor(0, 59, c);
-            MirroredSetPixelColor(0, 146, c);
-            MirroredSetPixelColor(0, 30, c);
-            break;
-        case 90:
-            MirroredSetPixelColor(0, 1, c);
-            MirroredSetPixelColor(0, 145, c);
-            MirroredSetPixelColor(0, 29, c);
-            break;
-        case 91:
-            MirroredSetPixelColor(0, 0, c);
-            MirroredSetPixelColor(0, 144, c);
-            MirroredSetPixelColor(0, 31, c);
-            break;
-        case 92:
-            MirroredSetPixelColor(1, 142, c);
-            MirroredSetPixelColor(0, 143, c);
-            MirroredSetPixelColor(0, 32, c);
-            break;
-        case 93:
-            MirroredSetPixelColor(1, 143, c);
-            MirroredSetPixelColor(0, 142, c);
-            MirroredSetPixelColor(0, 86, c);
-            break;
-        case 94:
-            MirroredSetPixelColor(1, 77, c);
-            MirroredSetPixelColor(0, 141, c);
-            MirroredSetPixelColor(0, 85, c);
-            break;
-        case 95:
-            MirroredSetPixelColor(1, 76, c);
-            MirroredSetPixelColor(0, 140, c);
-            MirroredSetPixelColor(0, 87, c);
-            break;
-        case 96:
-            MirroredSetPixelColor(1, 74, c);
-            MirroredSetPixelColor(0, 139, c);
-            MirroredSetPixelColor(0, 88, c);
-            break;
-        case 97:
-            MirroredSetPixelColor(1, 75, c);
-            MirroredSetPixelColor(0, 136, c);
-            MirroredSetPixelColor(0, 134, c);
-            break;
-        case 98:
-            MirroredSetPixelColor(1, 1, c);
-            MirroredSetPixelColor(0, 137, c);
-            MirroredSetPixelColor(0, 133, c);
-            break;
-        case 99:
-            MirroredSetPixelColor(1, 0, c);
-            MirroredSetPixelColor(0, 136, c);
-            MirroredSetPixelColor(0, 135, c);
-            break;
-        }
+        for (uint8_t x = 0; x < 3; x++)
+            MirroredSetPixelColor(pgm_read_byte_near(&KaleidoscopeLookupTable[index].strips[x].strip),
+                                  pgm_read_byte_near(&KaleidoscopeLookupTable[index].strips[x].index), c);
     }
 
 private:
