@@ -39,8 +39,8 @@ module triangleTwo(x,y)
 //iterative approach to drawing the large hexagon and subrtacting triangles from it
 module honeycomb()
 {
-    x = 0;
-    y = distance_apart * num_rings;
+    //x = 0;
+    //y = distance_apart * num_rings;
     
     linear_extrude(height=wall_depth) difference()
     {
@@ -219,8 +219,15 @@ module honeycomb()
             triangleTwo(triangle_height * -10, (distance_apart * i));
             triangleOne(triangle_height * -10, (distance_apart * (-i - 1)));
             triangleTwo(triangle_height * -10, (distance_apart * (-i - 1)));
-        }    
+        }  
+   
+        
     }
+    for (i = [num_rings / 2 - 1:-1:(-2 * num_rings) + (num_rings / 2)]) // draws the square
+        {
+            orgin = [triangle_height * -10, distance_apart * i  + (triangle_height - notch_width) / 2, wall_depth + 4, ];
+            translate(orgin) rotate(30)square([distance_apart * (num_rings * 2 + 1), notch_width]); //the + 1 is needed to finish the etch
+        }
 }
 
 //series of walls that make 4 triangles
