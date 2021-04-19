@@ -471,14 +471,14 @@ void handleSegmentsHourOnes(int num, uint32_t color)
 void drawDigitalClock(uint32_t color) // Emulates a seven segment clock to display the time
 {
     //the easiest way to draw the clock is to break the time into individual numbers and draw them 1 by 1;
-    int min;  //= time.getMin();
-    int hour; //= time.getHour();
+    DateTime now = rtc.now();
+    int min = now.minute();
+    int hour = now.hour();
 
     int minOnes = min % 10;
     int hourOnes = hour % 10;
 
     int minTens;
-    int hourTens = 1;
 
     //Unsure if there is a better way to do this but this works for now
     if (min >= 0 && min < 10)

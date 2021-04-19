@@ -8,10 +8,13 @@
 // https://github.com/FastLED/FastLED
 #include <FastLED.h>
 
+#ifdef CLOCK
 // https://github.com/adafruit/RTClib
 #include <RTClib.h>
+#endif
 
 #define DEBUG
+#define DEMO
 
 //
 // GLOBAL PIN DECLARATIONS -------------------------------------------------
@@ -30,15 +33,21 @@
 
 #define ENCODER_BUTTON_PIN_RIGHT 6
 #define ENCODER_BUTTON_PIN_LEFT 7
-#define LED_STRIPS_PIN_BASE 8
-#define LED_STRIPS 1 // FIX THIS (when we have more space)!
-#define LEDS_PER_STRIP 150
+
+// Change this to be a pin that has hardware SPI support
+// On the Arduino UNO this is pin 11
+// On the Teensey these are pins 11-13 with the Chip Select signal on Pin 10
+#define LED_STRIPS_PIN_BASE 11
+#define NUM_STRIPS 1 // FIX THIS (when we have more space)!
+#define NUM_LEDS_PER_STRIP 156
 
 #include "debug.h"
 #include "LEDStrips.h"
 #include "Kaleidoscope.h"
+#ifdef CLOCK
 #include "RealTimeClock.h"
-#include "seven-segment.h"
+#endif
+//#include "seven-segment.h"
 
 // This array lists each of the display/animation drawing functions
 // (which appear later in this code) in the order they're selected with
@@ -51,15 +60,20 @@ void (*renderFunc[])(void){
     mode_snowflake,
     mode_off, // make it obvious we're entering 'setup' modes
     mode_kaleidoscope_select_disks,
+#ifdef CLOCK
     mode_select_clock_face,
     mode_set_clock,
+#endif
     mode_set_brightness,
-#ifdef DEBUG
+#ifdef DEMO
     mode_off, // make it obvious we're entering 'demo' modes
+    mode_kaleidoscope_rainbowMarch,
     mode_blendWave,
     mode_rainbowMarch,
     mode_sawTooth,
     mode_plasma,
+#endif
+#ifdef DEBUG
     mode_kaleidoscope_test,
 #endif
     mode_off // make it obvious we're entering 'regular' modes
@@ -73,7 +87,9 @@ uint8_t mode = 0; // Index of current mode in table
 
 // global instances of objects
 LEDStrips leds;
+#ifdef CLOCK
 RealTimeClock clock;
+#endif
 Kaleidoscope kaleidoscope;
 
 // Instantiate Button objects from the Bounce2 namespace
@@ -115,8 +131,10 @@ void setup()
   // intialize the LED strips
   leds.setup();
 
+#ifdef CLOCK
   // intialize the real time clock
   clock.setup();
+#endif
 
   // initialize the kaleidoscope
   kaleidoscope.setup();
@@ -184,8 +202,10 @@ void loop()
   (*renderFunc[mode])();
 
   // render any overlay
+#ifdef CLOCK
   // update the clock display
   clock.loop();
+#endif
 
   // update the led strips to show the current frame
   FastLED.show();
@@ -212,7 +232,7 @@ void mode_set_brightness()
   DB_PRINTLN(F("mode_set_brightness"));
 }
 
-#ifdef DEBUG
+#ifdef DEMO
 
 // https://github.com/atuline/FastLED-Demos/blob/master/blendwave/blendwave.ino
 void mode_blendWave()
@@ -223,19 +243,16 @@ void mode_blendWave()
   static CRGB clr2;
   static uint8_t speed;
   static uint8_t loc1;
-  static uint8_t loc2;
-  static uint8_t ran1;
-  static uint8_t ran2;
 
   speed = beatsin8(6, 0, 255);
 
   clr1 = blend(CHSV(beatsin8(3, 0, 255), 255, 255), CHSV(beatsin8(4, 0, 255), 255, 255), speed);
   clr2 = blend(CHSV(beatsin8(4, 0, 255), 255, 255), CHSV(beatsin8(3, 0, 255), 255, 255), speed);
 
-  loc1 = beatsin8(10, 0, LEDS_PER_STRIP - 1);
+  loc1 = beatsin8(10, 0, NUM_LEDS_PER_STRIP - 1);
 
   fill_gradient_RGB(leds.strip[0], 0, clr2, loc1, clr1);
-  fill_gradient_RGB(leds.strip[0], loc1, clr2, LEDS_PER_STRIP - 1, clr1);
+  fill_gradient_RGB(leds.strip[0], loc1, clr2, NUM_LEDS_PER_STRIP - 1, clr1);
 }
 
 // https://github.com/atuline/FastLED-Demos/blob/master/rainbow_march/rainbow_march.ino
@@ -246,10 +263,10 @@ void mode_rainbowMarch()
   uint8_t thisdelay = 200, deltahue = 10;
   uint8_t thishue = millis() * (255 - thisdelay) / 255; // To change the rate, add a beat or something to the result. 'thisdelay' must be a fixed value.
 
-  // thishue = beat8(50);                                       // This uses a FastLED sawtooth generator. Again, the '50' should not change on the fly.
-  // thishue = beatsin8(50,0,255);                              // This can change speeds on the fly. You can also add these to each other.
+  // thishue = beat8(50);           // This uses a FastLED sawtooth generator. Again, the '50' should not change on the fly.
+  // thishue = beatsin8(50,0,255);  // This can change speeds on the fly. You can also add these to each other.
 
-  fill_rainbow(leds.strip[0], LEDS_PER_STRIP, thishue, deltahue);
+  fill_rainbow(leds.strip[0], NUM_LEDS_PER_STRIP, thishue, deltahue);
 }
 
 // https://github.com/atuline/FastLED-Demos/blob/master/sawtooth/sawtooth.ino
@@ -264,12 +281,12 @@ void mode_sawTooth()
 
   int bpm = 60;
   int ms_per_beat = 60000 / bpm; // 500ms per beat, where 60,000 = 60 seconds * 1000 ms
-  int ms_per_led = 60000 / bpm / LEDS_PER_STRIP;
+  int ms_per_led = 60000 / bpm / NUM_LEDS_PER_STRIP;
 
-  int cur_led = ((millis() % ms_per_beat) / ms_per_led) % (LEDS_PER_STRIP); // Using millis to count up the strand, with %NUM_LEDS at the end as a safety factor.
+  int cur_led = ((millis() % ms_per_beat) / ms_per_led) % (NUM_LEDS_PER_STRIP); // Using millis to count up the strand, with %NUM_LEDS at the end as a safety factor.
 
   if (cur_led == 0)
-    fill_solid(leds.strip[0], LEDS_PER_STRIP, CRGB::Black);
+    fill_solid(leds.strip[0], NUM_LEDS_PER_STRIP, CRGB::Black);
   else
     leds.strip[0][cur_led] = ColorFromPalette(currentPalette, 0, 255, currentBlending); // I prefer to use palettes instead of CHSV or CRGB assignments.
 }
@@ -293,7 +310,7 @@ void mode_plasma()
     int thisPhase = beatsin8(6, -64, 64); // Setting phase change for a couple of waves.
     int thatPhase = beatsin8(7, -64, 64);
 
-    for (int k = 0; k < LEDS_PER_STRIP; k++)
+    for (int k = 0; k < NUM_LEDS_PER_STRIP; k++)
     {
       // For each of the LED's in the strand, set a brightness based on a wave as follows:
       int colorIndex = cubicwave8((k * 23) + thisPhase) / 2 + cos8((k * 15) + thatPhase) / 2; // Create a wave and add a phase change and add another wave with its own phase change.. Hey, you can even change the frequencies if you wish.
@@ -316,4 +333,4 @@ void mode_plasma()
   }
 }
 
-#endif // DEBUG
+#endif // DEMO

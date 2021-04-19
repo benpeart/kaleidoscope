@@ -17,6 +17,7 @@
 #define JEWEL_LEAD 0x27100a
 
 // TODO: optimize the strip array to only require 2 bytes per pixel (16 bit color)
+// TODO: I was unsuccessful in finding a way to make these CRGB structures
 // store the strip RGB values in program memory (flash) to save SRAM
 static const PROGMEM uint32_t JewelStrip[JEWEL_STRIP_COLUMNS][TRIANGLE_ROWS] =
     {
@@ -123,8 +124,8 @@ static const PROGMEM Strips KaleidoscopeLookupTable[TRIANGLE_COUNT] =
         {{{0, 6}, {0, 71}, {1, 104}}},
         {{{1, 136}, {0, 72}, {1, 103}}},
         {{{1, 137}, {0, 73}, {1, 117}}},
-        {{{1, 83}, {0, 71}, {1, 118}}},
-        {{{1, 62}, {0, 75}, {0, 24}}},
+        {{{1, 83}, {0, 74}, {1, 118}}},
+        {{{1, 82}, {0, 75}, {0, 24}}},
         {{{1, 68}, {0, 76}, {0, 23}}},
         {{{1, 69}, {0, 77}, {0, 37}}},
         {{{1, 7}, {0, 78}, {0, 38}}},
@@ -168,7 +169,7 @@ static const PROGMEM Strips KaleidoscopeLookupTable[TRIANGLE_COUNT] =
         {{{0, 111}, {0, 150}, {1, 110}}},
         {{{0, 61}, {0, 149}, {1, 109}}},
         {{{0, 60}, {0, 148}, {1, 111}}},
-        {{{0, 58}, {0, 149}, {1, 112}}},
+        {{{0, 58}, {0, 147}, {1, 112}}},
         {{{0, 59}, {0, 146}, {0, 30}}},
         {{{0, 1}, {0, 145}, {0, 29}}},
         {{{0, 0}, {0, 144}, {0, 31}}},
@@ -200,52 +201,12 @@ public:
 #endif
 
         // start with random offsets to provide more variety
-        current_offset_1 = random(strip_1_columns);
-        current_offset_2 = random(strip_2_columns);
+        offset_1 = random(strip_1_columns);
+        offset_2 = random(strip_2_columns);
     }
 
     // update the position of the strips and draw the kaleidoscope
     void loop()
-    {
-        draw(current_offset_1, current_offset_2);
-
-        current_offset_1 = (++current_offset_1) % strip_1_columns;
-        current_offset_2 = (++current_offset_2) % strip_2_columns;
-    }
-
-    // https://stackoverflow.com/questions/1102692/how-to-alpha-blend-rgba-unsigned-byte-color-fast
-    uint32_t blendAlpha(uint32_t colora, uint32_t colorb, uint32_t alpha)
-    {
-        uint32_t rb1 = ((0xFF - alpha) * (colora & 0xFF00FF)) >> 8;
-        uint32_t rb2 = (alpha * (colorb & 0xFF00FF)) >> 8;
-        uint32_t g1 = ((0xFF - alpha) * (colora & 0x00FF00)) >> 8;
-        uint32_t g2 = (alpha * (colorb & 0x00FF00)) >> 8;
-
-        return ((rb1 + rb2) & 0xFF00FF) + ((g1 + g2) & 0x00FF00);
-    }
-
-    // draw a pixel mirrored and rotated 6 times to emulate a kaleidoscope
-    void drawKaleidoscopePixel6(uint8_t index, uint32_t c)
-    {
-        for (uint8_t x = 0; x < 3; x++)
-            MirroredSetPixelColor(pgm_read_byte_near(&KaleidoscopeLookupTable[index].strips[x].strip),
-                                  pgm_read_byte_near(&KaleidoscopeLookupTable[index].strips[x].index), c);
-    }
-
-private:
-    // pointer to two dimensional arrays of color values for kaleidoscope effect
-    // https://stackoverflow.com/questions/1052818/create-a-pointer-to-two-dimensional-array
-    const uint32_t (*rgb_strip_1)[TRIANGLE_ROWS];
-    uint8_t strip_1_columns;
-    const uint32_t (*rgb_strip_2)[TRIANGLE_ROWS];
-    uint8_t strip_2_columns;
-
-    // offset into strips, used to provide movement for the kaleidoscope
-    int current_offset_1;
-    int current_offset_2;
-
-    // this will blend two colors from the given stips/offsets and draw the kaleidoscope
-    void draw(uint8_t offset_1, uint8_t offset_2)
     {
         int begin = 0, end = 0, viewport_index = 0;
 
@@ -306,31 +267,74 @@ private:
             begin--;
             end++;
         }
+
+        offset_1 = (++offset_1) % strip_1_columns;
+        offset_2 = (++offset_2) % strip_2_columns;
     }
 
-    void MirroredSetPixelColor(int strip, int index, uint32_t c)
+    // https://stackoverflow.com/questions/1102692/how-to-alpha-blend-rgba-unsigned-byte-color-fast
+    uint32_t blendAlpha(uint32_t colora, uint32_t colorb, uint32_t alpha)
     {
-#ifdef DEBUG
-        if (index >= LEDS_PER_STRIP)
+        uint32_t rb1 = ((0xFF - alpha) * (colora & 0xFF00FF)) >> 8;
+        uint32_t rb2 = (alpha * (colorb & 0xFF00FF)) >> 8;
+        uint32_t g1 = ((0xFF - alpha) * (colora & 0x00FF00)) >> 8;
+        uint32_t g2 = (alpha * (colorb & 0x00FF00)) >> 8;
+
+        return ((rb1 + rb2) & 0xFF00FF) + ((g1 + g2) & 0x00FF00);
+    }
+
+    // draw a pixel mirrored and rotated 6 times to emulate a kaleidoscope
+    void drawKaleidoscopePixel6(int index, CRGB c)
+    {
+#ifdef NDEBUG
+        DB_PRINT(F("drawKaleidoscopePixel6("));
+        DB_PRINT(index);
+        DB_PRINT(F(", 0x"));
+        DB_PRINT(c, HEX);
+        DB_PRINTLN(")");
+#endif
+        if (index < 0 || index >= TRIANGLE_COUNT)
+            return;
+
+        for (uint8_t x = 0; x < 3; x++)
+            MirroredSetPixelColor(pgm_read_byte_near(&KaleidoscopeLookupTable[index].strips[x].strip),
+                                  pgm_read_byte_near(&KaleidoscopeLookupTable[index].strips[x].index), c);
+    }
+
+private:
+    // pointer to two dimensional arrays of color values for kaleidoscope effect
+    // https://stackoverflow.com/questions/1052818/create-a-pointer-to-two-dimensional-array
+    const uint32_t (*rgb_strip_1)[TRIANGLE_ROWS];
+    uint8_t strip_1_columns;
+    const uint32_t (*rgb_strip_2)[TRIANGLE_ROWS];
+    uint8_t strip_2_columns;
+
+    // offset into strips, used to provide movement for the kaleidoscope
+    int offset_1;
+    int offset_2;
+
+    void MirroredSetPixelColor(int strip, int index, CRGB rgb)
+    {
+        if (index < 0 || index >= NUM_LEDS_PER_STRIP)
         {
             DB_PRINT(F("MysetPixelColor: requested index ("));
             DB_PRINT(index);
             DB_PRINTLN(F(") exceeds number of LEDs in a strip."));
             return;
         }
-#endif
+
         switch (strip)
         {
         case 0:
-            leds.strip[0][index] = c;
+            leds.strip[0][index] = rgb;
             // FIX THIS (when we have more space)!
-            //            leds.strip[3][index] = c;
+            //            leds.strip[3][index] = rgb;
             break;
 
         case 1:
             // FIX THIS (when we have more space)!
-            //            leds.strip[1][index] = c;
-            //            leds.strip[2][index] = c;
+            //            leds.strip[1][index] = rgb;
+            //            leds.strip[2][index] = rgb;
             break;
 
         default:
@@ -362,12 +366,12 @@ void mode_kaleidoscope_interactive()
 // get reflected and mirrored properly
 void mode_kaleidoscope_test()
 {
-    static uint32_t index = -1;
+    static int index = -1;
 
     EVERY_N_MILLISECONDS(100)
     {
         // erase the last pixel
-        kaleidoscope.drawKaleidoscopePixel6(index, 0); // off
+        kaleidoscope.drawKaleidoscopePixel6(index, CRGB::Black); // off
 
         // move to the next pixel
         if (++index >= TRIANGLE_COUNT)
@@ -375,7 +379,32 @@ void mode_kaleidoscope_test()
         DB_PRINTLN(index);
 
         // light up the next pixel
-        kaleidoscope.drawKaleidoscopePixel6(index, 0xFF0000); // Red
+        kaleidoscope.drawKaleidoscopePixel6(index, CRGB::Red);
+    }
+}
+#endif
+
+#ifdef DEMO
+
+// https://github.com/atuline/FastLED-Demos/blob/master/rainbow_march/rainbow_march.ino
+void mode_kaleidoscope_rainbowMarch()
+{
+    //DB_PRINTLN(F("mode_rainbowMarch"));
+
+    uint8_t thisdelay = 200, deltahue = 255 / TRIANGLE_COUNT;
+    uint8_t thishue = millis() * (255 - thisdelay) / 255; // To change the rate, add a beat or something to the result. 'thisdelay' must be a fixed value.
+
+    // thishue = beat8(50);           // This uses a FastLED sawtooth generator. Again, the '50' should not change on the fly.
+    // thishue = beatsin8(50,0,255);  // This can change speeds on the fly. You can also add these to each other.
+
+    CHSV hsv;
+    hsv.hue = thishue;
+    hsv.val = 255;
+    hsv.sat = 240;
+    for (int i = 0; i < TRIANGLE_COUNT; ++i)
+    {
+        kaleidoscope.drawKaleidoscopePixel6(i, hsv);
+        hsv.hue += deltahue;
     }
 }
 #endif
