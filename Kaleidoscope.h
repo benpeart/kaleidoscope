@@ -301,6 +301,27 @@ public:
                                   pgm_read_byte_near(&KaleidoscopeLookupTable[index].strips[x].index), c);
     }
 
+    void fill_kaleidoscope_rainbow(uint8_t initialhue, uint8_t deltahue)
+    {
+        CHSV hsv;
+        hsv.hue = initialhue;
+        hsv.val = 255;
+        hsv.sat = 240;
+        for (int i = 0; i < TRIANGLE_COUNT; ++i)
+        {
+            drawKaleidoscopePixel6(i, hsv);
+            hsv.hue += deltahue;
+        }
+    }
+
+    void fill_kaleidoscope_solid(const struct CRGB &color)
+    {
+        for (int i = 0; i < TRIANGLE_COUNT; ++i)
+        {
+            drawKaleidoscopePixel6(i, color);
+        }
+    }
+
 private:
     // pointer to two dimensional arrays of color values for kaleidoscope effect
     // https://stackoverflow.com/questions/1052818/create-a-pointer-to-two-dimensional-array
@@ -389,7 +410,7 @@ void mode_kaleidoscope_test()
 // https://github.com/atuline/FastLED-Demos/blob/master/rainbow_march/rainbow_march.ino
 void mode_kaleidoscope_rainbowMarch()
 {
-    //DB_PRINTLN(F("mode_rainbowMarch"));
+    //DB_PRINTLN(F("mode_kaleidoscope_rainbowMarch"));
 
     uint8_t thisdelay = 200, deltahue = 255 / TRIANGLE_COUNT;
     uint8_t thishue = millis() * (255 - thisdelay) / 255; // To change the rate, add a beat or something to the result. 'thisdelay' must be a fixed value.
@@ -397,16 +418,73 @@ void mode_kaleidoscope_rainbowMarch()
     // thishue = beat8(50);           // This uses a FastLED sawtooth generator. Again, the '50' should not change on the fly.
     // thishue = beatsin8(50,0,255);  // This can change speeds on the fly. You can also add these to each other.
 
-    CHSV hsv;
-    hsv.hue = thishue;
-    hsv.val = 255;
-    hsv.sat = 240;
-    for (int i = 0; i < TRIANGLE_COUNT; ++i)
+    kaleidoscope.fill_kaleidoscope_rainbow(thishue, deltahue);
+}
+
+// https://github.com/atuline/FastLED-Demos/blob/master/plasma/plasma.ino
+
+// Use qsuba for smooth pixel colouring and qsubd for non-smooth pixel colouring
+#define qsubd(x, b) ((x > b) ? b : 0)     // Digital unsigned subtraction macro. if result <0, then => 0. Otherwise, take on fixed value.
+#define qsuba(x, b) ((x > b) ? x - b : 0) // Analog Unsigned subtraction macro. if result <0, then => 0
+
+void mode_kaleidoscope_plasma()
+{
+    //DB_PRINTLN(F("mode_kaleidoscope_plasma"));
+
+    static CRGBPalette16 currentPalette = ForestColors_p; // Palette definitions
+    static CRGBPalette16 targetPalette;
+    static TBlendType currentBlending = LINEARBLEND;
+
+    EVERY_N_MILLISECONDS(50)
+    {                                         // FastLED based non-blocking delay to update/display the sequence.
+        int thisPhase = beatsin8(6, -64, 64); // Setting phase change for a couple of waves.
+        int thatPhase = beatsin8(7, -64, 64);
+
+        for (int k = 0; k < TRIANGLE_COUNT; k++)
+        {
+            // For each of the LED's in the strand, set a brightness based on a wave as follows:
+            int colorIndex = cubicwave8((k * 23) + thisPhase) / 2 + cos8((k * 15) + thatPhase) / 2; // Create a wave and add a phase change and add another wave with its own phase change.. Hey, you can even change the frequencies if you wish.
+            int thisBright = qsuba(colorIndex, beatsin8(7, 0, 96));                                 // qsub gives it a bit of 'black' dead space by setting sets a minimum value. If colorIndex < current value of beatsin8(), then bright = 0. Otherwise, bright = colorIndex..
+
+            kaleidoscope.drawKaleidoscopePixel6(k, ColorFromPalette(currentPalette, colorIndex, thisBright, currentBlending)); // Let's now add the foreground colour.
+        }
+    }
+
+    EVERY_N_MILLISECONDS(100)
     {
-        kaleidoscope.drawKaleidoscopePixel6(i, hsv);
-        hsv.hue += deltahue;
+        uint8_t maxChanges = 24;
+        nblendPaletteTowardPalette(currentPalette, targetPalette, maxChanges); // AWESOME palette blending capability.
+    }
+
+    EVERY_N_SECONDS(5)
+    {                              // Change the target palette to a random one every 5 seconds.
+        uint8_t baseC = random8(); // You can use this as a baseline colour if you want similar hues in the next line.
+        targetPalette = CRGBPalette16(CHSV(baseC + random8(32), 192, random8(128, 255)), CHSV(baseC + random8(32), 255, random8(128, 255)), CHSV(baseC + random8(32), 192, random8(128, 255)), CHSV(baseC + random8(32), 255, random8(128, 255)));
     }
 }
+
+// https://github.com/atuline/FastLED-Demos/blob/master/sawtooth/sawtooth.ino
+void mode_kaleidoscope_sawTooth()
+{
+    //DB_PRINTLN(F("mode_kaleidoscope_sawTooth"));
+
+    // Palette definitions
+    static CRGBPalette16 currentPalette = PartyColors_p;
+    static CRGBPalette16 targetPalette = PartyColors_p;
+    static TBlendType currentBlending = LINEARBLEND; // NOBLEND or LINEARBLEND
+
+    int bpm = 60;
+    int ms_per_beat = 60000 / bpm; // 500ms per beat, where 60,000 = 60 seconds * 1000 ms
+    int ms_per_led = 60000 / bpm / TRIANGLE_COUNT;
+
+    int cur_led = ((millis() % ms_per_beat) / ms_per_led) % (TRIANGLE_COUNT); // Using millis to count up the strand, with %NUM_LEDS at the end as a safety factor.
+
+    if (cur_led == 0)
+        kaleidoscope.fill_kaleidoscope_solid(CRGB::Black);
+    else
+        kaleidoscope.drawKaleidoscopePixel6(cur_led, ColorFromPalette(currentPalette, 0, 255, currentBlending)); // I prefer to use palettes instead of CHSV or CRGB assignments.
+}
+
 #endif
 
 void mode_kaleidoscope_select_disks()
