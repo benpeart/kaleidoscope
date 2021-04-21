@@ -386,7 +386,7 @@ void mode_kaleidoscope_test()
 {
     static int index = -1;
 
-    EVERY_N_MILLISECONDS(100)
+    EVERY_N_MILLISECONDS(500)
     {
         // erase the last pixel
         kaleidoscope.drawKaleidoscopePixel6(index, CRGB::Black); // off
@@ -407,8 +407,6 @@ void mode_kaleidoscope_test()
 // https://github.com/atuline/FastLED-Demos/blob/master/rainbow_march/rainbow_march.ino
 void mode_kaleidoscope_rainbowMarch()
 {
-    //DB_PRINTLN(F("mode_kaleidoscope_rainbowMarch"));
-
     uint8_t thisdelay = 200, deltahue = 255 / TRIANGLE_COUNT;
     uint8_t thishue = millis() * (255 - thisdelay) / 255; // To change the rate, add a beat or something to the result. 'thisdelay' must be a fixed value.
 
@@ -426,8 +424,6 @@ void mode_kaleidoscope_rainbowMarch()
 
 void mode_kaleidoscope_plasma()
 {
-    //DB_PRINTLN(F("mode_kaleidoscope_plasma"));
-
     static CRGBPalette16 currentPalette = ForestColors_p; // Palette definitions
     static CRGBPalette16 targetPalette;
     static TBlendType currentBlending = LINEARBLEND;
@@ -463,8 +459,6 @@ void mode_kaleidoscope_plasma()
 // https://github.com/atuline/FastLED-Demos/blob/master/sawtooth/sawtooth.ino
 void mode_kaleidoscope_sawTooth()
 {
-    //DB_PRINTLN(F("mode_kaleidoscope_sawTooth"));
-
     // Palette definitions
     static CRGBPalette16 currentPalette = PartyColors_p;
     static TBlendType currentBlending = LINEARBLEND; // NOBLEND or LINEARBLEND
@@ -485,7 +479,6 @@ void mode_kaleidoscope_sawTooth()
 
 void mode_kaleidoscope_select_disks()
 {
-    DB_PRINTLN(F("mode_kaleidoscope_select_disks"));
 }
 
 #endif // KALEIDOSCOPE_H

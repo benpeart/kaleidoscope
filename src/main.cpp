@@ -14,6 +14,7 @@
 #include <RTClib.h>
 #endif
 
+#define ENCODER
 #define DEBUG
 #define DEMO
 
@@ -29,13 +30,13 @@
 //   Best Performance: CLK and DT pins have interrupt capability
 //   Good Performance: only CLK pins have interrupt capability
 //   Low Performance:  neither pin has interrupt capability
-#define ENCODER_CLK_PIN_RIGHT 2 // the CLK pins neeed to be on iterrupts (pins 2 and 3 for Arduino UNO)
-#define ENCODER_CLK_PIN_LEFT 3
-#define ENCODER_DIRECTION_PIN_RIGHT 4
-#define ENCODER_DIRECTION_PIN_LEFT 5
+#define ENCODER_CLK_PIN_RIGHT 10
+#define ENCODER_CLK_PIN_LEFT 0
+#define ENCODER_DIRECTION_PIN_RIGHT 11
+#define ENCODER_DIRECTION_PIN_LEFT 1
 
-#define ENCODER_BUTTON_PIN_RIGHT 6
-#define ENCODER_BUTTON_PIN_LEFT 7
+#define ENCODER_BUTTON_PIN_RIGHT 12
+#define ENCODER_BUTTON_PIN_LEFT 2
 #endif
 
 #define LED_STRIPS_PIN_BASE 19
@@ -58,17 +59,14 @@ void mode_off()
 
 void mode_color_wash()
 {
-  DB_PRINTLN(F("mode_color_wash"));
 }
 
 void mode_snowflake()
 {
-  DB_PRINTLN(F("mode_snowflake"));
 }
 
 void mode_set_brightness()
 {
-  DB_PRINTLN(F("mode_set_brightness"));
 }
 
 #ifdef DEMO
@@ -76,8 +74,6 @@ void mode_set_brightness()
 // https://github.com/atuline/FastLED-Demos/blob/master/blendwave/blendwave.ino
 void mode_blendWave()
 {
-  //DB_PRINTLN(F("mode_blendWave"));
-
   static CRGB clr1;
   static CRGB clr2;
   static uint8_t speed;
@@ -88,48 +84,48 @@ void mode_blendWave()
   clr1 = blend(CHSV(beatsin8(3, 0, 255), 255, 255), CHSV(beatsin8(4, 0, 255), 255, 255), speed);
   clr2 = blend(CHSV(beatsin8(4, 0, 255), 255, 255), CHSV(beatsin8(3, 0, 255), 255, 255), speed);
 
-  loc1 = beatsin8(10, 0, NUM_LEDS_PER_STRIP - 1);
+  loc1 = beatsin8(10, 0, NUM_STRIPS * NUM_LEDS_PER_STRIP - 1);
 
   fill_gradient_RGB(leds, 0, clr2, loc1, clr1);
-  fill_gradient_RGB(leds, loc1, clr2, NUM_LEDS_PER_STRIP - 1, clr1);
+  fill_gradient_RGB(leds, loc1, clr2, NUM_STRIPS * NUM_LEDS_PER_STRIP - 1, clr1);
 }
 
 // https://github.com/atuline/FastLED-Demos/blob/master/rainbow_march/rainbow_march.ino
 void mode_rainbowMarch()
 {
-  //DB_PRINTLN(F("mode_rainbowMarch"));
-
   uint8_t thisdelay = 200, deltahue = 10;
   uint8_t thishue = millis() * (255 - thisdelay) / 255; // To change the rate, add a beat or something to the result. 'thisdelay' must be a fixed value.
 
   // thishue = beat8(50);           // This uses a FastLED sawtooth generator. Again, the '50' should not change on the fly.
   // thishue = beatsin8(50,0,255);  // This can change speeds on the fly. You can also add these to each other.
 
-  fill_rainbow(leds, NUM_LEDS_PER_STRIP, thishue, deltahue);
+  fill_rainbow(leds, NUM_STRIPS * NUM_LEDS_PER_STRIP, thishue, deltahue);
 }
 
 // https://github.com/atuline/FastLED-Demos/blob/master/sawtooth/sawtooth.ino
 void mode_sawTooth()
 {
-  //DB_PRINTLN(F("mode_sawTooth"));
-
   // Palette definitions
   static CRGBPalette16 currentPalette = PartyColors_p;
   static TBlendType currentBlending = LINEARBLEND; // NOBLEND or LINEARBLEND
 
   int bpm = 60;
   int ms_per_beat = 60000 / bpm; // 500ms per beat, where 60,000 = 60 seconds * 1000 ms
-  int ms_per_led = 60000 / bpm / NUM_LEDS_PER_STRIP;
+  int ms_per_led = 60000 / bpm / NUM_STRIPS * NUM_LEDS_PER_STRIP;
 
-  int cur_led = ((millis() % ms_per_beat) / ms_per_led) % (NUM_LEDS_PER_STRIP); // Using millis to count up the strand, with %NUM_LEDS at the end as a safety factor.
+  int cur_led = ((millis() % ms_per_beat) / ms_per_led) % (NUM_STRIPS * NUM_LEDS_PER_STRIP); // Using millis to count up the strand, with %NUM_LEDS at the end as a safety factor.
 
   if (cur_led == 0)
-    fill_solid(leds, NUM_LEDS_PER_STRIP, CRGB::Black);
+    fill_solid(leds, NUM_STRIPS * NUM_LEDS_PER_STRIP, CRGB::Black);
   else
     leds[cur_led] = ColorFromPalette(currentPalette, 0, 255, currentBlending); // I prefer to use palettes instead of CHSV or CRGB assignments.
 }
 
 #endif // DEMO
+
+//
+// GLOBAL VARIABLES --------------------------------------------------------
+//
 
 // This array lists each of the display/animation drawing functions
 // (which appear later in this code) in the order they're selected with
@@ -164,9 +160,35 @@ void (*renderFunc[])(void){
 #define N_MODES (sizeof(renderFunc) / sizeof(renderFunc[0]))
 uint8_t mode = 0; // Index of current mode in table
 
-//
-// GLOBAL VARIABLES --------------------------------------------------------
-//
+#ifdef DEBUG
+const char modeNames[N_MODES][64] =
+    {
+        "mode_kaleidoscope_screensaver",
+        "mode_kaleidoscope_interactive",
+        "mode_color_wash",
+        "mode_snowflake",
+        "mode_off",
+        "mode_kaleidoscope_select_disks",
+#ifdef CLOCK
+        "mode_select_clock_face",
+        "mode_set_clock",
+#endif
+        "mode_set_brightness",
+#ifdef DEMO
+        "mode_off",
+        "mode_kaleidoscope_rainbowMarch",
+        "mode_kaleidoscope_plasma",
+        "mode_kaleidoscope_sawTooth",
+        "mode_blendWave",
+        "mode_rainbowMarch",
+        "mode_sawTooth",
+#endif
+#ifdef DEBUG
+        "mode_kaleidoscope_test",
+#endif
+        "mode_off"
+#endif
+};
 
 // global instances of objects
 #ifdef CLOCK
@@ -238,11 +260,13 @@ void setup()
   rightButton.interval(DEBOUNCE_MS);
   rightButton.setPressedState(LOW);
 #endif
+  DB_PRINTLN(modeNames[mode]);
 
   // intialize the LED strips for parallel output on the Teensy 4
   // https://github.com/FastLED/FastLED/wiki/Parallel-Output#parallel-output-on-the-teensy-4
   FastLED.addLeds<NUM_STRIPS, WS2812B, LED_STRIPS_PIN_BASE, GRB>(leds, NUM_LEDS_PER_STRIP);
-
+  FastLED.clear();
+  FastLED.setBrightness(32);
 #ifdef CLOCK
   // intialize the real time clock
   clock.setup();
@@ -262,7 +286,7 @@ void loop()
   adjustBrightness();
 #endif
 
-#ifdef ENCODER0
+#ifdef ENCODER
   // Update the buttons
   leftButton.update();
   rightButton.update();
@@ -270,12 +294,11 @@ void loop()
   // Handle button pressed?
   if (leftButton.pressed())
   {
-    DB_PRINTLN(F("leftButton.pressed"));
-
     if (mode)
       mode--; // Go to prior mode
     else
       mode = N_MODES - 1; // or "wrap around" to last mode
+    DB_PRINTLN(modeNames[mode]);
 
     // clear the led strips for the new mode
     FastLED.clear();
@@ -284,12 +307,11 @@ void loop()
   // Right button pressed?
   if (rightButton.pressed())
   {
-    DB_PRINTLN(F("rightButton.pressed"));
-
     if (mode < (N_MODES - 1))
       mode++; // Advance to next mode
     else
       mode = 0; // or "wrap around" to start
+    DB_PRINTLN(modeNames[mode]);
 
     // clear the led strips for the new mode
     FastLED.clear();
@@ -324,5 +346,8 @@ void loop()
 #endif
 
   // update the led strips to show the current frame
-  FastLED.show();
+  EVERY_N_MILLISECONDS(250)
+  {
+    FastLED.show();
+  }
 }
