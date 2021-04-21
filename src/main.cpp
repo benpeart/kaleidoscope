@@ -78,13 +78,33 @@ void mode_snowflake()
 // BRIGHTNESS helpers -------------------------------------------------
 //
 
-static int LEDBrightnessManualOffset = 0;
+#define KNOB_MULTIPLIER 12
 
 // automatically adjust the brightness of the LED strips to match the ambient lighting
 void adjustBrightness()
 {
   // store the current LED brightness so we can minimize minor differences
   static int LEDbrightness = 0;
+  static int LEDBrightnessManualOffset = 0;
+//  static int32_t positionRight = -9999;
+
+  // use the right knob as a brightness adjustment
+  int rightKnob = knobRight.read() * KNOB_MULTIPLIER;
+  if (rightKnob < -1023)
+  {
+    rightKnob = -1023;
+    knobRight.write(rightKnob / KNOB_MULTIPLIER);
+  }
+  if (rightKnob > 1023)
+  {
+    rightKnob = 1023;
+    knobRight.write(rightKnob / KNOB_MULTIPLIER);
+  }
+
+  // negate the knob position so that brightness gets higher clockwise, lower counterclockwise
+  rightKnob = -rightKnob;
+
+  LEDBrightnessManualOffset = min(1023, max(-1023, rightKnob)); // keep total offset between -1023 and 1023
 
   // check the photocell and map 0-1023 to 0-255 since that is the range for setBrightness
   // it is currently setup to use the internal pullup resistor so we need to invert and reading
@@ -97,7 +117,9 @@ void adjustBrightness()
   {
 #ifdef DEBUG
     DB_PRINT(F("Analog photocell reading = "));
-    DB_PRINTLN(photocellReading); // the raw analog reading
+    DB_PRINTLN(photocellReading);
+    DB_PRINT(F("Brightness knob reading  = "));
+    DB_PRINTLN(LEDBrightnessManualOffset);
     DB_PRINT(F("new brightness = "));
     DB_PRINTLN(newBrightness);
 #endif
@@ -105,61 +127,6 @@ void adjustBrightness()
     LEDbrightness = newBrightness;
     FastLED.setBrightness(LEDbrightness);
     leds_dirty = true;
-  }
-}
-
-#define KNOB_MULTIPLIER 12
-void mode_set_brightness()
-{
-  fill_rainbow(leds, NUM_STRIPS * NUM_LEDS_PER_STRIP, 0, 255 / TRIANGLE_COUNT);
-
-  // read and report on the knobs
-  static int32_t positionLeft = -9999;
-  static int32_t positionRight = -9999;
-
-  // keep each knob's offset between -1023 and 1023
-  int32_t newLeft = knobLeft.read() * KNOB_MULTIPLIER;
-  if (newLeft < -1023)
-  {
-    newLeft = -1023;
-    knobLeft.write(newLeft / KNOB_MULTIPLIER);
-  }
-  if (newLeft > 1023)
-  {
-    newLeft = 1023;
-    knobLeft.write(newLeft / KNOB_MULTIPLIER);
-  }
-  int32_t newRight = knobRight.read() * 12;
-  if (newRight < -1023)
-  {
-    newRight = -1023;
-    knobRight.write(newRight / KNOB_MULTIPLIER);
-  }
-  if (newRight > 1023)
-  {
-    newRight = 1023;
-    knobRight.write(newRight / KNOB_MULTIPLIER);
-  }
-
-  // negate the read so that brightness gets higher clockwise, lower counterclockwise
-  newLeft = -newLeft;
-  newRight = -newRight;
-
-  // if the brighness knobs have changed
-  if (newLeft != positionLeft || newRight != positionRight)
-  {
-    positionLeft = newLeft;
-    positionRight = newRight;
-    LEDBrightnessManualOffset = min(1023, max(-1023, positionLeft + positionRight)); // keep total offset between -1023 and 1023
-#ifdef NDEBUG
-    DB_PRINT(F("Left = "));
-    DB_PRINT(newLeft);
-    DB_PRINT(F(", Right = "));
-    DB_PRINTLN(newRight);
-    DB_PRINT(F("LEDBrightnessManualOffset = "));
-    DB_PRINTLN(LEDBrightnessManualOffset);
-#endif
-    adjustBrightness();
   }
 }
 
@@ -207,7 +174,6 @@ void (*renderFunc[])(void){
     mode_kaleidoscope_select_disks,
     mode_select_clock_face,
     mode_set_clock,
-    mode_set_brightness,
 #ifdef DEMO
     mode_off, // make it obvious we're entering 'demo' modes
     mode_kaleidoscope_rainbowMarch,
@@ -235,7 +201,6 @@ const char modeNames[N_MODES][64] =
         "mode_kaleidoscope_select_disks",
         "mode_select_clock_face",
         "mode_set_clock",
-        "mode_set_brightness",
 #ifdef DEMO
         "mode_off",
         "mode_kaleidoscope_rainbowMarch",
