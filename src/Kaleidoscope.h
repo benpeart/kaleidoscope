@@ -392,7 +392,7 @@ void mode_kaleidoscope_test()
 {
     static int index = -1;
 
-    EVERY_N_MILLISECONDS(500)
+    EVERY_N_MILLISECONDS(100)
     {
         // erase the last pixel
         kaleidoscope.drawKaleidoscopePixel6(index, CRGB::Black); // off

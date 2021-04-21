@@ -40,11 +40,25 @@
 // if we call FastLED.Show every loop. Maintain a 'dirty' bit so we know when
 // to call Show.
 CRGB leds[NUM_STRIPS * NUM_LEDS_PER_STRIP];
-boolean leds_dirty = false;
+boolean leds_dirty = true;
 
 #include "debug.h"
 #include "Kaleidoscope.h"
+#include "ripples.h"
 #include "RealTimeClock.h"
+
+// global instances of objects
+RealTimeClock clock;
+Kaleidoscope kaleidoscope;
+
+// Instantiate Button objects from the Bounce2 namespace
+Bounce2::Button leftButton = Bounce2::Button();
+Bounce2::Button rightButton = Bounce2::Button();
+#define DEBOUNCE_MS 5 // Button debounce time, in milliseconds
+
+// Instantiate rotary encoder knob objects
+Encoder knobRight(ENCODER_CLK_PIN_RIGHT, ENCODER_DIRECTION_PIN_RIGHT);
+Encoder knobLeft(ENCODER_CLK_PIN_LEFT, ENCODER_DIRECTION_PIN_LEFT);
 
 // All Pixels off
 void mode_off()
@@ -60,8 +74,93 @@ void mode_snowflake()
 {
 }
 
+//
+// BRIGHTNESS helpers -------------------------------------------------
+//
+
+static int LEDBrightnessManualOffset = 0;
+
+// automatically adjust the brightness of the LED strips to match the ambient lighting
+void adjustBrightness()
+{
+  // store the current LED brightness so we can minimize minor differences
+  static int LEDbrightness = 0;
+
+  // check the photocell and map 0-1023 to 0-255 since that is the range for setBrightness
+  // it is currently setup to use the internal pullup resistor so we need to invert and reading
+  int photocellReading = 1023 - analogRead(PHOTOCELL_PIN);
+  int newBrightness = min(1023, max(0, photocellReading + LEDBrightnessManualOffset));
+  newBrightness = map(newBrightness, 0, 1023, 0, 255);
+
+  // adjust our brightness if it has changed significantly
+  if ((newBrightness > LEDbrightness + 10) || (newBrightness < LEDbrightness - 10))
+  {
+#ifdef DEBUG
+    DB_PRINT(F("Analog photocell reading = "));
+    DB_PRINTLN(photocellReading); // the raw analog reading
+    DB_PRINT(F("new brightness = "));
+    DB_PRINTLN(newBrightness);
+#endif
+
+    LEDbrightness = newBrightness;
+    FastLED.setBrightness(LEDbrightness);
+    leds_dirty = true;
+  }
+}
+
+#define KNOB_MULTIPLIER 12
 void mode_set_brightness()
 {
+  fill_rainbow(leds, NUM_STRIPS * NUM_LEDS_PER_STRIP, 0, 255 / TRIANGLE_COUNT);
+
+  // read and report on the knobs
+  static int32_t positionLeft = -9999;
+  static int32_t positionRight = -9999;
+
+  // keep each knob's offset between -1023 and 1023
+  int32_t newLeft = knobLeft.read() * KNOB_MULTIPLIER;
+  if (newLeft < -1023)
+  {
+    newLeft = -1023;
+    knobLeft.write(newLeft / KNOB_MULTIPLIER);
+  }
+  if (newLeft > 1023)
+  {
+    newLeft = 1023;
+    knobLeft.write(newLeft / KNOB_MULTIPLIER);
+  }
+  int32_t newRight = knobRight.read() * 12;
+  if (newRight < -1023)
+  {
+    newRight = -1023;
+    knobRight.write(newRight / KNOB_MULTIPLIER);
+  }
+  if (newRight > 1023)
+  {
+    newRight = 1023;
+    knobRight.write(newRight / KNOB_MULTIPLIER);
+  }
+
+  // negate the read so that brightness gets higher clockwise, lower counterclockwise
+  newLeft = -newLeft;
+  newRight = -newRight;
+
+  // if the brighness knobs have changed
+  if (newLeft != positionLeft || newRight != positionRight)
+  {
+    positionLeft = newLeft;
+    positionRight = newRight;
+    LEDBrightnessManualOffset = min(1023, max(-1023, positionLeft + positionRight)); // keep total offset between -1023 and 1023
+#ifdef NDEBUG
+    DB_PRINT(F("Left = "));
+    DB_PRINT(newLeft);
+    DB_PRINT(F(", Right = "));
+    DB_PRINTLN(newRight);
+    DB_PRINT(F("LEDBrightnessManualOffset = "));
+    DB_PRINTLN(LEDBrightnessManualOffset);
+#endif
+    adjustBrightness();
+  }
 }
 
 #ifdef DEMO
@@ -114,6 +213,7 @@ void (*renderFunc[])(void){
     mode_kaleidoscope_rainbowMarch,
     mode_kaleidoscope_plasma,
     mode_kaleidoscope_sawTooth,
+    mode_kaleidoscope_ripples,
     mode_blendWave,
 #endif
 #ifdef DEBUG
@@ -141,6 +241,7 @@ const char modeNames[N_MODES][64] =
         "mode_kaleidoscope_rainbowMarch",
         "mode_kaleidoscope_plasma",
         "mode_kaleidoscope_sawTooth",
+        "mode_kaleidoscope_ripples",
         "mode_blendWave",
 #endif
 #ifdef DEBUG
@@ -149,44 +250,6 @@ const char modeNames[N_MODES][64] =
         "mode_off"
 #endif
 };
-
-// global instances of objects
-RealTimeClock clock;
-Kaleidoscope kaleidoscope;
-
-// Instantiate Button objects from the Bounce2 namespace
-Bounce2::Button leftButton = Bounce2::Button();
-Bounce2::Button rightButton = Bounce2::Button();
-#define DEBOUNCE_MS 5 // Button debounce time, in milliseconds
-
-// Instantiate rotary encoder knob objects
-Encoder knobRight(ENCODER_CLK_PIN_RIGHT, ENCODER_DIRECTION_PIN_RIGHT);
-Encoder knobLeft(ENCODER_CLK_PIN_LEFT, ENCODER_DIRECTION_PIN_LEFT);
-
-// automatically adjust the brightness of the LED strips to match the ambient lighting
-void adjustBrightness()
-{
-  // store the current LED brightness so we can minimize minor differences
-  static int LEDbrightness = 0;
-
-  // check the photocell and map 0-1023 to 0-255 since that is the range for setBrightness
-  // it is currently setup to use the internal pullup resistor so we need to invert and reading
-  int photocellReading = 1023 - analogRead(PHOTOCELL_PIN);
-  int newBrightness = map(photocellReading, 0, 1023, 0, 255);
-
-  // adjust our brightness if it has changed significantly
-  if ((newBrightness > LEDbrightness + 5) || (newBrightness < LEDbrightness - 5))
-  {
-    DB_PRINT(F("Analog photocell reading = "));
-    DB_PRINTLN(photocellReading); // the raw analog reading
-    DB_PRINT(F("new brightness = "));
-    DB_PRINTLN(newBrightness);
-
-    LEDbrightness = newBrightness;
-    FastLED.setBrightness(LEDbrightness);
-    leds_dirty = true;
-  }
-}
 
 //
 // SETUP FUNCTION -- RUNS ONCE AT PROGRAM START ----------------------------
@@ -223,6 +286,7 @@ void setup()
   // https://github.com/FastLED/FastLED/wiki/Parallel-Output#parallel-output-on-the-teensy-4
   FastLED.addLeds<NUM_STRIPS, WS2812B, LED_STRIPS_PIN_BASE, GRB>(leds, NUM_LEDS_PER_STRIP);
   FastLED.clear();
+  leds_dirty = true;
 
   // intialize the real time clock
   clock.setup();
@@ -251,6 +315,7 @@ void loop()
 
     // clear the led strips for the new mode
     FastLED.clear();
+    leds_dirty = true;
   }
 
   // Right button pressed?
@@ -265,33 +330,18 @@ void loop()
 
     // clear the led strips for the new mode
     FastLED.clear();
+    leds_dirty = true;
   }
 
-  // read and report on the knobs
-  static int32_t positionLeft = -9999;
-  static int32_t positionRight = -9999;
-  int32_t newLeft = knobLeft.read();
-  int32_t newRight = knobRight.read();
-  if (newLeft != positionLeft || newRight != positionRight)
-  {
-    DB_PRINT(F("Left = "));
-    DB_PRINT(newLeft);
-    DB_PRINT(F(", Right = "));
-    DB_PRINT(newRight);
-    DB_PRINTLN();
-    positionLeft = newLeft;
-    positionRight = newRight;
-  }
-
-  // Render one frame in current mode. To control the speed of updates, save the time the frame
-  // was last displayed and only display the next frame when enough time has elapsed. See
-  // mode_kaleidoscope_screensaver for an example.
+  // Render one frame in current mode. To control the speed of updates, use the
+  // EVERY_N_MILLISECONDS(N) macro to only update the frame when it is needed.
+  // Also be sure to set leds_dirty = true so that the updated frame will be displayed.
   (*renderFunc[mode])();
 
   // update the clock overlay
-  clock.loop();
+  //  clock.loop();
 
-  // if we have changes in the LEDs, show the current frame
+  // if we have changes in the LEDs, show the updated frame
   if (leds_dirty)
   {
     FastLED.show();
