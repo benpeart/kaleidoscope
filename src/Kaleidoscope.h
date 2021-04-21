@@ -269,6 +269,7 @@ public:
 
         offset_1 = (++offset_1) % strip_1_columns;
         offset_2 = (++offset_2) % strip_2_columns;
+        leds_dirty = true;
     }
 
     // https://stackoverflow.com/questions/1102692/how-to-alpha-blend-rgba-unsigned-byte-color-fast
@@ -348,11 +349,13 @@ private:
         case 0:
             leds[0 * NUM_LEDS_PER_STRIP + index] = rgb;
             leds[3 * NUM_LEDS_PER_STRIP + index] = rgb;
+            leds_dirty = true;
             break;
 
         case 1:
             leds[1 * NUM_LEDS_PER_STRIP + index] = rgb;
             leds[2 * NUM_LEDS_PER_STRIP + index] = rgb;
+            leds_dirty = true;
             break;
 
         default:
@@ -376,7 +379,10 @@ void mode_kaleidoscope_screensaver()
 
 void mode_kaleidoscope_interactive()
 {
-    kaleidoscope.loop();
+    EVERY_N_MILLISECONDS(50)
+    {
+        kaleidoscope.loop();
+    }
 }
 
 #ifdef DEBUG
@@ -407,13 +413,16 @@ void mode_kaleidoscope_test()
 // https://github.com/atuline/FastLED-Demos/blob/master/rainbow_march/rainbow_march.ino
 void mode_kaleidoscope_rainbowMarch()
 {
-    uint8_t thisdelay = 200, deltahue = 255 / TRIANGLE_COUNT;
-    uint8_t thishue = millis() * (255 - thisdelay) / 255; // To change the rate, add a beat or something to the result. 'thisdelay' must be a fixed value.
+    EVERY_N_MILLISECONDS(50)
+    {
+        uint8_t thisdelay = 200, deltahue = 255 / TRIANGLE_COUNT;
+        uint8_t thishue = millis() * (255 - thisdelay) / 255; // To change the rate, add a beat or something to the result. 'thisdelay' must be a fixed value.
 
-    // thishue = beat8(50);           // This uses a FastLED sawtooth generator. Again, the '50' should not change on the fly.
-    // thishue = beatsin8(50,0,255);  // This can change speeds on the fly. You can also add these to each other.
+        // thishue = beat8(50);           // This uses a FastLED sawtooth generator. Again, the '50' should not change on the fly.
+        // thishue = beatsin8(50,0,255);  // This can change speeds on the fly. You can also add these to each other.
 
-    kaleidoscope.fill_kaleidoscope_rainbow(thishue, deltahue);
+        kaleidoscope.fill_kaleidoscope_rainbow(thishue, deltahue);
+    }
 }
 
 // https://github.com/atuline/FastLED-Demos/blob/master/plasma/plasma.ino
@@ -429,7 +438,7 @@ void mode_kaleidoscope_plasma()
     static TBlendType currentBlending = LINEARBLEND;
 
     EVERY_N_MILLISECONDS(50)
-    {                                         // FastLED based non-blocking delay to update/display the sequence.
+    {
         int thisPhase = beatsin8(6, -64, 64); // Setting phase change for a couple of waves.
         int thatPhase = beatsin8(7, -64, 64);
 

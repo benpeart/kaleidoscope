@@ -14,36 +14,35 @@
 #include <RTClib.h>
 #endif
 
-#define ENCODER
 #define DEBUG
 #define DEMO
 
 //
 // GLOBAL PIN DECLARATIONS -------------------------------------------------
 //
-#ifdef PHOTOCELL
-#define PHOTOCELL_PIN 1 // the cell and 10K pulldown are connected to a0
-#endif
+#define PHOTOCELL_PIN A9
 
-#ifdef ENCODER
 // Change these pin numbers to the pins connected to your encoder.
 //   Best Performance: CLK and DT pins have interrupt capability
 //   Good Performance: only CLK pins have interrupt capability
 //   Low Performance:  neither pin has interrupt capability
-#define ENCODER_CLK_PIN_RIGHT 10
 #define ENCODER_CLK_PIN_LEFT 0
-#define ENCODER_DIRECTION_PIN_RIGHT 11
 #define ENCODER_DIRECTION_PIN_LEFT 1
-
-#define ENCODER_BUTTON_PIN_RIGHT 12
 #define ENCODER_BUTTON_PIN_LEFT 2
-#endif
+#define ENCODER_CLK_PIN_RIGHT 10
+#define ENCODER_DIRECTION_PIN_RIGHT 11
+#define ENCODER_BUTTON_PIN_RIGHT 12
 
+// setup our LED strips for parallel output using FastLED
 #define LED_STRIPS_PIN_BASE 19
 #define NUM_STRIPS 4
 #define NUM_LEDS_PER_STRIP 156
 
+// The Teensy with parallel updates for the LEDs is so fast, we get flickering
+// if we call FastLED.Show every loop. Maintain a 'dirty' bit so we know when
+// to call Show.
 CRGB leds[NUM_STRIPS * NUM_LEDS_PER_STRIP];
+boolean leds_dirty = false;
 
 #include "debug.h"
 #include "Kaleidoscope.h"
@@ -79,46 +78,19 @@ void mode_blendWave()
   static uint8_t speed;
   static uint8_t loc1;
 
-  speed = beatsin8(6, 0, 255);
+  EVERY_N_MILLISECONDS(50)
+  {
+    speed = beatsin8(6, 0, 255);
 
-  clr1 = blend(CHSV(beatsin8(3, 0, 255), 255, 255), CHSV(beatsin8(4, 0, 255), 255, 255), speed);
-  clr2 = blend(CHSV(beatsin8(4, 0, 255), 255, 255), CHSV(beatsin8(3, 0, 255), 255, 255), speed);
+    clr1 = blend(CHSV(beatsin8(3, 0, 255), 255, 255), CHSV(beatsin8(4, 0, 255), 255, 255), speed);
+    clr2 = blend(CHSV(beatsin8(4, 0, 255), 255, 255), CHSV(beatsin8(3, 0, 255), 255, 255), speed);
 
-  loc1 = beatsin8(10, 0, NUM_STRIPS * NUM_LEDS_PER_STRIP - 1);
+    loc1 = beatsin8(10, 0, NUM_STRIPS * NUM_LEDS_PER_STRIP - 1);
 
-  fill_gradient_RGB(leds, 0, clr2, loc1, clr1);
-  fill_gradient_RGB(leds, loc1, clr2, NUM_STRIPS * NUM_LEDS_PER_STRIP - 1, clr1);
-}
-
-// https://github.com/atuline/FastLED-Demos/blob/master/rainbow_march/rainbow_march.ino
-void mode_rainbowMarch()
-{
-  uint8_t thisdelay = 200, deltahue = 10;
-  uint8_t thishue = millis() * (255 - thisdelay) / 255; // To change the rate, add a beat or something to the result. 'thisdelay' must be a fixed value.
-
-  // thishue = beat8(50);           // This uses a FastLED sawtooth generator. Again, the '50' should not change on the fly.
-  // thishue = beatsin8(50,0,255);  // This can change speeds on the fly. You can also add these to each other.
-
-  fill_rainbow(leds, NUM_STRIPS * NUM_LEDS_PER_STRIP, thishue, deltahue);
-}
-
-// https://github.com/atuline/FastLED-Demos/blob/master/sawtooth/sawtooth.ino
-void mode_sawTooth()
-{
-  // Palette definitions
-  static CRGBPalette16 currentPalette = PartyColors_p;
-  static TBlendType currentBlending = LINEARBLEND; // NOBLEND or LINEARBLEND
-
-  int bpm = 60;
-  int ms_per_beat = 60000 / bpm; // 500ms per beat, where 60,000 = 60 seconds * 1000 ms
-  int ms_per_led = 60000 / bpm / NUM_STRIPS * NUM_LEDS_PER_STRIP;
-
-  int cur_led = ((millis() % ms_per_beat) / ms_per_led) % (NUM_STRIPS * NUM_LEDS_PER_STRIP); // Using millis to count up the strand, with %NUM_LEDS at the end as a safety factor.
-
-  if (cur_led == 0)
-    fill_solid(leds, NUM_STRIPS * NUM_LEDS_PER_STRIP, CRGB::Black);
-  else
-    leds[cur_led] = ColorFromPalette(currentPalette, 0, 255, currentBlending); // I prefer to use palettes instead of CHSV or CRGB assignments.
+    fill_gradient_RGB(leds, 0, clr2, loc1, clr1);
+    fill_gradient_RGB(leds, loc1, clr2, NUM_STRIPS * NUM_LEDS_PER_STRIP - 1, clr1);
+    leds_dirty = true;
+  }
 }
 
 #endif // DEMO
@@ -149,8 +121,6 @@ void (*renderFunc[])(void){
     mode_kaleidoscope_plasma,
     mode_kaleidoscope_sawTooth,
     mode_blendWave,
-    mode_rainbowMarch,
-    mode_sawTooth,
 #endif
 #ifdef DEBUG
     mode_kaleidoscope_test,
@@ -180,8 +150,6 @@ const char modeNames[N_MODES][64] =
         "mode_kaleidoscope_plasma",
         "mode_kaleidoscope_sawTooth",
         "mode_blendWave",
-        "mode_rainbowMarch",
-        "mode_sawTooth",
 #endif
 #ifdef DEBUG
         "mode_kaleidoscope_test",
@@ -196,7 +164,6 @@ RealTimeClock clock;
 #endif
 Kaleidoscope kaleidoscope;
 
-#ifdef ENCODER
 // Instantiate Button objects from the Bounce2 namespace
 Bounce2::Button leftButton = Bounce2::Button();
 Bounce2::Button rightButton = Bounce2::Button();
@@ -205,9 +172,7 @@ Bounce2::Button rightButton = Bounce2::Button();
 // Instantiate rotary encoder knob objects
 Encoder knobRight(ENCODER_CLK_PIN_RIGHT, ENCODER_DIRECTION_PIN_RIGHT);
 Encoder knobLeft(ENCODER_CLK_PIN_LEFT, ENCODER_DIRECTION_PIN_LEFT);
-#endif
 
-#ifdef PHOTOCELL
 // automatically adjust the brightness of the LED strips to match the ambient lighting
 void adjustBrightness()
 {
@@ -215,7 +180,8 @@ void adjustBrightness()
   static int LEDbrightness = 0;
 
   // check the photocell and map 0-1023 to 0-255 since that is the range for setBrightness
-  int photocellReading = analogRead(PHOTOCELL_PIN);
+  // it is currently setup to use the internal pullup resistor so we need to invert and reading
+  int photocellReading = 1023 - analogRead(PHOTOCELL_PIN);
   int newBrightness = map(photocellReading, 0, 1023, 0, 255);
 
   // adjust our brightness if it has changed significantly
@@ -228,9 +194,9 @@ void adjustBrightness()
 
     LEDbrightness = newBrightness;
     FastLED.setBrightness(LEDbrightness);
+    leds_dirty = true;
   }
 }
-#endif
 
 //
 // SETUP FUNCTION -- RUNS ONCE AT PROGRAM START ----------------------------
@@ -251,7 +217,9 @@ void setup()
   // initialize the random number generator using noise from analog pin 5
   randomSeed(analogRead(5));
 
-#ifdef ENCODER
+  // initialize the photo resister using the pullup resistor
+  pinMode(PHOTOCELL_PIN, INPUT_PULLUP);
+
   // initialize the rotary encoder buttons using the pullup resistor
   leftButton.attach(ENCODER_BUTTON_PIN_LEFT, INPUT_PULLUP);
   leftButton.interval(DEBOUNCE_MS);
@@ -259,14 +227,12 @@ void setup()
   rightButton.attach(ENCODER_BUTTON_PIN_RIGHT, INPUT_PULLUP);
   rightButton.interval(DEBOUNCE_MS);
   rightButton.setPressedState(LOW);
-#endif
   DB_PRINTLN(modeNames[mode]);
 
   // intialize the LED strips for parallel output on the Teensy 4
   // https://github.com/FastLED/FastLED/wiki/Parallel-Output#parallel-output-on-the-teensy-4
   FastLED.addLeds<NUM_STRIPS, WS2812B, LED_STRIPS_PIN_BASE, GRB>(leds, NUM_LEDS_PER_STRIP);
   FastLED.clear();
-  FastLED.setBrightness(32);
 #ifdef CLOCK
   // intialize the real time clock
   clock.setup();
@@ -281,17 +247,11 @@ void setup()
 //
 void loop()
 {
-#ifdef PHOTOCELL
   // automatically adjust the brightness of the LED strips to match the ambient lighting
   adjustBrightness();
-#endif
 
-#ifdef ENCODER
-  // Update the buttons
+  // Left button pressed?
   leftButton.update();
-  rightButton.update();
-
-  // Handle button pressed?
   if (leftButton.pressed())
   {
     if (mode)
@@ -305,6 +265,7 @@ void loop()
   }
 
   // Right button pressed?
+  rightButton.update();
   if (rightButton.pressed())
   {
     if (mode < (N_MODES - 1))
@@ -332,7 +293,6 @@ void loop()
     positionLeft = newLeft;
     positionRight = newRight;
   }
-#endif
 
   // Render one frame in current mode. To control the speed of updates, save the time the frame
   // was last displayed and only display the next frame when enough time has elapsed. See
@@ -345,9 +305,10 @@ void loop()
   clock.loop();
 #endif
 
-  // update the led strips to show the current frame
-  EVERY_N_MILLISECONDS(250)
+  // if we have changes in the LEDs, show the current frame
+  if (leds_dirty)
   {
     FastLED.show();
+    leds_dirty = false;
   }
 }
