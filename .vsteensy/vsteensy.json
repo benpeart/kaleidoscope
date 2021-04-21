@@ -16,9 +16,9 @@
       "projectLibraries": [
         "Bounce2",
         "Encoder",
+        "FastLED",
         "SPI",
-        "Time",
-        "FastLED-3.4.0.zip"
+        "Time"
       ],
       "board": {
         "name": "Teensy 4.0",

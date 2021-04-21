@@ -9,10 +9,8 @@
 // https://github.com/FastLED/FastLED
 #include <FastLED.h>
 
-#ifdef CLOCK
-// https://github.com/adafruit/RTClib
-#include <RTClib.h>
-#endif
+// https://github.com/PaulStoffregen/Time
+#include <TimeLib.h>
 
 #define DEBUG
 #define DEMO
@@ -46,9 +44,7 @@ boolean leds_dirty = false;
 
 #include "debug.h"
 #include "Kaleidoscope.h"
-#ifdef CLOCK
 #include "RealTimeClock.h"
-#endif
 
 // All Pixels off
 void mode_off()
@@ -85,7 +81,7 @@ void mode_blendWave()
     clr1 = blend(CHSV(beatsin8(3, 0, 255), 255, 255), CHSV(beatsin8(4, 0, 255), 255, 255), speed);
     clr2 = blend(CHSV(beatsin8(4, 0, 255), 255, 255), CHSV(beatsin8(3, 0, 255), 255, 255), speed);
 
-    loc1 = beatsin8(10, 0, NUM_STRIPS * NUM_LEDS_PER_STRIP - 1);
+    loc1 = beatsin8(10, 0);
 
     fill_gradient_RGB(leds, 0, clr2, loc1, clr1);
     fill_gradient_RGB(leds, loc1, clr2, NUM_STRIPS * NUM_LEDS_PER_STRIP - 1, clr1);
@@ -110,10 +106,8 @@ void (*renderFunc[])(void){
     mode_snowflake,
     mode_off, // make it obvious we're entering 'setup' modes
     mode_kaleidoscope_select_disks,
-#ifdef CLOCK
     mode_select_clock_face,
     mode_set_clock,
-#endif
     mode_set_brightness,
 #ifdef DEMO
     mode_off, // make it obvious we're entering 'demo' modes
@@ -139,10 +133,8 @@ const char modeNames[N_MODES][64] =
         "mode_snowflake",
         "mode_off",
         "mode_kaleidoscope_select_disks",
-#ifdef CLOCK
         "mode_select_clock_face",
         "mode_set_clock",
-#endif
         "mode_set_brightness",
 #ifdef DEMO
         "mode_off",
@@ -159,9 +151,7 @@ const char modeNames[N_MODES][64] =
 };
 
 // global instances of objects
-#ifdef CLOCK
 RealTimeClock clock;
-#endif
 Kaleidoscope kaleidoscope;
 
 // Instantiate Button objects from the Bounce2 namespace
@@ -233,10 +223,9 @@ void setup()
   // https://github.com/FastLED/FastLED/wiki/Parallel-Output#parallel-output-on-the-teensy-4
   FastLED.addLeds<NUM_STRIPS, WS2812B, LED_STRIPS_PIN_BASE, GRB>(leds, NUM_LEDS_PER_STRIP);
   FastLED.clear();
-#ifdef CLOCK
+
   // intialize the real time clock
   clock.setup();
-#endif
 
   // initialize the kaleidoscope
   kaleidoscope.setup();
@@ -279,10 +268,10 @@ void loop()
   }
 
   // read and report on the knobs
-  static long positionLeft = -9999;
-  static long positionRight = -9999;
-  long newLeft = knobLeft.read();
-  long newRight = knobRight.read();
+  static int32_t positionLeft = -9999;
+  static int32_t positionRight = -9999;
+  int32_t newLeft = knobLeft.read();
+  int32_t newRight = knobRight.read();
   if (newLeft != positionLeft || newRight != positionRight)
   {
     DB_PRINT(F("Left = "));
@@ -299,11 +288,8 @@ void loop()
   // mode_kaleidoscope_screensaver for an example.
   (*renderFunc[mode])();
 
-  // render any overlay
-#ifdef CLOCK
-  // update the clock display
+  // update the clock overlay
   clock.loop();
-#endif
 
   // if we have changes in the LEDs, show the current frame
   if (leds_dirty)

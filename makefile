@@ -7,12 +7,12 @@
 # Optimize           Faster
 # Keyboard Layout    US English
 #
-# 4/20/2021 7:12 PM
+# 4/20/2021 11:48 PM
 #******************************************************************************
 SHELL            := cmd.exe
 export SHELL
 
-TARGET_NAME      := DigitalKaleidoscope
+TARGET_NAME      := kaleidoscope
 BOARD_ID         := TEENSY40
 
 MCU              := imxrt1062
@@ -21,7 +21,7 @@ LIBS_SHARED_BASE := C:\Users\Ben\OneDrive\Documents\Arduino\libraries
 LIBS_SHARED      := 
 
 LIBS_LOCAL_BASE  := lib
-LIBS_LOCAL       := Bounce2 Encoder SPI Time FastLED 
+LIBS_LOCAL       := Bounce2 Encoder FastLED SPI Time 
 
 CORE_BASE        := C:\PROGRA~2\Arduino\hardware\teensy\avr\cores\teensy4
 GCC_BASE         := C:\PROGRA~2\Arduino\hardware\tools\arm\bin
