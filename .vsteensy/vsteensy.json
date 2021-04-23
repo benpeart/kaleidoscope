@@ -18,7 +18,8 @@
         "Encoder",
         "FastLED",
         "SPI",
-        "Time"
+        "Time",
+        "OctoWS2811"
       ],
       "board": {
         "name": "Teensy 4.0",

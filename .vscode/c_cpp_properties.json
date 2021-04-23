@@ -9,7 +9,8 @@
         "lib/Encoder/**",
         "lib/FastLED/**",
         "lib/SPI/**",
-        "lib/Time/**"
+        "lib/Time/**",
+        "lib/OctoWS2811/**"
       ],
       "forcedInclude": [],
       "defines": [

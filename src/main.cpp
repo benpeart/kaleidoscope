@@ -12,6 +12,9 @@
 // https://github.com/PaulStoffregen/Time
 #include <TimeLib.h>
 
+// https://github.com/PaulStoffregen/OctoWS2811
+#include <OctoWS2811.h>
+
 #define DEBUG
 #define DEMO
 
@@ -36,10 +39,49 @@
 #define NUM_STRIPS 4
 #define NUM_LEDS_PER_STRIP 156
 
+template <EOrder RGB_ORDER = GRB, uint8_t CHIP = WS2811_800kHz>
+class CTeensy4Controller : public CPixelLEDController<RGB_ORDER, 8, 0xFF>
+{
+  OctoWS2811 *pocto;
+
+public:
+  CTeensy4Controller(OctoWS2811 *_pocto)
+      : pocto(_pocto){};
+
+  virtual void init() {}
+  virtual void showPixels(PixelController<RGB_ORDER, 8, 0xFF> &pixels)
+  {
+
+    uint32_t i = 0;
+    while (pixels.has(1))
+    {
+      uint8_t r = pixels.loadAndScale0();
+      uint8_t g = pixels.loadAndScale1();
+      uint8_t b = pixels.loadAndScale2();
+      pocto->setPixel(i++, r, g, b);
+      pixels.stepDithering();
+      pixels.advanceData();
+    }
+
+    pocto->show();
+  }
+};
+
+// These buffers need to be large enough for all the pixels.
+// The total number of pixels is "ledsPerStrip * numPins".
+// Each pixel needs 3 bytes, so multiply by 3.  An "int" is
+// 4 bytes, so divide by 4.  The array is created using "int"
+// so the compiler will align it to 32 bit memory.
+DMAMEM int displayMemory[NUM_LEDS_PER_STRIP * NUM_STRIPS * 3 / 4];
+int drawingMemory[NUM_LEDS_PER_STRIP * NUM_STRIPS * 3 / 4];
+byte pinList[NUM_STRIPS] = {19, 18, 14, 15};
+CRGB leds[NUM_STRIPS * NUM_LEDS_PER_STRIP];
+OctoWS2811 octo(NUM_LEDS_PER_STRIP, displayMemory, drawingMemory, WS2811_RGB | WS2811_800kHz, NUM_STRIPS, pinList);
+CTeensy4Controller<GRB, WS2811_800kHz> *pcontroller;
+
 // The Teensy with parallel updates for the LEDs is so fast, we get flickering
 // if we call FastLED.Show every loop. Maintain a 'dirty' bit so we know when
 // to call Show.
-CRGB leds[NUM_STRIPS * NUM_LEDS_PER_STRIP];
 boolean leds_dirty = true;
 
 #include "debug.h"
@@ -68,6 +110,7 @@ void mode_off()
 
 void mode_color_wash()
 {
+  fill_rainbow(leds, NUM_STRIPS * NUM_LEDS_PER_STRIP, 0, 20);
 }
 
 void mode_snowflake()
@@ -78,54 +121,60 @@ void mode_snowflake()
 // BRIGHTNESS helpers -------------------------------------------------
 //
 
-#define KNOB_MULTIPLIER 12
+#define KNOB_MULTIPLIER 10
 
 // automatically adjust the brightness of the LED strips to match the ambient lighting
 void adjustBrightness()
 {
   // store the current LED brightness so we can minimize minor differences
   static int LEDbrightness = 0;
+  static int lastKnob = 0;
   static int LEDBrightnessManualOffset = 0;
-//  static int32_t positionRight = -9999;
 
-  // use the right knob as a brightness adjustment
-  int rightKnob = knobRight.read() * KNOB_MULTIPLIER;
-  if (rightKnob < -1023)
-  {
-    rightKnob = -1023;
-    knobRight.write(rightKnob / KNOB_MULTIPLIER);
-  }
-  if (rightKnob > 1023)
-  {
-    rightKnob = 1023;
-    knobRight.write(rightKnob / KNOB_MULTIPLIER);
-  }
-
-  // negate the knob position so that brightness gets higher clockwise, lower counterclockwise
-  rightKnob = -rightKnob;
-
-  LEDBrightnessManualOffset = min(1023, max(-1023, rightKnob)); // keep total offset between -1023 and 1023
-
-  // check the photocell and map 0-1023 to 0-255 since that is the range for setBrightness
-  // it is currently setup to use the internal pullup resistor so we need to invert and reading
+  // check the photocell and debounce it a bit as it moves around a lot
+  // it is currently setup to use the internal pullup resistor so we need to invert it's value
+  static int lastPhotocell = 0;
   int photocellReading = 1023 - analogRead(PHOTOCELL_PIN);
-  int newBrightness = min(1023, max(0, photocellReading + LEDBrightnessManualOffset));
-  newBrightness = map(newBrightness, 0, 1023, 0, 255);
+  if ((photocellReading > lastPhotocell + 75) || (photocellReading < lastPhotocell - 75))
+  {
+    lastPhotocell = photocellReading;
 
-  // adjust our brightness if it has changed significantly
-  if ((newBrightness > LEDbrightness + 10) || (newBrightness < LEDbrightness - 10))
+    DB_PRINT(F("photocell reading = "));
+    DB_PRINTLN(photocellReading);
+  }
+
+  // use the right knob as a brightness increment/decrement
+  int knob = knobRight.read();
+  if (knob != lastKnob)
+  {
+    if (knob > lastKnob)
+      LEDBrightnessManualOffset -= KNOB_MULTIPLIER;
+    else
+      LEDBrightnessManualOffset += KNOB_MULTIPLIER;
+
+    LEDBrightnessManualOffset = constrain(LEDBrightnessManualOffset, -1023, 1023);
+    lastKnob = knob;
+
+    DB_PRINT(F("LEDBrightnessManualOffset = "));
+    DB_PRINTLN(LEDBrightnessManualOffset);
+  }
+
+  // map our total brightness from 0-1023 to 0-255 since that is the range for setBrightness
+  int newBrightness = map(lastPhotocell + LEDBrightnessManualOffset, 0, 1023, 0, 255);
+  newBrightness = constrain(newBrightness, 0, 255);
+
+  // adjust our brightness if it has changed
+  if (newBrightness != LEDbrightness)
   {
 #ifdef DEBUG
-    DB_PRINT(F("Analog photocell reading = "));
-    DB_PRINTLN(photocellReading);
-    DB_PRINT(F("Brightness knob reading  = "));
-    DB_PRINTLN(LEDBrightnessManualOffset);
+    /*    
+    DB_PRINTLN(LEDBrightnessManualOffset);*/
     DB_PRINT(F("new brightness = "));
     DB_PRINTLN(newBrightness);
 #endif
 
     LEDbrightness = newBrightness;
-    FastLED.setBrightness(LEDbrightness);
+    FastLED.setBrightness(dim8_raw(LEDbrightness));
     leds_dirty = true;
   }
 }
@@ -232,11 +281,17 @@ void setup()
 #endif
 #endif
 
-  // initialize the random number generator using noise from analog pin 5
-  randomSeed(analogRead(5));
+  // initialize the random number generator using noise from an analog pin
+  randomSeed(analogRead(PHOTOCELL_PIN));
 
   // initialize the photo resister using the pullup resistor
   pinMode(PHOTOCELL_PIN, INPUT_PULLUP);
+
+  // intialize the real time clock
+  clock.setup();
+
+  // initialize the kaleidoscope
+  kaleidoscope.setup();
 
   // initialize the rotary encoder buttons using the pullup resistor
   leftButton.attach(ENCODER_BUTTON_PIN_LEFT, INPUT_PULLUP);
@@ -248,16 +303,11 @@ void setup()
   DB_PRINTLN(modeNames[mode]);
 
   // intialize the LED strips for parallel output on the Teensy 4
-  // https://github.com/FastLED/FastLED/wiki/Parallel-Output#parallel-output-on-the-teensy-4
-  FastLED.addLeds<NUM_STRIPS, WS2812B, LED_STRIPS_PIN_BASE, GRB>(leds, NUM_LEDS_PER_STRIP);
+  octo.begin();
+  pcontroller = new CTeensy4Controller<GRB, WS2811_800kHz>(&octo);
+  FastLED.addLeds(pcontroller, leds, NUM_STRIPS * NUM_LEDS_PER_STRIP);
   FastLED.clear();
   leds_dirty = true;
-
-  // intialize the real time clock
-  clock.setup();
-
-  // initialize the kaleidoscope
-  kaleidoscope.setup();
 }
 
 //

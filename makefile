@@ -7,7 +7,7 @@
 # Optimize           Faster
 # Keyboard Layout    US English
 #
-# 4/20/2021 11:48 PM
+# 4/22/2021 4:48 PM
 #******************************************************************************
 SHELL            := cmd.exe
 export SHELL
@@ -21,7 +21,7 @@ LIBS_SHARED_BASE := C:\Users\Ben\OneDrive\Documents\Arduino\libraries
 LIBS_SHARED      := 
 
 LIBS_LOCAL_BASE  := lib
-LIBS_LOCAL       := Bounce2 Encoder FastLED SPI Time 
+LIBS_LOCAL       := Bounce2 Encoder FastLED SPI Time OctoWS2811 
 
 CORE_BASE        := C:\PROGRA~2\Arduino\hardware\teensy\avr\cores\teensy4
 GCC_BASE         := C:\PROGRA~2\Arduino\hardware\tools\arm\bin
