@@ -121,7 +121,7 @@ void mode_snowflake()
 // BRIGHTNESS helpers -------------------------------------------------
 //
 
-#define KNOB_MULTIPLIER 10
+#define KNOB_INCREMENT 10
 
 // automatically adjust the brightness of the LED strips to match the ambient lighting
 void adjustBrightness()
@@ -148,9 +148,9 @@ void adjustBrightness()
   if (knob != lastKnob)
   {
     if (knob > lastKnob)
-      LEDBrightnessManualOffset -= KNOB_MULTIPLIER;
+      LEDBrightnessManualOffset -= KNOB_INCREMENT;
     else
-      LEDBrightnessManualOffset += KNOB_MULTIPLIER;
+      LEDBrightnessManualOffset += KNOB_INCREMENT;
 
     LEDBrightnessManualOffset = constrain(LEDBrightnessManualOffset, -1023, 1023);
     lastKnob = knob;
@@ -167,8 +167,6 @@ void adjustBrightness()
   if (newBrightness != LEDbrightness)
   {
 #ifdef DEBUG
-    /*    
-    DB_PRINTLN(LEDBrightnessManualOffset);*/
     DB_PRINT(F("new brightness = "));
     DB_PRINTLN(newBrightness);
 #endif
@@ -178,33 +176,6 @@ void adjustBrightness()
     leds_dirty = true;
   }
 }
-
-#ifdef DEMO
-
-// https://github.com/atuline/FastLED-Demos/blob/master/blendwave/blendwave.ino
-void mode_blendWave()
-{
-  static CRGB clr1;
-  static CRGB clr2;
-  static uint8_t speed;
-  static uint8_t loc1;
-
-  EVERY_N_MILLISECONDS(50)
-  {
-    speed = beatsin8(6, 0, 255);
-
-    clr1 = blend(CHSV(beatsin8(3, 0, 255), 255, 255), CHSV(beatsin8(4, 0, 255), 255, 255), speed);
-    clr2 = blend(CHSV(beatsin8(4, 0, 255), 255, 255), CHSV(beatsin8(3, 0, 255), 255, 255), speed);
-
-    loc1 = beatsin8(10, 0);
-
-    fill_gradient_RGB(leds, 0, clr2, loc1, clr1);
-    fill_gradient_RGB(leds, loc1, clr2, NUM_STRIPS * NUM_LEDS_PER_STRIP - 1, clr1);
-    leds_dirty = true;
-  }
-}
-
-#endif // DEMO
 
 //
 // GLOBAL VARIABLES --------------------------------------------------------
@@ -229,7 +200,7 @@ void (*renderFunc[])(void){
     mode_kaleidoscope_plasma,
     mode_kaleidoscope_sawTooth,
     mode_kaleidoscope_ripples,
-    mode_blendWave,
+    mode_kaleidoscope_blendWave,
 #endif
 #ifdef DEBUG
     mode_kaleidoscope_test,
@@ -256,7 +227,7 @@ const char modeNames[N_MODES][64] =
         "mode_kaleidoscope_plasma",
         "mode_kaleidoscope_sawTooth",
         "mode_kaleidoscope_ripples",
-        "mode_blendWave",
+        "mode_kaleidoscope_blendWave",
 #endif
 #ifdef DEBUG
         "mode_kaleidoscope_test",
