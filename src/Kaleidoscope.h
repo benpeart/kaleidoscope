@@ -267,8 +267,10 @@ public:
             end++;
         }
 
-        offset_1 = (++offset_1) % strip_1_columns;
-        offset_2 = (++offset_2) % strip_2_columns;
+        ++offset_1;
+        offset_1 = offset_1 % strip_1_columns;
+        ++offset_2;
+        offset_2 = offset_2 % strip_2_columns;
         leds_dirty = true;
     }
 

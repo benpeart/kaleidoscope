@@ -15,7 +15,7 @@
 // https://github.com/PaulStoffregen/OctoWS2811
 #include <OctoWS2811.h>
 
-#define DEBUG
+//#define DEBUG
 #define DEMO
 
 //
@@ -210,8 +210,7 @@ void (*renderFunc[])(void){
 #define N_MODES (sizeof(renderFunc) / sizeof(renderFunc[0]))
 uint8_t mode = 0; // Index of current mode in table
 
-#ifdef DEBUG
-const char modeNames[N_MODES][64] =
+const PROGMEM char modeNames[N_MODES][64] =
     {
         "mode_kaleidoscope_screensaver",
         "mode_kaleidoscope_interactive",
@@ -232,9 +231,7 @@ const char modeNames[N_MODES][64] =
 #ifdef DEBUG
         "mode_kaleidoscope_test",
 #endif
-        "mode_off"
-#endif
-};
+        "mode_off"};
 
 //
 // SETUP FUNCTION -- RUNS ONCE AT PROGRAM START ----------------------------
