@@ -253,6 +253,11 @@ void setup()
   }
 #endif
 
+#ifdef TIME
+  // intialize the real time clock
+  myclock.setup();
+#endif
+
 #ifdef PHOTOCELL
   // initialize the photo resister using the pullup resistor
   pinMode(PHOTOCELL_PIN, INPUT_PULLUP);
@@ -260,14 +265,6 @@ void setup()
 
   // initialize the random number generator using noise from an analog pin
   randomSeed(analogRead(33));
-
-#ifdef TIME
-  // intialize the real time clock
-  myclock.setup();
-#endif
-
-  // initialize the kaleidoscope
-  kaleidoscope.setup();
 
 #ifdef BOUNCE
   // initialize the rotary encoder buttons using the pullup resistor
@@ -286,6 +283,9 @@ void setup()
   FastLED.addLeds<LED_TYPE, LED_STRIPS_PIN_BASE + 2, COLOR_ORDER>(leds + 2 * NUM_LEDS_PER_STRIP, NUM_LEDS_PER_STRIP).setCorrection(TypicalLEDStrip);
   FastLED.addLeds<LED_TYPE, LED_STRIPS_PIN_BASE + 3, COLOR_ORDER>(leds + 3 * NUM_LEDS_PER_STRIP, NUM_LEDS_PER_STRIP).setCorrection(TypicalLEDStrip);
   leds_dirty = true;
+
+  // initialize the kaleidoscope
+  kaleidoscope.setup();
 }
 
 //
