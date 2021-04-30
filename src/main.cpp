@@ -1,13 +1,14 @@
 #include "Arduino.h"
 
-#ifdef ENCODER
-// https://github.com/PaulStoffregen/Encoder
-#include <Encoder.h>
-#endif
-
+#define BOUNCE
 #ifdef BOUNCE
 // https://github.com/thomasfredericks/Bounce2
 #include <Bounce2.h>
+#endif
+
+#ifdef ENCODER
+// https://github.com/PaulStoffregen/Encoder
+#include <Encoder.h>
 #endif
 
 #define WIFI
@@ -30,21 +31,25 @@
 #define PHOTOCELL_PIN 32
 #endif
 
+#ifdef BOUNCE
+// Change these pin numbers to the button pins on your encoder.
+#define ENCODER_BUTTON_PIN_LEFT 17
+#define ENCODER_BUTTON_PIN_RIGHT 23
+#endif
+
 #ifdef ENCODER
 // Change these pin numbers to the pins connected to your encoder.
-//   Best Performance: CLK and DT pins have interrupt capability
-//   Good Performance: only CLK pins have interrupt capability
-//   Low Performance:  neither pin has interrupt capability
-#define ENCODER_CLK_PIN_LEFT 0
-#define ENCODER_DIRECTION_PIN_LEFT 1
-#define ENCODER_BUTTON_PIN_LEFT 2
-#define ENCODER_CLK_PIN_RIGHT 10
-#define ENCODER_DIRECTION_PIN_RIGHT 11
-#define ENCODER_BUTTON_PIN_RIGHT 12
+#define ENCODER_CLK_PIN_LEFT 4
+#define ENCODER_DIRECTION_PIN_LEFT 16
+#define ENCODER_CLK_PIN_RIGHT 1
+#define ENCODER_DIRECTION_PIN_RIGHT 22
 #endif
 
 // setup our LED strips for parallel output using FastLED
-#define LED_STRIPS_PIN_BASE 16
+#define LED_STRIP_PIN_1 14
+#define LED_STRIP_PIN_2 27
+#define LED_STRIP_PIN_3 26
+#define LED_STRIP_PIN_4 25
 #define NUM_STRIPS 4
 #define NUM_LEDS_PER_STRIP 156
 #define LED_TYPE WS2812B
@@ -278,10 +283,10 @@ void setup()
   DB_PRINTLN(modeNames[mode]);
 
   // intialize the LED strips for parallel output
-  FastLED.addLeds<LED_TYPE, LED_STRIPS_PIN_BASE + 0, COLOR_ORDER>(leds + 0 * NUM_LEDS_PER_STRIP, NUM_LEDS_PER_STRIP).setCorrection(TypicalLEDStrip);
-  FastLED.addLeds<LED_TYPE, LED_STRIPS_PIN_BASE + 1, COLOR_ORDER>(leds + 1 * NUM_LEDS_PER_STRIP, NUM_LEDS_PER_STRIP).setCorrection(TypicalLEDStrip);
-  FastLED.addLeds<LED_TYPE, LED_STRIPS_PIN_BASE + 2, COLOR_ORDER>(leds + 2 * NUM_LEDS_PER_STRIP, NUM_LEDS_PER_STRIP).setCorrection(TypicalLEDStrip);
-  FastLED.addLeds<LED_TYPE, LED_STRIPS_PIN_BASE + 3, COLOR_ORDER>(leds + 3 * NUM_LEDS_PER_STRIP, NUM_LEDS_PER_STRIP).setCorrection(TypicalLEDStrip);
+  FastLED.addLeds<LED_TYPE, LED_STRIP_PIN_1, COLOR_ORDER>(leds + 0 * NUM_LEDS_PER_STRIP, NUM_LEDS_PER_STRIP).setCorrection(TypicalLEDStrip);
+  FastLED.addLeds<LED_TYPE, LED_STRIP_PIN_2, COLOR_ORDER>(leds + 1 * NUM_LEDS_PER_STRIP, NUM_LEDS_PER_STRIP).setCorrection(TypicalLEDStrip);
+  FastLED.addLeds<LED_TYPE, LED_STRIP_PIN_3, COLOR_ORDER>(leds + 2 * NUM_LEDS_PER_STRIP, NUM_LEDS_PER_STRIP).setCorrection(TypicalLEDStrip);
+  FastLED.addLeds<LED_TYPE, LED_STRIP_PIN_4, COLOR_ORDER>(leds + 3 * NUM_LEDS_PER_STRIP, NUM_LEDS_PER_STRIP).setCorrection(TypicalLEDStrip);
   leds_dirty = true;
 
   // initialize the kaleidoscope
@@ -296,7 +301,7 @@ void loop()
   // automatically adjust the brightness of the LED strips to match the ambient lighting
   adjustBrightness();
 
-#ifdef ENCODER
+#ifdef BOUNCE
   // Left button pressed?
   leftButton.update();
   if (leftButton.pressed())
