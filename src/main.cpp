@@ -1,28 +1,36 @@
 #include "Arduino.h"
 
+#ifdef ENCODER
 // https://github.com/PaulStoffregen/Encoder
 #include <Encoder.h>
+#endif
 
+#ifdef BOUNCE
 // https://github.com/thomasfredericks/Bounce2
 #include <Bounce2.h>
+#endif
+
+#define WIFI
+#ifdef WIFI
+// https://github.com/khoih-prog/ESPAsync_WiFiManager
+#include <ESPAsync_WiFiManager.h>
+#endif
 
 // https://github.com/FastLED/FastLED
+#define FASTLED_RMT_MAX_CHANNELS 2
 #include <FastLED.h>
 
-// https://github.com/PaulStoffregen/Time
-#include <TimeLib.h>
-
-// https://github.com/PaulStoffregen/OctoWS2811
-#include <OctoWS2811.h>
-
-//#define DEBUG
+#define DEBUG
 #define DEMO
 
 //
 // GLOBAL PIN DECLARATIONS -------------------------------------------------
 //
-#define PHOTOCELL_PIN A9
+#ifdef PHOTOCELL
+#define PHOTOCELL_PIN 32
+#endif
 
+#ifdef ENCODER
 // Change these pin numbers to the pins connected to your encoder.
 //   Best Performance: CLK and DT pins have interrupt capability
 //   Good Performance: only CLK pins have interrupt capability
@@ -33,74 +41,50 @@
 #define ENCODER_CLK_PIN_RIGHT 10
 #define ENCODER_DIRECTION_PIN_RIGHT 11
 #define ENCODER_BUTTON_PIN_RIGHT 12
+#endif
 
 // setup our LED strips for parallel output using FastLED
-#define LED_STRIPS_PIN_BASE 19
+#define LED_STRIPS_PIN_BASE 16
 #define NUM_STRIPS 4
 #define NUM_LEDS_PER_STRIP 156
+#define LED_TYPE WS2812B
+#define COLOR_ORDER GRB
 
-template <EOrder RGB_ORDER = GRB, uint8_t CHIP = WS2811_800kHz>
-class CTeensy4Controller : public CPixelLEDController<RGB_ORDER, 8, 0xFF>
-{
-  OctoWS2811 *pocto;
-
-public:
-  CTeensy4Controller(OctoWS2811 *_pocto)
-      : pocto(_pocto){};
-
-  virtual void init() {}
-  virtual void showPixels(PixelController<RGB_ORDER, 8, 0xFF> &pixels)
-  {
-
-    uint32_t i = 0;
-    while (pixels.has(1))
-    {
-      uint8_t r = pixels.loadAndScale0();
-      uint8_t g = pixels.loadAndScale1();
-      uint8_t b = pixels.loadAndScale2();
-      pocto->setPixel(i++, r, g, b);
-      pixels.stepDithering();
-      pixels.advanceData();
-    }
-
-    pocto->show();
-  }
-};
-
-// These buffers need to be large enough for all the pixels.
-// The total number of pixels is "ledsPerStrip * numPins".
-// Each pixel needs 3 bytes, so multiply by 3.  An "int" is
-// 4 bytes, so divide by 4.  The array is created using "int"
-// so the compiler will align it to 32 bit memory.
-DMAMEM int displayMemory[NUM_LEDS_PER_STRIP * NUM_STRIPS * 3 / 4];
-int drawingMemory[NUM_LEDS_PER_STRIP * NUM_STRIPS * 3 / 4];
-byte pinList[NUM_STRIPS] = {19, 18, 14, 15};
 CRGB leds[NUM_STRIPS * NUM_LEDS_PER_STRIP];
-OctoWS2811 octo(NUM_LEDS_PER_STRIP, displayMemory, drawingMemory, WS2811_RGB | WS2811_800kHz, NUM_STRIPS, pinList);
-CTeensy4Controller<GRB, WS2811_800kHz> *pcontroller;
 
-// The Teensy with parallel updates for the LEDs is so fast, we get flickering
-// if we call FastLED.Show every loop. Maintain a 'dirty' bit so we know when
-// to call Show.
+// With parallel updates for the LEDs so fast, we get flickering if we call
+// FastLED.Show every loop. Maintain a 'dirty' bit so we know when to call Show.
 boolean leds_dirty = true;
 
 #include "debug.h"
+
 #include "Kaleidoscope.h"
 #include "ripples.h"
-#include "RealTimeClock.h"
-
-// global instances of objects
-RealTimeClock clock;
 Kaleidoscope kaleidoscope;
 
+#ifdef WIFI
+AsyncWebServer webServer(80);
+DNSServer dnsServer;
+#endif
+
+#define TIME
+#ifdef TIME
+#include "RealTimeClock.h"
+RealTimeClock myclock;
+#endif
+
+#ifdef BOUNCE
 // Instantiate Button objects from the Bounce2 namespace
 Bounce2::Button leftButton = Bounce2::Button();
 Bounce2::Button rightButton = Bounce2::Button();
 #define DEBOUNCE_MS 5 // Button debounce time, in milliseconds
+#endif
 
+#ifdef ENCODER
 // Instantiate rotary encoder knob objects
 Encoder knobRight(ENCODER_CLK_PIN_RIGHT, ENCODER_DIRECTION_PIN_RIGHT);
 Encoder knobLeft(ENCODER_CLK_PIN_LEFT, ENCODER_DIRECTION_PIN_LEFT);
+#endif
 
 // All Pixels off
 void mode_off()
@@ -128,22 +112,27 @@ void adjustBrightness()
 {
   // store the current LED brightness so we can minimize minor differences
   static int LEDbrightness = 0;
-  static int lastKnob = 0;
   static int LEDBrightnessManualOffset = 0;
+
+  // The ADC input channels have a 12 bit resolution. This means that you can get analog readings
+  // ranging from 0 to 4095, in which 0 corresponds to 0V and 4095 to 3.3V
+  // https://randomnerdtutorials.com/esp32-pinout-reference-gpios/
 
   // check the photocell and debounce it a bit as it moves around a lot
   // it is currently setup to use the internal pullup resistor so we need to invert it's value
   static int lastPhotocell = 0;
-  int photocellReading = 1023 - analogRead(PHOTOCELL_PIN);
+#ifdef PHOTOCELL
+  int photocellReading = 4095 - analogRead(PHOTOCELL_PIN);
   if ((photocellReading > lastPhotocell + 75) || (photocellReading < lastPhotocell - 75))
   {
     lastPhotocell = photocellReading;
-
-    DB_PRINT(F("photocell reading = "));
-    DB_PRINTLN(photocellReading);
+    DB_PRINTF("photocell reading = %d\r\n", photocellReading);
   }
+#endif
 
+#ifdef ENCODER
   // use the right knob as a brightness increment/decrement
+  static int lastKnob = 0;
   int knob = knobRight.read();
   if (knob != lastKnob)
   {
@@ -152,34 +141,28 @@ void adjustBrightness()
     else
       LEDBrightnessManualOffset += KNOB_INCREMENT;
 
-    LEDBrightnessManualOffset = constrain(LEDBrightnessManualOffset, -1023, 1023);
+    LEDBrightnessManualOffset = constrain(LEDBrightnessManualOffset, -4095, 4095);
     lastKnob = knob;
 
     DB_PRINT(F("LEDBrightnessManualOffset = "));
     DB_PRINTLN(LEDBrightnessManualOffset);
   }
+#endif
 
-  // map our total brightness from 0-1023 to 0-255 since that is the range for setBrightness
-  int newBrightness = map(lastPhotocell + LEDBrightnessManualOffset, 0, 1023, 0, 255);
+  // map our total brightness from 0-4095 to 0-255 since that is the range for setBrightness
+  int newBrightness = map(lastPhotocell + LEDBrightnessManualOffset, 0, 4095, 0, 255);
   newBrightness = constrain(newBrightness, 0, 255);
 
   // adjust our brightness if it has changed
   if (newBrightness != LEDbrightness)
   {
-#ifdef DEBUG
-    DB_PRINT(F("new brightness = "));
-    DB_PRINTLN(newBrightness);
-#endif
-
     LEDbrightness = newBrightness;
+    DB_PRINTF("new brightness = %d\r\n", newBrightness);
+
     FastLED.setBrightness(dim8_raw(LEDbrightness));
     leds_dirty = true;
   }
 }
-
-//
-// GLOBAL VARIABLES --------------------------------------------------------
-//
 
 // This array lists each of the display/animation drawing functions
 // (which appear later in this code) in the order they're selected with
@@ -192,8 +175,10 @@ void (*renderFunc[])(void){
     mode_snowflake,
     mode_off, // make it obvious we're entering 'setup' modes
     mode_kaleidoscope_select_disks,
+#ifdef TIME
     mode_select_clock_face,
     mode_set_clock,
+#endif
 #ifdef DEMO
     mode_off, // make it obvious we're entering 'demo' modes
     mode_kaleidoscope_rainbowMarch,
@@ -218,8 +203,10 @@ const PROGMEM char modeNames[N_MODES][64] =
         "mode_snowflake",
         "mode_off",
         "mode_kaleidoscope_select_disks",
+#ifdef TIME
         "mode_select_clock_face",
         "mode_set_clock",
+#endif
 #ifdef DEMO
         "mode_off",
         "mode_kaleidoscope_rainbowMarch",
@@ -243,24 +230,46 @@ void setup()
   delay(3000);
 
   Serial.begin(115200);
-#ifndef ESP8266
   while (!Serial)
     ; // wait for serial port to connect. Needed for native USB port only
 #endif
+
+#ifdef WIFI
+  // connect to wifi or enter AP mode so it can be configured
+  DB_PRINT("\nStarting Async_AutoConnect_ESP32_minimal on " + String(ARDUINO_BOARD));
+  DB_PRINTLN(ESP_ASYNC_WIFIMANAGER_VERSION);
+  ESPAsync_WiFiManager ESPAsync_wifiManager(&webServer, &dnsServer, "Kaleidoscope");
+  //ESPAsync_wifiManager.resetSettings();   //reset saved settings
+  ESPAsync_wifiManager.setAPStaticIPConfig(IPAddress(192, 168, 132, 1), IPAddress(192, 168, 132, 1), IPAddress(255, 255, 255, 0));
+  ESPAsync_wifiManager.autoConnect("KaleidoscopeAP");
+  if (WiFi.status() == WL_CONNECTED)
+  {
+    DB_PRINT(F("Connected. Local IP: "));
+    DB_PRINTLN(WiFi.localIP());
+  }
+  else
+  {
+    DB_PRINTLN(ESPAsync_wifiManager.getStatus(WiFi.status()));
+  }
+#endif
+
+#ifdef PHOTOCELL
+  // initialize the photo resister using the pullup resistor
+  pinMode(PHOTOCELL_PIN, INPUT_PULLUP);
 #endif
 
   // initialize the random number generator using noise from an analog pin
-  randomSeed(analogRead(PHOTOCELL_PIN));
+  randomSeed(analogRead(33));
 
-  // initialize the photo resister using the pullup resistor
-  pinMode(PHOTOCELL_PIN, INPUT_PULLUP);
-
+#ifdef TIME
   // intialize the real time clock
-  clock.setup();
+  myclock.setup();
+#endif
 
   // initialize the kaleidoscope
   kaleidoscope.setup();
 
+#ifdef BOUNCE
   // initialize the rotary encoder buttons using the pullup resistor
   leftButton.attach(ENCODER_BUTTON_PIN_LEFT, INPUT_PULLUP);
   leftButton.interval(DEBOUNCE_MS);
@@ -268,13 +277,14 @@ void setup()
   rightButton.attach(ENCODER_BUTTON_PIN_RIGHT, INPUT_PULLUP);
   rightButton.interval(DEBOUNCE_MS);
   rightButton.setPressedState(LOW);
+#endif
   DB_PRINTLN(modeNames[mode]);
 
-  // intialize the LED strips for parallel output on the Teensy 4
-  octo.begin();
-  pcontroller = new CTeensy4Controller<GRB, WS2811_800kHz>(&octo);
-  FastLED.addLeds(pcontroller, leds, NUM_STRIPS * NUM_LEDS_PER_STRIP);
-  FastLED.clear();
+  // intialize the LED strips for parallel output
+  FastLED.addLeds<LED_TYPE, LED_STRIPS_PIN_BASE + 0, COLOR_ORDER>(leds + 0 * NUM_LEDS_PER_STRIP, NUM_LEDS_PER_STRIP).setCorrection(TypicalLEDStrip);
+  FastLED.addLeds<LED_TYPE, LED_STRIPS_PIN_BASE + 1, COLOR_ORDER>(leds + 1 * NUM_LEDS_PER_STRIP, NUM_LEDS_PER_STRIP).setCorrection(TypicalLEDStrip);
+  FastLED.addLeds<LED_TYPE, LED_STRIPS_PIN_BASE + 2, COLOR_ORDER>(leds + 2 * NUM_LEDS_PER_STRIP, NUM_LEDS_PER_STRIP).setCorrection(TypicalLEDStrip);
+  FastLED.addLeds<LED_TYPE, LED_STRIPS_PIN_BASE + 3, COLOR_ORDER>(leds + 3 * NUM_LEDS_PER_STRIP, NUM_LEDS_PER_STRIP).setCorrection(TypicalLEDStrip);
   leds_dirty = true;
 }
 
@@ -286,6 +296,7 @@ void loop()
   // automatically adjust the brightness of the LED strips to match the ambient lighting
   adjustBrightness();
 
+#ifdef ENCODER
   // Left button pressed?
   leftButton.update();
   if (leftButton.pressed())
@@ -315,14 +326,15 @@ void loop()
     FastLED.clear();
     leds_dirty = true;
   }
+#endif
 
   // Render one frame in current mode. To control the speed of updates, use the
   // EVERY_N_MILLISECONDS(N) macro to only update the frame when it is needed.
   // Also be sure to set leds_dirty = true so that the updated frame will be displayed.
   (*renderFunc[mode])();
 
-  // update the clock overlay
-  //  clock.loop();
+  // update the clock
+  myclock.loop();
 
   // if we have changes in the LEDs, show the updated frame
   if (leds_dirty)

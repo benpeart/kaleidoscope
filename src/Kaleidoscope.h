@@ -227,12 +227,7 @@ public:
                 // since the strips are stored in PROGMEM, we must read them into SRAM before using them
                 uint32_t pixel_1 = pgm_read_dword_near(&rgb_strip_1[column][row]);
 #ifdef NDEBUG
-                DB_PRINT(F("pixel_1["));
-                DB_PRINT(column);
-                DB_PRINT(F("]["));
-                DB_PRINT(row);
-                DB_PRINT(F("] = 0x"));
-                DB_PRINTLN(pixel_1, HEX);
+                DB_PRINTF("pixel_1[%d][%d] = %x\r\n", column, row, pixel_1);
 #endif
 
                 // the column number must wrap around as needed to stay within the number
@@ -246,19 +241,13 @@ public:
                 // since the strips are stored in PROGMEM, we must read them into SRAM before using them
                 uint32_t pixel_2 = pgm_read_dword_near(&rgb_strip_2[column][row]);
 #ifdef NDEBUG
-                DB_PRINT(F("pixel_2["));
-                DB_PRINT(column);
-                DB_PRINT(F("]["));
-                DB_PRINT(row);
-                DB_PRINT(F("] = 0x"));
-                DB_PRINTLN(pixel_2, HEX);
+                DB_PRINTF("pixel_2[%d][%d] = %x\r\n", column, row, pixel_2);
 #endif
 
                 // blend the pixels from the two strips by doing 50% transparency
                 uint32_t pixel = blendAlpha(pixel_1, pixel_2, 0x7f);
 #ifdef NDEBUG
-                DB_PRINT(F("blended pixel = 0x"));
-                DB_PRINTLN(pixel, HEX);
+                DB_PRINTF("blended pixel = %x\r\n", pixel);
 #endif
                 drawKaleidoscopePixel6(viewport_index, pixel);
                 viewport_index++;

@@ -21,6 +21,8 @@
 */
 #define DB_PRINT(...)\
             do { if (DB_ACTIVE) Serial.print(__VA_ARGS__); } while (0)
+#define DB_PRINTF(...)\
+            do { if (DB_ACTIVE) Serial.printf(__VA_ARGS__); } while (0)
 #define DB_PRINTLN(...)\
             do { if (DB_ACTIVE) Serial.println(__VA_ARGS__); } while (0)
 
