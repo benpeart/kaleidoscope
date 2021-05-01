@@ -6,9 +6,10 @@
 #include <Bounce2.h>
 #endif
 
+ #define ENCODER
 #ifdef ENCODER
-// https://github.com/PaulStoffregen/Encoder
-#include <Encoder.h>
+// https://github.com/madhephaestus/ESP32Encoder
+#include <ESP32Encoder.h>
 #endif
 
 #define WIFI
@@ -41,7 +42,7 @@
 // Change these pin numbers to the pins connected to your encoder.
 #define ENCODER_CLK_PIN_LEFT 4
 #define ENCODER_DIRECTION_PIN_LEFT 16
-#define ENCODER_CLK_PIN_RIGHT 1
+#define ENCODER_CLK_PIN_RIGHT 21
 #define ENCODER_DIRECTION_PIN_RIGHT 22
 #endif
 
@@ -87,8 +88,8 @@ Bounce2::Button rightButton = Bounce2::Button();
 
 #ifdef ENCODER
 // Instantiate rotary encoder knob objects
-Encoder knobRight(ENCODER_CLK_PIN_RIGHT, ENCODER_DIRECTION_PIN_RIGHT);
-Encoder knobLeft(ENCODER_CLK_PIN_LEFT, ENCODER_DIRECTION_PIN_LEFT);
+ESP32Encoder knobRight;
+ESP32Encoder knobLeft;
 #endif
 
 // All Pixels off
@@ -110,7 +111,7 @@ void mode_snowflake()
 // BRIGHTNESS helpers -------------------------------------------------
 //
 
-#define KNOB_INCREMENT 10
+#define KNOB_INCREMENT 100
 
 // automatically adjust the brightness of the LED strips to match the ambient lighting
 void adjustBrightness()
@@ -138,7 +139,7 @@ void adjustBrightness()
 #ifdef ENCODER
   // use the right knob as a brightness increment/decrement
   static int lastKnob = 0;
-  int knob = knobRight.read();
+  int knob = knobRight.getCount();
   if (knob != lastKnob)
   {
     if (knob > lastKnob)
@@ -281,6 +282,13 @@ void setup()
   rightButton.setPressedState(LOW);
 #endif
   DB_PRINTLN(modeNames[mode]);
+
+#ifdef ENCODER
+  // initialize the rotary encoders
+  ESP32Encoder::useInternalWeakPullResistors=UP;
+  knobRight.attachHalfQuad(ENCODER_CLK_PIN_RIGHT, ENCODER_DIRECTION_PIN_RIGHT);
+  knobLeft.attachHalfQuad(ENCODER_CLK_PIN_LEFT, ENCODER_DIRECTION_PIN_LEFT);
+#endif  
 
   // intialize the LED strips for parallel output
   FastLED.addLeds<LED_TYPE, LED_STRIP_PIN_1, COLOR_ORDER>(leds + 0 * NUM_LEDS_PER_STRIP, NUM_LEDS_PER_STRIP).setCorrection(TypicalLEDStrip);
