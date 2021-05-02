@@ -6,7 +6,7 @@
 #include <Bounce2.h>
 #endif
 
- #define ENCODER
+#define ENCODER
 #ifdef ENCODER
 // https://github.com/madhephaestus/ESP32Encoder
 #include <ESP32Encoder.h>
@@ -16,6 +16,12 @@
 #ifdef WIFI
 // https://github.com/khoih-prog/ESPAsync_WiFiManager
 #include <ESPAsync_WiFiManager.h>
+#endif
+
+#define OTA
+#ifdef OTA
+// https://github.com/ayushsharma82/AsyncElegantOTA
+#include <AsyncElegantOTA.h>
 #endif
 
 // https://github.com/FastLED/FastLED
@@ -138,20 +144,28 @@ void adjustBrightness()
 
 #ifdef ENCODER
   // use the right knob as a brightness increment/decrement
-  static int lastKnob = 0;
+  static int lastRightKnob = 0;
   int knob = knobRight.getCount();
-  if (knob != lastKnob)
+  if (knob != lastRightKnob)
   {
-    if (knob > lastKnob)
+    if (knob > lastRightKnob)
       LEDBrightnessManualOffset -= KNOB_INCREMENT;
     else
       LEDBrightnessManualOffset += KNOB_INCREMENT;
 
     LEDBrightnessManualOffset = constrain(LEDBrightnessManualOffset, -4095, 4095);
-    lastKnob = knob;
+    lastRightKnob = knob;
 
-    DB_PRINT(F("LEDBrightnessManualOffset = "));
-    DB_PRINTLN(LEDBrightnessManualOffset);
+    DB_PRINTF("LEDBrightnessManualOffset = %d\r\n", LEDBrightnessManualOffset);
+  }
+
+  // test code for the left knob
+  static int lastLeftKnob = 0;
+  knob = knobLeft.getCount();
+  if (knob != lastLeftKnob)
+  {
+    lastLeftKnob = knob;
+    DB_PRINTF("Left knob count = %d\r\n", lastLeftKnob);
   }
 #endif
 
@@ -242,7 +256,7 @@ void setup()
 
 #ifdef WIFI
   // connect to wifi or enter AP mode so it can be configured
-  DB_PRINT("\nStarting Async_AutoConnect_ESP32_minimal on " + String(ARDUINO_BOARD));
+  DB_PRINT("\nStarting Kaleidoscope on " + String(ARDUINO_BOARD));
   DB_PRINTLN(ESP_ASYNC_WIFIMANAGER_VERSION);
   ESPAsync_WiFiManager ESPAsync_wifiManager(&webServer, &dnsServer, "Kaleidoscope");
   //ESPAsync_wifiManager.resetSettings();   //reset saved settings
@@ -257,6 +271,19 @@ void setup()
   {
     DB_PRINTLN(ESPAsync_wifiManager.getStatus(WiFi.status()));
   }
+  webServer.end(); // FIX THIS - is it needed?
+#endif
+
+#ifdef OTA
+  // add a simple home page (OTA update UI is on /update)
+  webServer.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
+    request->send(200, "text/plain", "Hi! I an a digital Kaleidoscope.");
+  });
+
+  // Start ElegantOTA and require a username/password
+  AsyncElegantOTA.begin(&webServer, "admin", "admin");
+  webServer.begin();
+  DB_PRINTLN(F("OTA web server started."));
 #endif
 
 #ifdef TIME
@@ -285,10 +312,10 @@ void setup()
 
 #ifdef ENCODER
   // initialize the rotary encoders
-  ESP32Encoder::useInternalWeakPullResistors=UP;
+  ESP32Encoder::useInternalWeakPullResistors = UP;
   knobRight.attachHalfQuad(ENCODER_CLK_PIN_RIGHT, ENCODER_DIRECTION_PIN_RIGHT);
   knobLeft.attachHalfQuad(ENCODER_CLK_PIN_LEFT, ENCODER_DIRECTION_PIN_LEFT);
-#endif  
+#endif
 
   // intialize the LED strips for parallel output
   FastLED.addLeds<LED_TYPE, LED_STRIP_PIN_1, COLOR_ORDER>(leds + 0 * NUM_LEDS_PER_STRIP, NUM_LEDS_PER_STRIP).setCorrection(TypicalLEDStrip);
@@ -346,8 +373,14 @@ void loop()
   // Also be sure to set leds_dirty = true so that the updated frame will be displayed.
   (*renderFunc[mode])();
 
+#ifdef OTA
+  AsyncElegantOTA.loop();
+#endif
+
+#ifdef TIME
   // update the clock
   myclock.loop();
+#endif
 
   // if we have changes in the LEDs, show the updated frame
   if (leds_dirty)

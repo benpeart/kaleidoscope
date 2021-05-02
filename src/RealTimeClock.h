@@ -30,16 +30,19 @@ public:
     {
         DB_PRINTLN(F("RealTimeClock.setup"));
 
+//        configTzTime(WM_config.TZ, "us.pool.ntp.org", "time.nist.gov", "0.pool.ntp.org", "1.pool.ntp.org");
         configTime(-5 * SECS_PER_HOUR, SECS_PER_HOUR, "us.pool.ntp.org");
     }
 
     void loop()
     {
-        // only display the time every second
-        EVERY_N_MILLISECONDS (1000)
+#ifdef DEBUG        
+        // only display the time every minute
+        EVERY_N_MILLISECONDS (60000)
         {
             printLocalTime();
         }
+#endif        
     }
 };
 
