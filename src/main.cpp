@@ -34,8 +34,9 @@
 //
 // GLOBAL PIN DECLARATIONS -------------------------------------------------
 //
+#define PHOTOCELL
 #ifdef PHOTOCELL
-#define PHOTOCELL_PIN 32
+#define PHOTOCELL_PIN 33
 #endif
 
 #ifdef BOUNCE
@@ -119,6 +120,28 @@ void mode_snowflake()
 
 #define KNOB_INCREMENT 100
 
+#ifdef PHOTOCELL
+#define FILTER_LEN 15
+uint32_t readADC_Avg(int ADC_Raw)
+{
+  static uint32_t ADCBuffer[FILTER_LEN];
+  static int index = 0;
+  int i = 0;
+  uint32_t Sum = 0;
+
+  ADCBuffer[index++] = ADC_Raw;
+  if (index == FILTER_LEN)
+  {
+    index = 0;
+  }
+  for (i = 0; i < FILTER_LEN; i++)
+  {
+    Sum += ADCBuffer[i];
+  }
+  return (Sum / FILTER_LEN);
+}
+#endif
+
 // automatically adjust the brightness of the LED strips to match the ambient lighting
 void adjustBrightness()
 {
@@ -131,11 +154,10 @@ void adjustBrightness()
   // https://randomnerdtutorials.com/esp32-pinout-reference-gpios/
 
   // check the photocell and debounce it a bit as it moves around a lot
-  // it is currently setup to use the internal pullup resistor so we need to invert it's value
   static int lastPhotocell = 0;
 #ifdef PHOTOCELL
-  int photocellReading = 4095 - analogRead(PHOTOCELL_PIN);
-  if ((photocellReading > lastPhotocell + 75) || (photocellReading < lastPhotocell - 75))
+  int photocellReading = readADC_Avg(analogRead(PHOTOCELL_PIN));
+  if ((photocellReading > lastPhotocell + 256) || (photocellReading < lastPhotocell - 256))
   {
     lastPhotocell = photocellReading;
     DB_PRINTF("photocell reading = %d\r\n", photocellReading);
@@ -271,7 +293,6 @@ void setup()
   {
     DB_PRINTLN(ESPAsync_wifiManager.getStatus(WiFi.status()));
   }
-  webServer.end(); // FIX THIS - is it needed?
 #endif
 
 #ifdef OTA
@@ -292,8 +313,9 @@ void setup()
 #endif
 
 #ifdef PHOTOCELL
-  // initialize the photo resister using the pullup resistor
-  pinMode(PHOTOCELL_PIN, INPUT_PULLUP);
+  // Testing shows that the internal pullup resistors on the ESP32 are complete crap and
+  // unusable. Probably why every example does their own external pullup/down resistors.
+  pinMode(PHOTOCELL_PIN, INPUT);
 #endif
 
   // initialize the random number generator using noise from an analog pin
