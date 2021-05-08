@@ -24,12 +24,16 @@
 #include <AsyncElegantOTA.h>
 #endif
 
+#define FASTLED
+#ifdef FASTLED
 // https://github.com/FastLED/FastLED
 #define FASTLED_RMT_MAX_CHANNELS 2
 #include <FastLED.h>
+#endif
 
-#define DEBUG
 #define DEMO
+#define DEBUG
+#include "debug.h"
 
 //
 // GLOBAL PIN DECLARATIONS -------------------------------------------------
@@ -53,6 +57,7 @@
 #define ENCODER_DIRECTION_PIN_RIGHT 22
 #endif
 
+#ifdef FASTLED
 // setup our LED strips for parallel output using FastLED
 #define LED_STRIP_PIN_1 14
 #define LED_STRIP_PIN_2 27
@@ -69,11 +74,10 @@ CRGB leds[NUM_STRIPS * NUM_LEDS_PER_STRIP];
 // FastLED.Show every loop. Maintain a 'dirty' bit so we know when to call Show.
 boolean leds_dirty = true;
 
-#include "debug.h"
-
 #include "Kaleidoscope.h"
 #include "ripples.h"
 Kaleidoscope kaleidoscope;
+#endif
 
 #ifdef WIFI
 AsyncWebServer webServer(80);
@@ -99,6 +103,7 @@ ESP32Encoder knobRight;
 ESP32Encoder knobLeft;
 #endif
 
+#ifdef FASTLED
 // All Pixels off
 void mode_off()
 {
@@ -113,6 +118,7 @@ void mode_color_wash()
 void mode_snowflake()
 {
 }
+#endif
 
 //
 // BRIGHTNESS helpers -------------------------------------------------
@@ -201,11 +207,14 @@ void adjustBrightness()
     LEDbrightness = newBrightness;
     DB_PRINTF("new brightness = %d\r\n", newBrightness);
 
+#ifdef FASTLED
     FastLED.setBrightness(dim8_raw(LEDbrightness));
     leds_dirty = true;
+#endif
   }
 }
 
+#ifdef FASTLED
 // This array lists each of the display/animation drawing functions
 // (which appear later in this code) in the order they're selected with
 // the right button.  Some functions appear repeatedly...for example,
@@ -261,6 +270,7 @@ const PROGMEM char modeNames[N_MODES][64] =
         "mode_kaleidoscope_test",
 #endif
         "mode_off"};
+#endif
 
 //
 // SETUP FUNCTION -- RUNS ONCE AT PROGRAM START ----------------------------
@@ -293,6 +303,7 @@ void setup()
   {
     DB_PRINTLN(ESPAsync_wifiManager.getStatus(WiFi.status()));
   }
+//  DB_PRINTF("The timezone is %s\r\n", ESPAsync_wifiManager.getTimezoneName().c_str());
 #endif
 
 #ifdef OTA
@@ -330,7 +341,6 @@ void setup()
   rightButton.interval(DEBOUNCE_MS);
   rightButton.setPressedState(LOW);
 #endif
-  DB_PRINTLN(modeNames[mode]);
 
 #ifdef ENCODER
   // initialize the rotary encoders
@@ -339,15 +349,18 @@ void setup()
   knobLeft.attachHalfQuad(ENCODER_CLK_PIN_LEFT, ENCODER_DIRECTION_PIN_LEFT);
 #endif
 
+#ifdef FASTLED
   // intialize the LED strips for parallel output
   FastLED.addLeds<LED_TYPE, LED_STRIP_PIN_1, COLOR_ORDER>(leds + 0 * NUM_LEDS_PER_STRIP, NUM_LEDS_PER_STRIP).setCorrection(TypicalLEDStrip);
   FastLED.addLeds<LED_TYPE, LED_STRIP_PIN_2, COLOR_ORDER>(leds + 1 * NUM_LEDS_PER_STRIP, NUM_LEDS_PER_STRIP).setCorrection(TypicalLEDStrip);
   FastLED.addLeds<LED_TYPE, LED_STRIP_PIN_3, COLOR_ORDER>(leds + 2 * NUM_LEDS_PER_STRIP, NUM_LEDS_PER_STRIP).setCorrection(TypicalLEDStrip);
   FastLED.addLeds<LED_TYPE, LED_STRIP_PIN_4, COLOR_ORDER>(leds + 3 * NUM_LEDS_PER_STRIP, NUM_LEDS_PER_STRIP).setCorrection(TypicalLEDStrip);
   leds_dirty = true;
+  DB_PRINTLN(modeNames[mode]);
 
   // initialize the kaleidoscope
   kaleidoscope.setup();
+#endif
 }
 
 //
@@ -369,9 +382,11 @@ void loop()
       mode = N_MODES - 1; // or "wrap around" to last mode
     DB_PRINTLN(modeNames[mode]);
 
+#ifdef FASTLED
     // clear the led strips for the new mode
     FastLED.clear();
     leds_dirty = true;
+#endif
   }
 
   // Right button pressed?
@@ -384,16 +399,20 @@ void loop()
       mode = 0; // or "wrap around" to start
     DB_PRINTLN(modeNames[mode]);
 
+#ifdef FASTLED
     // clear the led strips for the new mode
     FastLED.clear();
     leds_dirty = true;
+#endif
   }
 #endif
 
+#ifdef FASTLED
   // Render one frame in current mode. To control the speed of updates, use the
   // EVERY_N_MILLISECONDS(N) macro to only update the frame when it is needed.
   // Also be sure to set leds_dirty = true so that the updated frame will be displayed.
   (*renderFunc[mode])();
+#endif
 
 #ifdef OTA
   AsyncElegantOTA.loop();
@@ -404,10 +423,12 @@ void loop()
   myclock.loop();
 #endif
 
+#ifdef FASTLED
   // if we have changes in the LEDs, show the updated frame
   if (leds_dirty)
   {
     FastLED.show();
     leds_dirty = false;
   }
+#endif
 }
