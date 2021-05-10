@@ -1,44 +1,62 @@
 #include "Arduino.h"
 
+// flags to enable turning of various parts of the app for debugging purposes
 #define BOUNCE
+#define ENCODER
+#define FASTLED
+#define WIFI
+#define OTA
+#define ALEXA
+#define TIME
+#define PHOTOCELL
+#define DEMO
+
+// enable debugging macros
+#define DEBUG
+#include "debug.h"
+
 #ifdef BOUNCE
 // https://github.com/thomasfredericks/Bounce2
 #include <Bounce2.h>
 #endif
 
-#define ENCODER
 #ifdef ENCODER
 // https://github.com/madhephaestus/ESP32Encoder
 #include <ESP32Encoder.h>
 #endif
 
-#define WIFI
+#ifdef FASTLED
+// https://github.com/FastLED/FastLED
+#define FASTLED_RMT_MAX_CHANNELS 2 // why 2 channels instead of 4 (one per strip?)
+//#define FASTLED_ESP32_FLASH_LOCK 1 // TODO: hack to enable OTA that doesn't work
+#include <FastLED.h>
+#endif
+
 #ifdef WIFI
 // https://github.com/khoih-prog/ESPAsync_WiFiManager
 #include <ESPAsync_WiFiManager.h>
-#endif
 
-#define OTA
 #ifdef OTA
 // https://github.com/ayushsharma82/AsyncElegantOTA
 #include <AsyncElegantOTA.h>
 #endif
 
-#define FASTLED
-#ifdef FASTLED
-// https://github.com/FastLED/FastLED
-#define FASTLED_RMT_MAX_CHANNELS 2
-#include <FastLED.h>
+#ifdef ALEXA
+// https://github.com/Aircoookie/Espalexa
+#define ESPALEXA_ASYNC
+#define ESPALEXA_MAXDEVICES 1
+#define ESPALEXA_DEBUG
+#include <Espalexa.h>
 #endif
 
-#define DEMO
-#define DEBUG
-#include "debug.h"
+#ifdef TIME
+#include "RealTimeClock.h"
+#endif
+#endif // WIFI
 
 //
 // GLOBAL PIN DECLARATIONS -------------------------------------------------
 //
-#define PHOTOCELL
 #ifdef PHOTOCELL
 #define PHOTOCELL_PIN 33
 #endif
@@ -79,16 +97,9 @@ boolean leds_dirty = true;
 Kaleidoscope kaleidoscope;
 #endif
 
-#ifdef WIFI
-AsyncWebServer webServer(80);
-DNSServer dnsServer;
-#endif
-
-#define TIME
-#ifdef TIME
-#include "RealTimeClock.h"
-RealTimeClock myclock;
-#endif
+//
+// Global variables  -------------------------------------------------
+//
 
 #ifdef BOUNCE
 // Instantiate Button objects from the Bounce2 namespace
@@ -102,6 +113,19 @@ Bounce2::Button rightButton = Bounce2::Button();
 ESP32Encoder knobRight;
 ESP32Encoder knobLeft;
 #endif
+
+#ifdef WIFI
+AsyncWebServer webServer(80);
+DNSServer dnsServer;
+
+#ifdef ALEXA
+Espalexa espalexa;
+#endif
+
+#ifdef TIME
+RealTimeClock myclock;
+#endif
+#endif // WIFI
 
 #ifdef FASTLED
 // All Pixels off
@@ -132,7 +156,6 @@ uint32_t readADC_Avg(int ADC_Raw)
 {
   static uint32_t ADCBuffer[FILTER_LEN];
   static int index = 0;
-  int i = 0;
   uint32_t Sum = 0;
 
   ADCBuffer[index++] = ADC_Raw;
@@ -140,7 +163,7 @@ uint32_t readADC_Avg(int ADC_Raw)
   {
     index = 0;
   }
-  for (i = 0; i < FILTER_LEN; i++)
+  for (int i = 0; i < FILTER_LEN; i++)
   {
     Sum += ADCBuffer[i];
   }
@@ -272,6 +295,41 @@ const PROGMEM char modeNames[N_MODES][64] =
         "mode_off"};
 #endif
 
+#ifdef ALEXA
+//our Alexa callback function
+void hueChanged(EspalexaDevice *d)
+{
+  Serial.print("E changed to ");
+  Serial.print(d->getValue());
+  Serial.print(", colormode ");
+  switch (d->getColorMode())
+  {
+  case EspalexaColorMode::hs:
+    Serial.print("hs, ");
+    Serial.print("hue ");
+    Serial.print(d->getHue());
+    Serial.print(", sat ");
+    Serial.println(d->getSat());
+    break;
+  case EspalexaColorMode::xy:
+    Serial.print("xy, ");
+    Serial.print("x ");
+    Serial.print(d->getX());
+    Serial.print(", y ");
+    Serial.println(d->getY());
+    break;
+  case EspalexaColorMode::ct:
+    Serial.print("ct, ");
+    Serial.print("ct ");
+    Serial.println(d->getCt());
+    break;
+  case EspalexaColorMode::none:
+    Serial.println("none");
+    break;
+  }
+}
+#endif
+
 //
 // SETUP FUNCTION -- RUNS ONCE AT PROGRAM START ----------------------------
 //
@@ -303,8 +361,8 @@ void setup()
   {
     DB_PRINTLN(ESPAsync_wifiManager.getStatus(WiFi.status()));
   }
-//  DB_PRINTF("The timezone is %s\r\n", ESPAsync_wifiManager.getTimezoneName().c_str());
-#endif
+  DB_PRINT("The timezone is ");
+  DB_PRINTLN(ESPAsync_wifiManager.getTimezoneName().c_str());
 
 #ifdef OTA
   // add a simple home page (OTA update UI is on /update)
@@ -314,14 +372,35 @@ void setup()
 
   // Start ElegantOTA and require a username/password
   AsyncElegantOTA.begin(&webServer, "admin", "admin");
-  webServer.begin();
   DB_PRINTLN(F("OTA web server started."));
+#endif
+
+#ifdef ALEXA
+  webServer.onNotFound([](AsyncWebServerRequest *request) {
+    // if you don't know the URI, ask espalexa whether it is an Alexa control request
+    if (!espalexa.handleAlexaApiCall(request))
+    {
+      // handle the 404 error
+      request->send(404, "text/plain", "Not found");
+    }
+  });
+
+  // Define your devices here.
+  espalexa.addDevice("Hue", hueChanged, EspalexaDeviceType::extendedcolor); //color + color temperature
+
+  // give espalexa a pointer to your server object so it can use your server instead of creating its own
+  espalexa.begin(&webServer);
 #endif
 
 #ifdef TIME
   // intialize the real time clock
   myclock.setup();
 #endif
+
+#ifndef ALEXA
+  webServer.begin(); //omit this since it will be done by espalexa.begin(&webServer)
+#endif
+#endif // WIFI
 
 #ifdef PHOTOCELL
   // Testing shows that the internal pullup resistors on the ESP32 are complete crap and
@@ -407,23 +486,27 @@ void loop()
   }
 #endif
 
-#ifdef FASTLED
-  // Render one frame in current mode. To control the speed of updates, use the
-  // EVERY_N_MILLISECONDS(N) macro to only update the frame when it is needed.
-  // Also be sure to set leds_dirty = true so that the updated frame will be displayed.
-  (*renderFunc[mode])();
-#endif
-
+#ifdef WIFI
 #ifdef OTA
   AsyncElegantOTA.loop();
+#endif
+
+#ifdef ALEXA
+  espalexa.loop();
 #endif
 
 #ifdef TIME
   // update the clock
   myclock.loop();
 #endif
+#endif // WIFI
 
 #ifdef FASTLED
+  // Render one frame in current mode. To control the speed of updates, use the
+  // EVERY_N_MILLISECONDS(N) macro to only update the frame when it is needed.
+  // Also be sure to set leds_dirty = true so that the updated frame will be displayed.
+  (*renderFunc[mode])();
+
   // if we have changes in the LEDs, show the updated frame
   if (leds_dirty)
   {
