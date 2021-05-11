@@ -1,6 +1,11 @@
 #ifndef KALEIDOSCOPE_H
 #define KALEIDOSCOPE_H
 
+// we're going to blend between frames so need an array of LEDs for both frames
+// then we'll blend them together into the 'output' leds array which will be displayed
+CRGB leds2[NUM_STRIPS * NUM_LEDS_PER_STRIP];
+CRGB leds3[NUM_STRIPS * NUM_LEDS_PER_STRIP];
+
 // statically define the 'filmstrips' to use to generate the kaleidoscope
 #define TRIANGLE_ROWS 10                                            // the height of the 'viewport' triangle
 #define TRIANGLE_COLUMNS 19                                         // the width of the base of the 'viewport' triange
@@ -202,10 +207,12 @@ public:
         // start with random offsets to provide more variety
         offset_1 = random(strip_1_columns);
         offset_2 = random(strip_2_columns);
+
+        fill_solid(leds3, NUM_STRIPS * NUM_LEDS_PER_STRIP, CRGB::Black);
     }
 
     // update the position of the strips and draw the kaleidoscope
-    void loop()
+    void drawNextFrame(CRGB *leds)
     {
         int begin = 0, end = 0, viewport_index = 0;
 
@@ -245,11 +252,11 @@ public:
 #endif
 
                 // blend the pixels from the two strips by doing 50% transparency
-                uint32_t pixel = blendAlpha(pixel_1, pixel_2, 0x7f);
+                CRGB pixel = blend(CRGB(pixel_1), CRGB(pixel_2), 127);
 #ifdef NDEBUG
                 DB_PRINTF("blended pixel = %x\r\n", pixel);
 #endif
-                drawKaleidoscopePixel6(viewport_index, pixel);
+                drawKaleidoscopePixel6(leds, viewport_index, pixel);
                 viewport_index++;
             }
             begin--;
@@ -263,19 +270,8 @@ public:
         leds_dirty = true;
     }
 
-    // https://stackoverflow.com/questions/1102692/how-to-alpha-blend-rgba-unsigned-byte-color-fast
-    uint32_t blendAlpha(uint32_t colora, uint32_t colorb, uint32_t alpha)
-    {
-        uint32_t rb1 = ((0xFF - alpha) * (colora & 0xFF00FF)) >> 8;
-        uint32_t rb2 = (alpha * (colorb & 0xFF00FF)) >> 8;
-        uint32_t g1 = ((0xFF - alpha) * (colora & 0x00FF00)) >> 8;
-        uint32_t g2 = (alpha * (colorb & 0x00FF00)) >> 8;
-
-        return ((rb1 + rb2) & 0xFF00FF) + ((g1 + g2) & 0x00FF00);
-    }
-
     // draw a pixel mirrored and rotated 6 times to emulate a kaleidoscope
-    void drawKaleidoscopePixel6(int index, CRGB c)
+    void drawKaleidoscopePixel6(CRGB *leds, int index, CRGB c)
     {
 #ifdef NDEBUG
         DB_PRINT(F("drawKaleidoscopePixel6("));
@@ -288,11 +284,11 @@ public:
             return;
 
         for (uint8_t x = 0; x < 3; x++)
-            MirroredSetPixelColor(pgm_read_byte_near(&KaleidoscopeLookupTable[index].strips[x].strip),
+            MirroredSetPixelColor(leds, pgm_read_byte_near(&KaleidoscopeLookupTable[index].strips[x].strip),
                                   pgm_read_byte_near(&KaleidoscopeLookupTable[index].strips[x].index), c);
     }
 
-    void fill_kaleidoscope_rainbow(uint8_t initialhue, uint8_t deltahue)
+    void fill_kaleidoscope_rainbow(CRGB *leds, uint8_t initialhue, uint8_t deltahue)
     {
         CHSV hsv;
         hsv.hue = initialhue;
@@ -300,20 +296,20 @@ public:
         hsv.sat = 240;
         for (int i = 0; i < TRIANGLE_COUNT; ++i)
         {
-            drawKaleidoscopePixel6(i, hsv);
+            drawKaleidoscopePixel6(leds, i, hsv);
             hsv.hue += deltahue;
         }
     }
 
-    void fill_kaleidoscope_solid(const struct CRGB &color)
+    void fill_kaleidoscope_solid(CRGB *leds, const struct CRGB &color)
     {
         for (int i = 0; i < TRIANGLE_COUNT; ++i)
         {
-            drawKaleidoscopePixel6(i, color);
+            drawKaleidoscopePixel6(leds, i, color);
         }
     }
 
-    void fill_gradient_RGB(uint16_t startpos, CRGB startcolor,
+    void fill_gradient_RGB(CRGB *leds, uint16_t startpos, CRGB startcolor,
                            uint16_t endpos, CRGB endcolor)
     {
         // if the points are in the wrong order, straighten them
@@ -351,7 +347,7 @@ public:
         accum88 b88 = startcolor.b << 8;
         for (uint16_t i = startpos; i <= endpos; ++i)
         {
-            drawKaleidoscopePixel6(i, CRGB(r88 >> 8, g88 >> 8, b88 >> 8));
+            drawKaleidoscopePixel6(leds, i, CRGB(r88 >> 8, g88 >> 8, b88 >> 8));
             r88 += rdelta87;
             g88 += gdelta87;
             b88 += bdelta87;
@@ -370,7 +366,7 @@ private:
     int offset_1;
     int offset_2;
 
-    void MirroredSetPixelColor(int strip, int index, CRGB rgb)
+    void MirroredSetPixelColor(CRGB *leds, int strip, int index, CRGB rgb)
     {
         if (index < 0 || index >= NUM_LEDS_PER_STRIP)
         {
@@ -404,12 +400,45 @@ private:
 
 extern Kaleidoscope kaleidoscope;
 
+#define MS_BETWEEN_FRAMES 512
 void mode_kaleidoscope_screensaver()
 {
-    EVERY_N_MILLISECONDS(250)
+    static boolean first_array = true;
+    static int time_of_last_frame = 0;
+
+    int time = millis();
+
+    // draw the next frame into the correct led array
+    if (time >= time_of_last_frame + MS_BETWEEN_FRAMES)
     {
-        // animate and draw the kaleidoscope
-        kaleidoscope.loop();
+        // draw the next frame of the kaleidoscope
+        if (first_array)
+        {
+            kaleidoscope.drawNextFrame(leds2);
+        }
+        else
+        {
+            kaleidoscope.drawNextFrame(leds3);
+        }
+        time_of_last_frame = time;
+        first_array = !first_array;
+        leds_dirty = true;
+    }
+
+    // smoothly blend from one frame to the next
+    EVERY_N_MILLISECONDS(5)
+    {
+        // ratio is the percentage of time remaining for this frame mapped to 0-255
+        fract8 ratio = map(time, time_of_last_frame, time_of_last_frame + MS_BETWEEN_FRAMES, 0, 255);
+        if (!first_array)
+            ratio = 255 - ratio;
+
+        // mix the 2 arrays together
+        for (int i = 0; i < NUM_STRIPS * NUM_LEDS_PER_STRIP; i++)
+        {
+            leds[i] = blend(leds2[i], leds3[i], ratio);
+        }
+        leds_dirty = true;
     }
 }
 
@@ -417,7 +446,7 @@ void mode_kaleidoscope_interactive()
 {
     EVERY_N_MILLISECONDS(50)
     {
-        kaleidoscope.loop();
+        kaleidoscope.drawNextFrame(leds);
     }
 }
 
@@ -431,7 +460,7 @@ void mode_kaleidoscope_test()
     EVERY_N_MILLISECONDS(100)
     {
         // erase the last pixel
-        kaleidoscope.drawKaleidoscopePixel6(index, CRGB::Black); // off
+        kaleidoscope.drawKaleidoscopePixel6(leds, index, CRGB::Black); // off
 
         // move to the next pixel
         if (++index >= TRIANGLE_COUNT)
@@ -439,7 +468,7 @@ void mode_kaleidoscope_test()
         DB_PRINTLN(index);
 
         // light up the next pixel
-        kaleidoscope.drawKaleidoscopePixel6(index, CRGB::Red);
+        kaleidoscope.drawKaleidoscopePixel6(leds, index, CRGB::Red);
     }
 }
 #endif
@@ -457,7 +486,7 @@ void mode_kaleidoscope_rainbowMarch()
         // thishue = beat8(50);           // This uses a FastLED sawtooth generator. Again, the '50' should not change on the fly.
         // thishue = beatsin8(50,0,255);  // This can change speeds on the fly. You can also add these to each other.
 
-        kaleidoscope.fill_kaleidoscope_rainbow(thishue, deltahue);
+        kaleidoscope.fill_kaleidoscope_rainbow(leds, thishue, deltahue);
     }
 }
 
@@ -484,7 +513,7 @@ void mode_kaleidoscope_plasma()
             int colorIndex = cubicwave8((k * 23) + thisPhase) / 2 + cos8((k * 15) + thatPhase) / 2; // Create a wave and add a phase change and add another wave with its own phase change.. Hey, you can even change the frequencies if you wish.
             int thisBright = qsuba(colorIndex, beatsin8(7, 0, 96));                                 // qsub gives it a bit of 'black' dead space by setting sets a minimum value. If colorIndex < current value of beatsin8(), then bright = 0. Otherwise, bright = colorIndex..
 
-            kaleidoscope.drawKaleidoscopePixel6(k, ColorFromPalette(currentPalette, colorIndex, thisBright, currentBlending)); // Let's now add the foreground colour.
+            kaleidoscope.drawKaleidoscopePixel6(leds, k, ColorFromPalette(currentPalette, colorIndex, thisBright, currentBlending)); // Let's now add the foreground colour.
         }
     }
 
@@ -515,9 +544,9 @@ void mode_kaleidoscope_sawTooth()
     int cur_led = ((millis() % ms_per_beat) / ms_per_led) % (TRIANGLE_COUNT); // Using millis to count up the strand, with %NUM_LEDS at the end as a safety factor.
 
     if (cur_led == 0)
-        kaleidoscope.fill_kaleidoscope_solid(CRGB::Black);
+        kaleidoscope.fill_kaleidoscope_solid(leds, CRGB::Black);
     else
-        kaleidoscope.drawKaleidoscopePixel6(cur_led, ColorFromPalette(currentPalette, 0, 255, currentBlending)); // I prefer to use palettes instead of CHSV or CRGB assignments.
+        kaleidoscope.drawKaleidoscopePixel6(leds, cur_led, ColorFromPalette(currentPalette, 0, 255, currentBlending)); // I prefer to use palettes instead of CHSV or CRGB assignments.
 }
 
 // https://github.com/atuline/FastLED-Demos/blob/master/blendwave/blendwave.ino
@@ -537,8 +566,8 @@ void mode_kaleidoscope_blendWave()
 
         loc1 = beatsin8(10, 0, TRIANGLE_COUNT - 1);
 
-        kaleidoscope.fill_gradient_RGB(0, clr2, loc1, clr1);
-        kaleidoscope.fill_gradient_RGB(loc1, clr2, TRIANGLE_COUNT - 1, clr1);
+        kaleidoscope.fill_gradient_RGB(leds, 0, clr2, loc1, clr1);
+        kaleidoscope.fill_gradient_RGB(leds, loc1, clr2, TRIANGLE_COUNT - 1, clr1);
         leds_dirty = true;
     }
 }

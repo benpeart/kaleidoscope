@@ -4,10 +4,12 @@
 #define BOUNCE
 #define ENCODER
 #define FASTLED
-#define WIFI
+//#define WIFI
+#ifdef WIFI
 #define OTA
 #define ALEXA
 #define TIME
+#endif
 #define PHOTOCELL
 #define DEMO
 
