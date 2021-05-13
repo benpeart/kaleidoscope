@@ -11,7 +11,6 @@
 #define TIME
 #endif
 #define PHOTOCELL
-#define DEMO
 
 // enable debugging macros
 #define DEBUG
@@ -83,20 +82,16 @@
 #define LED_STRIP_PIN_2 27
 #define LED_STRIP_PIN_3 26
 #define LED_STRIP_PIN_4 25
-#define NUM_STRIPS 4
-#define NUM_LEDS_PER_STRIP 156
 #define LED_TYPE WS2812B
 #define COLOR_ORDER GRB
 
-CRGB leds[NUM_STRIPS * NUM_LEDS_PER_STRIP];
-
-// With parallel updates for the LEDs so fast, we get flickering if we call
-// FastLED.Show every loop. Maintain a 'dirty' bit so we know when to call Show.
-boolean leds_dirty = true;
-
 #include "Kaleidoscope.h"
 #include "ripples.h"
-Kaleidoscope kaleidoscope;
+#include "beatwave.h"
+#include "rainbowmarch.h"
+#include "plasma.h"
+#include "blendwave.h"
+#include "sawtooth.h"
 #endif
 
 //
@@ -262,6 +257,7 @@ void (*renderFunc[])(void){
     mode_kaleidoscope_sawTooth,
     mode_kaleidoscope_ripples,
     mode_kaleidoscope_blendWave,
+    mode_kaleidoscope_beatWave,
 #endif
 #ifdef DEBUG
     mode_kaleidoscope_test,
@@ -290,6 +286,7 @@ const PROGMEM char modeNames[N_MODES][64] =
         "mode_kaleidoscope_sawTooth",
         "mode_kaleidoscope_ripples",
         "mode_kaleidoscope_blendWave",
+        "mode_kaleidoscope_beatWave",
 #endif
 #ifdef DEBUG
         "mode_kaleidoscope_test",

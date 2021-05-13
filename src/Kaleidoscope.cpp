@@ -1,0 +1,498 @@
+#include <Arduino.h>
+#include <FastLED.h>
+#include "Kaleidoscope.h"
+
+// enable debugging macros
+#define DEBUG
+#include "debug.h"
+
+#define JEWEL_STRIP_COLUMNS 28
+#define DIAMOND_STRIP_COLUMNS 28
+#define JEWEL_RED 0x770000
+#define JEWEL_GRE 0x007700
+#define JEWEL_BLU 0x000077
+#define JEWEL_ORA 0x774000
+#define JEWEL_YEL 0x777700
+#define JEWEL_PUR 0x770077
+#define JEWEL_LEA 0x27100a
+
+// With parallel updates for the LEDs so fast, we get flickering if we call
+// FastLED.Show every loop. Maintain a 'dirty' bit so we know when to call Show.
+boolean leds_dirty = true;
+
+// we're going to blend between frames so need an array of LEDs for both frames
+// then we'll blend them together into the 'output' leds array which will be displayed
+CRGB leds[NUM_STRIPS * NUM_LEDS_PER_STRIP];
+CRGB leds2[NUM_STRIPS * NUM_LEDS_PER_STRIP];
+CRGB leds3[NUM_STRIPS * NUM_LEDS_PER_STRIP];
+
+Kaleidoscope kaleidoscope;
+
+// TODO: optimize the strip array to only require 2 bytes per pixel (16 bit color)
+// TODO: I was unsuccessful in finding a way to make these CRGB structures
+// store the strip RGB values in program memory (flash) to save SRAM
+static const PROGMEM uint32_t JewelStrip[JEWEL_STRIP_COLUMNS][TRIANGLE_ROWS] =
+    {
+        {JEWEL_RED, JEWEL_RED, JEWEL_RED, JEWEL_RED, JEWEL_RED, JEWEL_RED, JEWEL_RED, JEWEL_RED, JEWEL_RED, JEWEL_RED},
+        {JEWEL_RED, JEWEL_RED, JEWEL_RED, JEWEL_RED, JEWEL_RED, JEWEL_RED, JEWEL_RED, JEWEL_RED, JEWEL_RED, JEWEL_RED},
+        {JEWEL_RED, JEWEL_RED, JEWEL_RED, JEWEL_PUR, JEWEL_PUR, JEWEL_PUR, JEWEL_PUR, JEWEL_PUR, JEWEL_PUR, JEWEL_PUR},
+        {JEWEL_RED, JEWEL_RED, JEWEL_RED, JEWEL_PUR, JEWEL_PUR, JEWEL_PUR, JEWEL_PUR, JEWEL_PUR, JEWEL_PUR, JEWEL_PUR},
+        {JEWEL_BLU, JEWEL_BLU, JEWEL_BLU, JEWEL_BLU, JEWEL_BLU, JEWEL_BLU, JEWEL_BLU, JEWEL_BLU, JEWEL_BLU, JEWEL_BLU},
+        {JEWEL_BLU, JEWEL_BLU, JEWEL_BLU, JEWEL_BLU, JEWEL_BLU, JEWEL_BLU, JEWEL_BLU, JEWEL_BLU, JEWEL_BLU, JEWEL_BLU},
+        {JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA},
+
+        {JEWEL_ORA, JEWEL_ORA, JEWEL_PUR, JEWEL_ORA, JEWEL_ORA, JEWEL_PUR, JEWEL_PUR, JEWEL_PUR, JEWEL_GRE, JEWEL_GRE},
+        {JEWEL_ORA, JEWEL_ORA, JEWEL_PUR, JEWEL_ORA, JEWEL_ORA, JEWEL_PUR, JEWEL_PUR, JEWEL_PUR, JEWEL_GRE, JEWEL_GRE},
+        {JEWEL_ORA, JEWEL_ORA, JEWEL_PUR, JEWEL_ORA, JEWEL_ORA, JEWEL_PUR, JEWEL_PUR, JEWEL_PUR, JEWEL_GRE, JEWEL_GRE},
+        {JEWEL_ORA, JEWEL_ORA, JEWEL_PUR, JEWEL_ORA, JEWEL_ORA, JEWEL_PUR, JEWEL_PUR, JEWEL_PUR, JEWEL_GRE, JEWEL_GRE},
+        {JEWEL_ORA, JEWEL_ORA, JEWEL_PUR, JEWEL_ORA, JEWEL_ORA, JEWEL_PUR, JEWEL_PUR, JEWEL_PUR, JEWEL_GRE, JEWEL_GRE},
+        {JEWEL_ORA, JEWEL_ORA, JEWEL_PUR, JEWEL_ORA, JEWEL_ORA, JEWEL_PUR, JEWEL_PUR, JEWEL_PUR, JEWEL_GRE, JEWEL_GRE},
+        {JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA},
+
+        {JEWEL_PUR, JEWEL_PUR, JEWEL_PUR, JEWEL_PUR, JEWEL_PUR, JEWEL_PUR, JEWEL_PUR, JEWEL_PUR, JEWEL_PUR, JEWEL_PUR},
+        {JEWEL_PUR, JEWEL_PUR, JEWEL_PUR, JEWEL_PUR, JEWEL_PUR, JEWEL_PUR, JEWEL_PUR, JEWEL_PUR, JEWEL_PUR, JEWEL_PUR},
+        {JEWEL_RED, JEWEL_RED, JEWEL_RED, JEWEL_RED, JEWEL_RED, JEWEL_RED, JEWEL_RED, JEWEL_RED, JEWEL_RED, JEWEL_RED},
+        {JEWEL_RED, JEWEL_RED, JEWEL_RED, JEWEL_RED, JEWEL_RED, JEWEL_RED, JEWEL_RED, JEWEL_RED, JEWEL_RED, JEWEL_RED},
+        {JEWEL_YEL, JEWEL_YEL, JEWEL_YEL, JEWEL_YEL, JEWEL_YEL, JEWEL_YEL, JEWEL_YEL, JEWEL_YEL, JEWEL_YEL, JEWEL_YEL},
+        {JEWEL_YEL, JEWEL_YEL, JEWEL_YEL, JEWEL_YEL, JEWEL_YEL, JEWEL_YEL, JEWEL_YEL, JEWEL_YEL, JEWEL_YEL, JEWEL_YEL},
+        {JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA},
+
+        {JEWEL_YEL, JEWEL_YEL, JEWEL_YEL, JEWEL_BLU, JEWEL_BLU, JEWEL_BLU, JEWEL_BLU, JEWEL_ORA, JEWEL_ORA, JEWEL_ORA},
+        {JEWEL_YEL, JEWEL_YEL, JEWEL_YEL, JEWEL_BLU, JEWEL_BLU, JEWEL_BLU, JEWEL_BLU, JEWEL_ORA, JEWEL_ORA, JEWEL_ORA},
+        {JEWEL_YEL, JEWEL_YEL, JEWEL_YEL, JEWEL_BLU, JEWEL_BLU, JEWEL_BLU, JEWEL_BLU, JEWEL_ORA, JEWEL_ORA, JEWEL_ORA},
+        {JEWEL_YEL, JEWEL_YEL, JEWEL_YEL, JEWEL_BLU, JEWEL_BLU, JEWEL_BLU, JEWEL_BLU, JEWEL_ORA, JEWEL_ORA, JEWEL_ORA},
+        {JEWEL_YEL, JEWEL_YEL, JEWEL_YEL, JEWEL_BLU, JEWEL_BLU, JEWEL_BLU, JEWEL_BLU, JEWEL_ORA, JEWEL_ORA, JEWEL_ORA},
+        {JEWEL_YEL, JEWEL_YEL, JEWEL_YEL, JEWEL_BLU, JEWEL_BLU, JEWEL_BLU, JEWEL_BLU, JEWEL_ORA, JEWEL_ORA, JEWEL_ORA},
+        {JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA}};
+
+static const PROGMEM uint32_t DiamondStrip[DIAMOND_STRIP_COLUMNS][TRIANGLE_ROWS] =
+    {
+        {JEWEL_LEA, JEWEL_RED, JEWEL_LEA, JEWEL_LEA, JEWEL_GRE, JEWEL_LEA, JEWEL_LEA, JEWEL_BLU, JEWEL_LEA, JEWEL_LEA},
+        {JEWEL_RED, JEWEL_RED, JEWEL_RED, JEWEL_GRE, JEWEL_GRE, JEWEL_GRE, JEWEL_BLU, JEWEL_BLU, JEWEL_BLU, JEWEL_LEA},
+        {JEWEL_ORA, JEWEL_RED, JEWEL_LEA, JEWEL_YEL, JEWEL_GRE, JEWEL_LEA, JEWEL_PUR, JEWEL_BLU, JEWEL_LEA, JEWEL_RED},
+        {JEWEL_ORA, JEWEL_ORA, JEWEL_YEL, JEWEL_YEL, JEWEL_YEL, JEWEL_PUR, JEWEL_PUR, JEWEL_PUR, JEWEL_RED, JEWEL_RED},
+        {JEWEL_ORA, JEWEL_GRE, JEWEL_LEA, JEWEL_YEL, JEWEL_BLU, JEWEL_LEA, JEWEL_PUR, JEWEL_ORA, JEWEL_LEA, JEWEL_RED},
+        {JEWEL_GRE, JEWEL_GRE, JEWEL_GRE, JEWEL_BLU, JEWEL_BLU, JEWEL_BLU, JEWEL_ORA, JEWEL_ORA, JEWEL_ORA, JEWEL_LEA},
+        {JEWEL_LEA, JEWEL_GRE, JEWEL_LEA, JEWEL_LEA, JEWEL_BLU, JEWEL_LEA, JEWEL_LEA, JEWEL_ORA, JEWEL_LEA, JEWEL_LEA},
+
+        {JEWEL_LEA, JEWEL_RED, JEWEL_LEA, JEWEL_LEA, JEWEL_GRE, JEWEL_LEA, JEWEL_LEA, JEWEL_BLU, JEWEL_LEA, JEWEL_LEA},
+        {JEWEL_RED, JEWEL_RED, JEWEL_RED, JEWEL_GRE, JEWEL_GRE, JEWEL_GRE, JEWEL_BLU, JEWEL_BLU, JEWEL_BLU, JEWEL_LEA},
+        {JEWEL_ORA, JEWEL_RED, JEWEL_LEA, JEWEL_YEL, JEWEL_GRE, JEWEL_LEA, JEWEL_PUR, JEWEL_BLU, JEWEL_LEA, JEWEL_RED},
+        {JEWEL_ORA, JEWEL_ORA, JEWEL_YEL, JEWEL_YEL, JEWEL_YEL, JEWEL_PUR, JEWEL_PUR, JEWEL_PUR, JEWEL_RED, JEWEL_RED},
+        {JEWEL_ORA, JEWEL_GRE, JEWEL_LEA, JEWEL_YEL, JEWEL_BLU, JEWEL_LEA, JEWEL_PUR, JEWEL_ORA, JEWEL_LEA, JEWEL_RED},
+        {JEWEL_GRE, JEWEL_GRE, JEWEL_GRE, JEWEL_BLU, JEWEL_BLU, JEWEL_BLU, JEWEL_ORA, JEWEL_ORA, JEWEL_ORA, JEWEL_LEA},
+        {JEWEL_LEA, JEWEL_GRE, JEWEL_LEA, JEWEL_LEA, JEWEL_BLU, JEWEL_LEA, JEWEL_LEA, JEWEL_ORA, JEWEL_LEA, JEWEL_LEA},
+
+        {JEWEL_LEA, JEWEL_RED, JEWEL_LEA, JEWEL_LEA, JEWEL_GRE, JEWEL_LEA, JEWEL_LEA, JEWEL_BLU, JEWEL_LEA, JEWEL_LEA},
+        {JEWEL_RED, JEWEL_RED, JEWEL_RED, JEWEL_GRE, JEWEL_GRE, JEWEL_GRE, JEWEL_BLU, JEWEL_BLU, JEWEL_BLU, JEWEL_LEA},
+        {JEWEL_ORA, JEWEL_RED, JEWEL_LEA, JEWEL_YEL, JEWEL_GRE, JEWEL_LEA, JEWEL_PUR, JEWEL_BLU, JEWEL_LEA, JEWEL_RED},
+        {JEWEL_ORA, JEWEL_ORA, JEWEL_YEL, JEWEL_YEL, JEWEL_YEL, JEWEL_PUR, JEWEL_PUR, JEWEL_PUR, JEWEL_RED, JEWEL_RED},
+        {JEWEL_ORA, JEWEL_GRE, JEWEL_LEA, JEWEL_YEL, JEWEL_BLU, JEWEL_LEA, JEWEL_PUR, JEWEL_ORA, JEWEL_LEA, JEWEL_RED},
+        {JEWEL_GRE, JEWEL_GRE, JEWEL_GRE, JEWEL_BLU, JEWEL_BLU, JEWEL_BLU, JEWEL_ORA, JEWEL_ORA, JEWEL_ORA, JEWEL_LEA},
+        {JEWEL_LEA, JEWEL_GRE, JEWEL_LEA, JEWEL_LEA, JEWEL_BLU, JEWEL_LEA, JEWEL_LEA, JEWEL_ORA, JEWEL_LEA, JEWEL_LEA},
+
+        {JEWEL_LEA, JEWEL_RED, JEWEL_LEA, JEWEL_LEA, JEWEL_GRE, JEWEL_LEA, JEWEL_LEA, JEWEL_BLU, JEWEL_LEA, JEWEL_LEA},
+        {JEWEL_RED, JEWEL_RED, JEWEL_RED, JEWEL_GRE, JEWEL_GRE, JEWEL_GRE, JEWEL_BLU, JEWEL_BLU, JEWEL_BLU, JEWEL_LEA},
+        {JEWEL_ORA, JEWEL_RED, JEWEL_LEA, JEWEL_YEL, JEWEL_GRE, JEWEL_LEA, JEWEL_PUR, JEWEL_BLU, JEWEL_LEA, JEWEL_RED},
+        {JEWEL_ORA, JEWEL_ORA, JEWEL_YEL, JEWEL_YEL, JEWEL_YEL, JEWEL_PUR, JEWEL_PUR, JEWEL_PUR, JEWEL_RED, JEWEL_RED},
+        {JEWEL_ORA, JEWEL_GRE, JEWEL_LEA, JEWEL_YEL, JEWEL_BLU, JEWEL_LEA, JEWEL_PUR, JEWEL_ORA, JEWEL_LEA, JEWEL_RED},
+        {JEWEL_GRE, JEWEL_GRE, JEWEL_GRE, JEWEL_BLU, JEWEL_BLU, JEWEL_BLU, JEWEL_ORA, JEWEL_ORA, JEWEL_ORA, JEWEL_LEA},
+        {JEWEL_LEA, JEWEL_GRE, JEWEL_LEA, JEWEL_LEA, JEWEL_BLU, JEWEL_LEA, JEWEL_LEA, JEWEL_ORA, JEWEL_LEA, JEWEL_LEA}};
+/*
+        {JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA},
+        {JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA},
+        {JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA},
+        {JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA},
+        {JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA},
+        {JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA},
+        {JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA},
+
+        {JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA},
+        {JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA},
+        {JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA},
+        {JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA},
+        {JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA},
+        {JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA},
+        {JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA},
+
+        {JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA},
+        {JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA},
+        {JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA},
+        {JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA},
+        {JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA},
+        {JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA},
+        {JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA}};
+        */
+
+// create a lookup table where the index is the number of the triangle and the result is
+// three pairs of {strip, index} that can be passed to MirroredSetPixelColor so they are
+// mirrored to the other 3 axis
+struct Pixel
+{
+    uint8_t strip;
+    uint8_t index;
+};
+
+struct Strips
+{
+    Pixel strips[3];
+};
+
+static const PROGMEM Strips KaleidoscopeLookupTable[TRIANGLE_COUNT] =
+    {
+        {{{1, 18}, {1, 19}, {1, 20}}},
+        {{{1, 59}, {1, 58}, {1, 22}}},
+        {{{1, 17}, {1, 57}, {1, 21}}},
+        {{{1, 16}, {1, 56}, {1, 55}}},
+        {{{1, 90}, {1, 91}, {1, 24}}},
+        {{{1, 60}, {1, 92}, {1, 23}}},
+        {{{1, 61}, {1, 93}, {1, 53}}},
+        {{{1, 15}, {1, 94}, {1, 54}}},
+        {{{1, 14}, {1, 95}, {1, 96}}},
+        {{{1, 131}, {1, 130}, {1, 26}}},
+        {{{1, 89}, {1, 129}, {1, 25}}},
+        {{{1, 88}, {1, 128}, {1, 51}}},
+        {{{1, 62}, {1, 127}, {1, 52}}},
+        {{{1, 63}, {1, 126}, {1, 98}}},
+        {{{1, 13}, {1, 125}, {1, 97}}},
+        {{{1, 12}, {1, 124}, {1, 123}}},
+        {{{0, 10}, {0, 11}, {1, 28}}},
+        {{{1, 132}, {0, 12}, {1, 27}}},
+        {{{1, 133}, {0, 13}, {1, 49}}},
+        {{{1, 87}, {0, 14}, {1, 50}}},
+        {{{1, 86}, {0, 15}, {1, 100}}},
+        {{{1, 64}, {0, 16}, {1, 99}}},
+        {{{1, 65}, {0, 17}, {1, 121}}},
+        {{{1, 11}, {0, 18}, {1, 122}}},
+        {{{1, 10}, {0, 19}, {0, 20}}},
+        {{{0, 51}, {0, 50}, {1, 30}}},
+        {{{0, 9}, {0, 49}, {1, 29}}},
+        {{{0, 8}, {0, 48}, {1, 47}}},
+        {{{1, 134}, {0, 47}, {1, 48}}},
+        {{{1, 135}, {0, 46}, {1, 102}}},
+        {{{1, 85}, {0, 45}, {1, 101}}},
+        {{{1, 84}, {0, 44}, {1, 119}}},
+        {{{1, 66}, {0, 43}, {1, 120}}},
+        {{{1, 67}, {0, 42}, {0, 22}}},
+        {{{1, 9}, {0, 41}, {0, 21}}},
+        {{{1, 8}, {0, 40}, {0, 39}}},
+        {{{0, 66}, {0, 67}, {1, 32}}},
+        {{{0, 52}, {0, 68}, {1, 31}}},
+        {{{0, 53}, {0, 69}, {1, 45}}},
+        {{{0, 7}, {0, 70}, {1, 46}}},
+        {{{0, 6}, {0, 71}, {1, 104}}},
+        {{{1, 136}, {0, 72}, {1, 103}}},
+        {{{1, 137}, {0, 73}, {1, 117}}},
+        {{{1, 83}, {0, 74}, {1, 118}}},
+        {{{1, 82}, {0, 75}, {0, 24}}},
+        {{{1, 68}, {0, 76}, {0, 23}}},
+        {{{1, 69}, {0, 77}, {0, 37}}},
+        {{{1, 7}, {0, 78}, {0, 38}}},
+        {{{1, 6}, {0, 79}, {0, 80}}},
+        {{{0, 107}, {0, 106}, {1, 34}}},
+        {{{0, 65}, {0, 105}, {1, 33}}},
+        {{{0, 64}, {0, 104}, {1, 43}}},
+        {{{0, 54}, {0, 103}, {1, 44}}},
+        {{{0, 55}, {0, 102}, {1, 106}}},
+        {{{0, 5}, {0, 101}, {1, 105}}},
+        {{{0, 4}, {0, 100}, {1, 115}}},
+        {{{1, 138}, {0, 99}, {1, 116}}},
+        {{{1, 139}, {0, 98}, {0, 26}}},
+        {{{1, 81}, {0, 97}, {0, 25}}},
+        {{{1, 80}, {0, 96}, {0, 35}}},
+        {{{1, 70}, {0, 95}, {0, 36}}},
+        {{{1, 71}, {0, 94}, {0, 82}}},
+        {{{1, 5}, {0, 93}, {0, 81}}},
+        {{{1, 4}, {0, 92}, {0, 91}}},
+        {{{0, 114}, {0, 115}, {1, 36}}},
+        {{{0, 108}, {0, 116}, {1, 35}}},
+        {{{0, 109}, {0, 117}, {1, 41}}},
+        {{{0, 63}, {0, 118}, {1, 42}}},
+        {{{0, 62}, {0, 119}, {1, 108}}},
+        {{{0, 56}, {0, 120}, {1, 107}}},
+        {{{0, 57}, {0, 121}, {1, 113}}},
+        {{{0, 3}, {0, 122}, {1, 114}}},
+        {{{0, 2}, {0, 123}, {0, 28}}},
+        {{{1, 140}, {0, 124}, {0, 27}}},
+        {{{1, 141}, {0, 125}, {0, 33}}},
+        {{{1, 79}, {0, 126}, {0, 34}}},
+        {{{1, 78}, {0, 127}, {0, 84}}},
+        {{{1, 72}, {0, 128}, {0, 83}}},
+        {{{1, 73}, {0, 129}, {0, 89}}},
+        {{{1, 3}, {0, 130}, {0, 90}}},
+        {{{1, 2}, {0, 131}, {0, 132}}},
+        {{{0, 155}, {0, 154}, {1, 38}}},
+        {{{0, 113}, {0, 153}, {1, 37}}},
+        {{{0, 112}, {0, 152}, {1, 39}}},
+        {{{0, 110}, {0, 151}, {1, 40}}},
+        {{{0, 111}, {0, 150}, {1, 110}}},
+        {{{0, 61}, {0, 149}, {1, 109}}},
+        {{{0, 60}, {0, 148}, {1, 111}}},
+        {{{0, 58}, {0, 147}, {1, 112}}},
+        {{{0, 59}, {0, 146}, {0, 30}}},
+        {{{0, 1}, {0, 145}, {0, 29}}},
+        {{{0, 0}, {0, 144}, {0, 31}}},
+        {{{1, 142}, {0, 143}, {0, 32}}},
+        {{{1, 143}, {0, 142}, {0, 86}}},
+        {{{1, 77}, {0, 141}, {0, 85}}},
+        {{{1, 76}, {0, 140}, {0, 87}}},
+        {{{1, 74}, {0, 139}, {0, 88}}},
+        {{{1, 75}, {0, 136}, {0, 134}}},
+        {{{1, 1}, {0, 137}, {0, 133}}},
+        {{{1, 0}, {0, 136}, {0, 135}}}};
+
+void Kaleidoscope::setup()
+{
+    DB_PRINTLN(F("Kaleidoscope.setup"));
+    rgb_strip_1 = JewelStrip;
+    strip_1_columns = JEWEL_STRIP_COLUMNS;
+    rgb_strip_2 = DiamondStrip;
+    strip_2_columns = DIAMOND_STRIP_COLUMNS;
+
+    // start with random offsets to provide more variety
+    offset_1 = random(strip_1_columns);
+    offset_2 = random(strip_2_columns);
+
+    ::fill_solid(leds3, NUM_STRIPS * NUM_LEDS_PER_STRIP, CRGB::Black);
+}
+
+// update the position of the strips and draw the kaleidoscope
+void Kaleidoscope::drawFrame(CRGB *leds)
+{
+    int begin = 0, end = 0, viewport_index = 0;
+
+    // draw the kaleidoscope pixels for this 'frame'
+    for (int row = 0; row < TRIANGLE_ROWS; row++)
+    {
+        for (int x = begin; x <= end; x++)
+        {
+            int column;
+
+            // the column number must wrap around as needed to stay within the number
+            // of columns available in the strip
+            column = x + offset_1;
+            if (column < 0)
+                column = (column % strip_1_columns) + strip_1_columns - 1;
+            else
+                column = column % strip_1_columns;
+
+            // since the strips are stored in PROGMEM, we must read them into SRAM before using them
+            uint32_t pixel_1 = pgm_read_dword_near(&rgb_strip_1[column][row]);
+#ifdef NDEBUG
+            DB_PRINTF("pixel_1[%d][%d] = %x\r\n", column, row, pixel_1);
+#endif
+
+            // the column number must wrap around as needed to stay within the number
+            // of columns available in the strip
+            column = x + offset_2;
+            if (column < 0)
+                column = (column % strip_2_columns) + strip_2_columns - 1;
+            else
+                column = column % strip_2_columns;
+
+            // since the strips are stored in PROGMEM, we must read them into SRAM before using them
+            uint32_t pixel_2 = pgm_read_dword_near(&rgb_strip_2[column][row]);
+#ifdef NDEBUG
+            DB_PRINTF("pixel_2[%d][%d] = %x\r\n", column, row, pixel_2);
+#endif
+
+            // blend the pixels from the two strips by doing 50% transparency
+            CRGB pixel = blend(CRGB(pixel_1), CRGB(pixel_2), 127);
+#ifdef NDEBUG
+            DB_PRINTF("blended pixel = %x\r\n", pixel);
+#endif
+            drawPixel(leds, viewport_index, pixel);
+            viewport_index++;
+        }
+        begin--;
+        end++;
+    }
+
+    ++offset_1;
+    offset_1 = offset_1 % strip_1_columns;
+    ++offset_2;
+    offset_2 = offset_2 % strip_2_columns;
+    leds_dirty = true;
+}
+
+// draw a pixel mirrored and rotated 6 times to emulate a kaleidoscope
+void Kaleidoscope::drawPixel(CRGB *leds, int index, CRGB c)
+{
+#ifdef NDEBUG
+    DB_PRINT(F("drawPixel("));
+    DB_PRINT(index);
+    DB_PRINT(F(", 0x"));
+    DB_PRINT(c, HEX);
+    DB_PRINTLN(")");
+#endif
+    if (index < 0 || index >= TRIANGLE_COUNT)
+        return;
+
+    for (uint8_t x = 0; x < 3; x++)
+        MirroredSetPixelColor(leds, pgm_read_byte_near(&KaleidoscopeLookupTable[index].strips[x].strip),
+                              pgm_read_byte_near(&KaleidoscopeLookupTable[index].strips[x].index), c);
+}
+
+void Kaleidoscope::fill_rainbow(CRGB *leds, uint8_t initialhue, uint8_t deltahue)
+{
+    CHSV hsv;
+    hsv.hue = initialhue;
+    hsv.val = 255;
+    hsv.sat = 240;
+    for (int i = 0; i < TRIANGLE_COUNT; ++i)
+    {
+        drawPixel(leds, i, hsv);
+        hsv.hue += deltahue;
+    }
+}
+
+void Kaleidoscope::fill_solid(CRGB *leds, const struct CRGB &color)
+{
+    ::fill_solid(leds, NUM_LEDS_PER_STRIP, color);
+}
+
+void Kaleidoscope::fill_gradient_RGB(CRGB *leds, uint16_t startpos, CRGB startcolor,
+                                     uint16_t endpos, CRGB endcolor)
+{
+    // if the points are in the wrong order, straighten them
+    if (endpos < startpos)
+    {
+        uint16_t t = endpos;
+        CRGB tc = endcolor;
+        endcolor = startcolor;
+        endpos = startpos;
+        startpos = t;
+        startcolor = tc;
+    }
+
+    saccum87 rdistance87;
+    saccum87 gdistance87;
+    saccum87 bdistance87;
+
+    rdistance87 = (endcolor.r - startcolor.r) << 7;
+    gdistance87 = (endcolor.g - startcolor.g) << 7;
+    bdistance87 = (endcolor.b - startcolor.b) << 7;
+
+    uint16_t pixeldistance = endpos - startpos;
+    int16_t divisor = pixeldistance ? pixeldistance : 1;
+
+    saccum87 rdelta87 = rdistance87 / divisor;
+    saccum87 gdelta87 = gdistance87 / divisor;
+    saccum87 bdelta87 = bdistance87 / divisor;
+
+    rdelta87 *= 2;
+    gdelta87 *= 2;
+    bdelta87 *= 2;
+
+    accum88 r88 = startcolor.r << 8;
+    accum88 g88 = startcolor.g << 8;
+    accum88 b88 = startcolor.b << 8;
+    for (uint16_t i = startpos; i <= endpos; ++i)
+    {
+        drawPixel(leds, i, CRGB(r88 >> 8, g88 >> 8, b88 >> 8));
+        r88 += rdelta87;
+        g88 += gdelta87;
+        b88 += bdelta87;
+    }
+}
+
+void Kaleidoscope::MirroredSetPixelColor(CRGB *leds, int strip, int index, CRGB rgb)
+{
+    if (index < 0 || index >= NUM_LEDS_PER_STRIP)
+    {
+        DB_PRINT(F("MysetPixelColor: requested index ("));
+        DB_PRINT(index);
+        DB_PRINTLN(F(") exceeds number of LEDs in a strip."));
+        return;
+    }
+
+    switch (strip)
+    {
+    case 0:
+        leds[0 * NUM_LEDS_PER_STRIP + index] = rgb;
+        leds[3 * NUM_LEDS_PER_STRIP + index] = rgb;
+        leds_dirty = true;
+        break;
+
+    case 1:
+        leds[1 * NUM_LEDS_PER_STRIP + index] = rgb;
+        leds[2 * NUM_LEDS_PER_STRIP + index] = rgb;
+        leds_dirty = true;
+        break;
+
+    default:
+        DB_PRINT(F("MysetPixelColor: invalid strip ID = "));
+        DB_PRINTLN(strip);
+        break;
+    }
+}
+
+#define MS_BETWEEN_FRAMES 512
+void mode_kaleidoscope_screensaver()
+{
+    static boolean first_array = true;
+    static int time_of_last_frame = 0;
+
+    int time = millis();
+
+    // draw the next frame into the correct led array
+    if (time >= time_of_last_frame + MS_BETWEEN_FRAMES)
+    {
+        // draw the next frame of the kaleidoscope
+        kaleidoscope.drawFrame(first_array ? leds2 : leds3);
+        time_of_last_frame = time;
+        first_array = !first_array;
+        leds_dirty = true;
+    }
+
+    // smoothly blend from one frame to the next
+    EVERY_N_MILLISECONDS(5)
+    {
+        // ratio is the percentage of time remaining for this frame mapped to 0-255
+        fract8 ratio = map(time, time_of_last_frame, time_of_last_frame + MS_BETWEEN_FRAMES, 0, 255);
+        if (!first_array)
+            ratio = 255 - ratio;
+
+        // mix the 2 arrays together
+        for (int i = 0; i < NUM_STRIPS * NUM_LEDS_PER_STRIP; i++)
+        {
+            leds[i] = blend(leds2[i], leds3[i], ratio);
+        }
+        leds_dirty = true;
+    }
+}
+
+void mode_kaleidoscope_interactive()
+{
+    EVERY_N_MILLISECONDS(50)
+    {
+        kaleidoscope.drawFrame(leds);
+    }
+}
+
+void mode_kaleidoscope_select_disks()
+{
+}
+
+#ifdef DEBUG
+// loop through all pixels in the source triange making sure they
+// get reflected and mirrored properly
+void mode_kaleidoscope_test()
+{
+    static int index = -1;
+
+    EVERY_N_MILLISECONDS(100)
+    {
+        // erase the last pixel
+        kaleidoscope.drawPixel(leds, index, CRGB::Black); // off
+
+        // move to the next pixel
+        if (++index >= TRIANGLE_COUNT)
+            index = 0;
+        DB_PRINTLN(index);
+
+        // light up the next pixel
+        kaleidoscope.drawPixel(leds, index, CRGB::Red);
+    }
+}
+#endif

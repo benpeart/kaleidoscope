@@ -10,6 +10,8 @@
             "includePath": [
                 "D:/src/kaleidoscope/include",
                 "D:/src/kaleidoscope/src",
+                "D:/src/kaleidoscope/.pio/libdeps/node32s/Espalexa/src",
+                "C:/Users/Ben/.platformio/packages/framework-arduinoespressif32/libraries/WebServer/src",
                 "C:/Users/Ben/.platformio/packages/framework-arduinoespressif32/libraries/Update/src",
                 "D:/src/kaleidoscope/.pio/libdeps/node32s/ESP32Encoder/src",
                 "D:/src/kaleidoscope/.pio/libdeps/node32s/Bounce2/src",
@@ -106,7 +108,6 @@
                 "C:/Users/Ben/.platformio/packages/framework-arduinoespressif32/libraries/SD_MMC/src",
                 "C:/Users/Ben/.platformio/packages/framework-arduinoespressif32/libraries/SimpleBLE/src",
                 "C:/Users/Ben/.platformio/packages/framework-arduinoespressif32/libraries/Ticker/src",
-                "C:/Users/Ben/.platformio/packages/framework-arduinoespressif32/libraries/WebServer/src",
                 "C:/Users/Ben/.platformio/packages/framework-arduinoespressif32/libraries/WiFiClientSecure/src",
                 "C:/Users/Ben/.platformio/packages/framework-arduinoespressif32/libraries/WiFiProv/src",
                 "C:/Users/Ben/.platformio/packages/framework-arduinoespressif32/libraries/Wire/src",
@@ -117,6 +118,8 @@
                 "path": [
                     "D:/src/kaleidoscope/include",
                     "D:/src/kaleidoscope/src",
+                    "D:/src/kaleidoscope/.pio/libdeps/node32s/Espalexa/src",
+                    "C:/Users/Ben/.platformio/packages/framework-arduinoespressif32/libraries/WebServer/src",
                     "C:/Users/Ben/.platformio/packages/framework-arduinoespressif32/libraries/Update/src",
                     "D:/src/kaleidoscope/.pio/libdeps/node32s/ESP32Encoder/src",
                     "D:/src/kaleidoscope/.pio/libdeps/node32s/Bounce2/src",
@@ -213,7 +216,6 @@
                     "C:/Users/Ben/.platformio/packages/framework-arduinoespressif32/libraries/SD_MMC/src",
                     "C:/Users/Ben/.platformio/packages/framework-arduinoespressif32/libraries/SimpleBLE/src",
                     "C:/Users/Ben/.platformio/packages/framework-arduinoespressif32/libraries/Ticker/src",
-                    "C:/Users/Ben/.platformio/packages/framework-arduinoespressif32/libraries/WebServer/src",
                     "C:/Users/Ben/.platformio/packages/framework-arduinoespressif32/libraries/WiFiClientSecure/src",
                     "C:/Users/Ben/.platformio/packages/framework-arduinoespressif32/libraries/WiFiProv/src",
                     "C:/Users/Ben/.platformio/packages/framework-arduinoespressif32/libraries/Wire/src",
