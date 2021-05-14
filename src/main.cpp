@@ -52,8 +52,8 @@
 #endif
 
 #ifdef TIME
-#include <EEPROM.h>
 #include "RealTimeClock.h"
+#include <Preferences.h>
 #endif
 #endif // WIFI
 
@@ -334,7 +334,7 @@ void setup()
   DB_PRINT("\nStarting Kaleidoscope on " + String(ARDUINO_BOARD));
   DB_PRINTLN(ESP_ASYNC_WIFIMANAGER_VERSION);
   ESPAsync_WiFiManager ESPAsync_wifiManager(&webServer, &dnsServer, "Kaleidoscope");
-  ESPAsync_wifiManager.resetSettings();   //reset saved settings
+  //ESPAsync_wifiManager.resetSettings();   //reset saved settings
   ESPAsync_wifiManager.setAPStaticIPConfig(IPAddress(192, 168, 132, 1), IPAddress(192, 168, 132, 1), IPAddress(255, 255, 255, 0));
   ESPAsync_wifiManager.autoConnect("KaleidoscopeAP");
   if (WiFi.status() == WL_CONNECTED)
@@ -381,9 +381,12 @@ void setup()
   String tz = ESPAsync_wifiManager.getTimezoneName();
   if (tz.length())
   {
-    // write the timezone string into EEPROM
-    DB_PRINTF("Saving timezone '%s' to EEPROM\r\n", tz.c_str());
-    EEPROM.put(0, tz);
+    // write the timezone string into persistant memory
+    DB_PRINTF("Saving timezone '%s'\r\n", tz.c_str());
+    Preferences preferences;
+    preferences.begin("kaleidoscope", false);
+    preferences.putString("tz", tz);
+    preferences.end();
   }
 
   // intialize the real time clock
