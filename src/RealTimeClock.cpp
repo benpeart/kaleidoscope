@@ -52,6 +52,7 @@ void rtc_setup()
         configTime(-5 * SECS_PER_HOUR, SECS_PER_HOUR, "us.pool.ntp.org", "time.nist.gov");
         DB_PRINTLN(F("Current Timezone is not set. Enter Config Portal to set."));
     }
+    printLocalTime();
 }
 
 void rtc_loop()

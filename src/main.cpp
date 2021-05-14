@@ -378,11 +378,12 @@ void setup()
 #ifdef TIME
   // this only returns a value during the initial config step (call resetSettings() to test)
   // store the string in EEPROM for later use
-  String tz = ESPAsync_wifiManager.getTimezoneName();
-  if (tz.length())
+  String timezoneName = ESPAsync_wifiManager.getTimezoneName();
+  if (timezoneName.length())
   {
     // write the timezone string into persistant memory
-    DB_PRINTF("Saving timezone '%s'\r\n", tz.c_str());
+    DB_PRINTF("Saving timezone '%s'\r\n", timezoneName.c_str());
+    const char * tz = ESPAsync_wifiManager.getTZ(timezoneName);
     Preferences preferences;
     preferences.begin("kaleidoscope", false);
     preferences.putString("tz", tz);
