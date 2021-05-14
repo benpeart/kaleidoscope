@@ -1,4 +1,4 @@
-#include "Arduino.h"
+#include <Arduino.h>
 
 // flags to enable turning of various parts of the app for debugging purposes
 #define BOUNCE
@@ -35,7 +35,7 @@
 
 #ifdef WIFI
 // https://github.com/khoih-prog/ESPAsync_WiFiManager
-#define USE_ESP_WIFIMANAGER_NTP     true
+#define USE_ESP_WIFIMANAGER_NTP true
 #include <ESPAsync_WiFiManager.h>
 
 #ifdef OTA
@@ -52,6 +52,7 @@
 #endif
 
 #ifdef TIME
+#include <EEPROM.h>
 #include "RealTimeClock.h"
 #endif
 #endif // WIFI
@@ -333,7 +334,7 @@ void setup()
   DB_PRINT("\nStarting Kaleidoscope on " + String(ARDUINO_BOARD));
   DB_PRINTLN(ESP_ASYNC_WIFIMANAGER_VERSION);
   ESPAsync_WiFiManager ESPAsync_wifiManager(&webServer, &dnsServer, "Kaleidoscope");
-  //ESPAsync_wifiManager.resetSettings();   //reset saved settings
+  ESPAsync_wifiManager.resetSettings();   //reset saved settings
   ESPAsync_wifiManager.setAPStaticIPConfig(IPAddress(192, 168, 132, 1), IPAddress(192, 168, 132, 1), IPAddress(255, 255, 255, 0));
   ESPAsync_wifiManager.autoConnect("KaleidoscopeAP");
   if (WiFi.status() == WL_CONNECTED)
@@ -375,6 +376,16 @@ void setup()
 #endif
 
 #ifdef TIME
+  // this only returns a value during the initial config step (call resetSettings() to test)
+  // store the string in EEPROM for later use
+  String tz = ESPAsync_wifiManager.getTimezoneName();
+  if (tz.length())
+  {
+    // write the timezone string into EEPROM
+    DB_PRINTF("Saving timezone '%s' to EEPROM\r\n", tz.c_str());
+    EEPROM.put(0, tz);
+  }
+
   // intialize the real time clock
   rtc_setup();
 #endif
