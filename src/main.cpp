@@ -4,7 +4,7 @@
 #define BOUNCE
 #define ENCODER
 #define FASTLED
-//#define WIFI
+#define WIFI
 #ifdef WIFI
 #define OTA
 #define ALEXA
@@ -35,6 +35,7 @@
 
 #ifdef WIFI
 // https://github.com/khoih-prog/ESPAsync_WiFiManager
+#define USE_ESP_WIFIMANAGER_NTP     true
 #include <ESPAsync_WiFiManager.h>
 
 #ifdef OTA
@@ -118,10 +119,6 @@ DNSServer dnsServer;
 #ifdef ALEXA
 Espalexa espalexa;
 #endif
-
-#ifdef TIME
-RealTimeClock myclock;
-#endif
 #endif // WIFI
 
 #ifdef FASTLED
@@ -129,15 +126,6 @@ RealTimeClock myclock;
 void mode_off()
 {
   // nothing to see here... (the pixels got cleared by the button press)
-}
-
-void mode_color_wash()
-{
-  fill_rainbow(leds, NUM_STRIPS * NUM_LEDS_PER_STRIP, 0, 20);
-}
-
-void mode_snowflake()
-{
 }
 #endif
 
@@ -242,8 +230,6 @@ void adjustBrightness()
 void (*renderFunc[])(void){
     mode_kaleidoscope_screensaver,
     mode_kaleidoscope_interactive,
-    mode_color_wash,
-    mode_snowflake,
     mode_off, // make it obvious we're entering 'setup' modes
     mode_kaleidoscope_select_disks,
 #ifdef TIME
@@ -271,8 +257,6 @@ const PROGMEM char modeNames[N_MODES][64] =
     {
         "mode_kaleidoscope_screensaver",
         "mode_kaleidoscope_interactive",
-        "mode_color_wash",
-        "mode_snowflake",
         "mode_off",
         "mode_kaleidoscope_select_disks",
 #ifdef TIME
@@ -332,6 +316,7 @@ void hueChanged(EspalexaDevice *d)
 //
 // SETUP FUNCTION -- RUNS ONCE AT PROGRAM START ----------------------------
 //
+
 void setup()
 {
 #ifdef DEBUG
@@ -360,8 +345,6 @@ void setup()
   {
     DB_PRINTLN(ESPAsync_wifiManager.getStatus(WiFi.status()));
   }
-  DB_PRINT("The timezone is ");
-  DB_PRINTLN(ESPAsync_wifiManager.getTimezoneName().c_str());
 
 #ifdef OTA
   // add a simple home page (OTA update UI is on /update)
@@ -393,7 +376,7 @@ void setup()
 
 #ifdef TIME
   // intialize the real time clock
-  myclock.setup();
+  rtc_setup();
 #endif
 
 #ifndef ALEXA
@@ -496,7 +479,7 @@ void loop()
 
 #ifdef TIME
   // update the clock
-  myclock.loop();
+  rtc_loop();
 #endif
 #endif // WIFI
 

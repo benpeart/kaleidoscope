@@ -10,6 +10,7 @@ static CRGBPalette16 currentPalette;
 static CRGBPalette16 targetPalette;
 static TBlendType currentBlending = LINEARBLEND;
 
+// https://github.com/atuline/FastLED-Demos/blob/master/beatwave/beatwave.ino
 void beatwave()
 {
     uint8_t wave1 = beatsin8(9, 0, 255); // That's the same as beatsin8(9);
