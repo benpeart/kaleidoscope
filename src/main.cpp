@@ -3,11 +3,10 @@
 // flags to enable turning of various parts of the app for debugging purposes
 #define BOUNCE
 #define ENCODER
-#define FASTLED
 #define WIFI
 #ifdef WIFI
 #define OTA
-#define ALEXA
+//#define ALEXA // can't get Alexa to discover my devices, from the issues, seems like this is a common problem
 #define TIME
 #endif
 #define PHOTOCELL
@@ -26,12 +25,10 @@
 #include <ESP32Encoder.h>
 #endif
 
-#ifdef FASTLED
 // https://github.com/FastLED/FastLED
 #define FASTLED_RMT_MAX_CHANNELS 2 // why 2 channels instead of 4 (one per strip?)
 //#define FASTLED_ESP32_FLASH_LOCK 1 // TODO: hack to enable OTA that doesn't work
 #include <FastLED.h>
-#endif
 
 #ifdef WIFI
 // https://github.com/khoih-prog/ESPAsync_WiFiManager
@@ -78,7 +75,6 @@
 #define ENCODER_DIRECTION_PIN_RIGHT 22
 #endif
 
-#ifdef FASTLED
 // setup our LED strips for parallel output using FastLED
 #define LED_STRIP_PIN_1 14
 #define LED_STRIP_PIN_2 27
@@ -94,7 +90,6 @@
 #include "plasma.h"
 #include "blendwave.h"
 #include "sawtooth.h"
-#endif
 
 //
 // Global variables  -------------------------------------------------
@@ -122,13 +117,11 @@ Espalexa espalexa;
 #endif
 #endif // WIFI
 
-#ifdef FASTLED
 // All Pixels off
 void mode_off()
 {
   // nothing to see here... (the pixels got cleared by the button press)
 }
-#endif
 
 //
 // BRIGHTNESS helpers -------------------------------------------------
@@ -216,14 +209,11 @@ void adjustBrightness()
     LEDbrightness = newBrightness;
     DB_PRINTF("new brightness = %d\r\n", newBrightness);
 
-#ifdef FASTLED
     FastLED.setBrightness(dim8_raw(LEDbrightness));
     leds_dirty = true;
-#endif
   }
 }
 
-#ifdef FASTLED
 // This array lists each of the display/animation drawing functions
 // (which appear later in this code) in the order they're selected with
 // the right button.  Some functions appear repeatedly...for example,
@@ -235,7 +225,6 @@ void (*renderFunc[])(void){
     mode_kaleidoscope_select_disks,
 #ifdef TIME
     mode_select_clock_face,
-    mode_set_clock,
 #endif
 #ifdef DEMO
     mode_off, // make it obvious we're entering 'demo' modes
@@ -262,7 +251,6 @@ const PROGMEM char modeNames[N_MODES][64] =
         "mode_kaleidoscope_select_disks",
 #ifdef TIME
         "mode_select_clock_face",
-        "mode_set_clock",
 #endif
 #ifdef DEMO
         "mode_off",
@@ -277,7 +265,7 @@ const PROGMEM char modeNames[N_MODES][64] =
         "mode_kaleidoscope_test",
 #endif
         "mode_off"};
-#endif
+
 
 #ifdef ALEXA
 //our Alexa callback function
@@ -377,7 +365,7 @@ void setup()
 
 #ifdef TIME
   // this only returns a value during the initial config step (call resetSettings() to test)
-  // store the string in EEPROM for later use
+  // store the string in persistant storage for later use
   String timezoneName = ESPAsync_wifiManager.getTimezoneName();
   if (timezoneName.length())
   {
@@ -425,7 +413,6 @@ void setup()
   knobLeft.attachHalfQuad(ENCODER_CLK_PIN_LEFT, ENCODER_DIRECTION_PIN_LEFT);
 #endif
 
-#ifdef FASTLED
   // intialize the LED strips for parallel output
   FastLED.addLeds<LED_TYPE, LED_STRIP_PIN_1, COLOR_ORDER>(leds + 0 * NUM_LEDS_PER_STRIP, NUM_LEDS_PER_STRIP).setCorrection(TypicalLEDStrip);
   FastLED.addLeds<LED_TYPE, LED_STRIP_PIN_2, COLOR_ORDER>(leds + 1 * NUM_LEDS_PER_STRIP, NUM_LEDS_PER_STRIP).setCorrection(TypicalLEDStrip);
@@ -436,7 +423,6 @@ void setup()
 
   // initialize the kaleidoscope
   kaleidoscope.setup();
-#endif
 }
 
 //
@@ -444,8 +430,6 @@ void setup()
 //
 void loop()
 {
-  // automatically adjust the brightness of the LED strips to match the ambient lighting
-  adjustBrightness();
 
 #ifdef BOUNCE
   // Left button pressed?
@@ -458,11 +442,9 @@ void loop()
       mode = N_MODES - 1; // or "wrap around" to last mode
     DB_PRINTLN(modeNames[mode]);
 
-#ifdef FASTLED
     // clear the led strips for the new mode
     FastLED.clear();
     leds_dirty = true;
-#endif
   }
 
   // Right button pressed?
@@ -475,11 +457,9 @@ void loop()
       mode = 0; // or "wrap around" to start
     DB_PRINTLN(modeNames[mode]);
 
-#ifdef FASTLED
     // clear the led strips for the new mode
     FastLED.clear();
     leds_dirty = true;
-#endif
   }
 #endif
 
@@ -498,7 +478,9 @@ void loop()
 #endif
 #endif // WIFI
 
-#ifdef FASTLED
+  // automatically adjust the brightness of the LED strips to match the ambient lighting
+  adjustBrightness();
+
   // Render one frame in current mode. To control the speed of updates, use the
   // EVERY_N_MILLISECONDS(N) macro to only update the frame when it is needed.
   // Also be sure to set leds_dirty = true so that the updated frame will be displayed.
@@ -510,5 +492,4 @@ void loop()
     FastLED.show();
     leds_dirty = false;
   }
-#endif
 }

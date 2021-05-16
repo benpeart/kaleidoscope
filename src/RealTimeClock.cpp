@@ -70,6 +70,3 @@ void mode_select_clock_face()
 {
 }
 
-void mode_set_clock()
-{
-}

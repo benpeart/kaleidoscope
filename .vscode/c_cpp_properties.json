@@ -10,6 +10,7 @@
             "includePath": [
                 "D:/src/kaleidoscope/include",
                 "D:/src/kaleidoscope/src",
+                "C:/Users/Ben/.platformio/packages/framework-arduinoespressif32/libraries/Preferences/src",
                 "D:/src/kaleidoscope/.pio/libdeps/node32s/Espalexa/src",
                 "C:/Users/Ben/.platformio/packages/framework-arduinoespressif32/libraries/WebServer/src",
                 "C:/Users/Ben/.platformio/packages/framework-arduinoespressif32/libraries/Update/src",
@@ -103,7 +104,6 @@
                 "C:/Users/Ben/.platformio/packages/framework-arduinoespressif32/libraries/HTTPUpdate/src",
                 "C:/Users/Ben/.platformio/packages/framework-arduinoespressif32/libraries/HTTPUpdateServer/src",
                 "C:/Users/Ben/.platformio/packages/framework-arduinoespressif32/libraries/NetBIOS/src",
-                "C:/Users/Ben/.platformio/packages/framework-arduinoespressif32/libraries/Preferences/src",
                 "C:/Users/Ben/.platformio/packages/framework-arduinoespressif32/libraries/SD/src",
                 "C:/Users/Ben/.platformio/packages/framework-arduinoespressif32/libraries/SD_MMC/src",
                 "C:/Users/Ben/.platformio/packages/framework-arduinoespressif32/libraries/SimpleBLE/src",
@@ -118,6 +118,7 @@
                 "path": [
                     "D:/src/kaleidoscope/include",
                     "D:/src/kaleidoscope/src",
+                    "C:/Users/Ben/.platformio/packages/framework-arduinoespressif32/libraries/Preferences/src",
                     "D:/src/kaleidoscope/.pio/libdeps/node32s/Espalexa/src",
                     "C:/Users/Ben/.platformio/packages/framework-arduinoespressif32/libraries/WebServer/src",
                     "C:/Users/Ben/.platformio/packages/framework-arduinoespressif32/libraries/Update/src",
@@ -211,7 +212,6 @@
                     "C:/Users/Ben/.platformio/packages/framework-arduinoespressif32/libraries/HTTPUpdate/src",
                     "C:/Users/Ben/.platformio/packages/framework-arduinoespressif32/libraries/HTTPUpdateServer/src",
                     "C:/Users/Ben/.platformio/packages/framework-arduinoespressif32/libraries/NetBIOS/src",
-                    "C:/Users/Ben/.platformio/packages/framework-arduinoespressif32/libraries/Preferences/src",
                     "C:/Users/Ben/.platformio/packages/framework-arduinoespressif32/libraries/SD/src",
                     "C:/Users/Ben/.platformio/packages/framework-arduinoespressif32/libraries/SD_MMC/src",
                     "C:/Users/Ben/.platformio/packages/framework-arduinoespressif32/libraries/SimpleBLE/src",

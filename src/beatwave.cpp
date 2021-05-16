@@ -37,7 +37,11 @@ void mode_kaleidoscope_beatWave()
 
     EVERY_N_SECONDS(5)
     { // Change the target palette to a random one every 5 seconds.
-        targetPalette = CRGBPalette16(CHSV(random8(), 255, random8(128, 255)), CHSV(random8(), 255, random8(128, 255)), CHSV(random8(), 192, random8(128, 255)), CHSV(random8(), 255, random8(128, 255)));
+        targetPalette = CRGBPalette16(
+            CHSV(random8(), 255, random8(128, 255)), 
+            CHSV(random8(), 255, random8(128, 255)), 
+            CHSV(random8(), 192, random8(128, 255)), 
+            CHSV(random8(), 255, random8(128, 255)));
         leds_dirty = true;
     }
 }
