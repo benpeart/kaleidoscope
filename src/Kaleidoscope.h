@@ -22,6 +22,11 @@ class Kaleidoscope
 public:
     void setup();
 
+    // draw the requested frame as a kaleidoscope
+    void drawPaletteFrame(CRGB *leds, const struct CRGBPalette16& pal, 
+        const uint8_t (*disk_1)[TRIANGLE_ROWS], const uint8_t offset_1, const uint8_t columns_1, 
+        const uint8_t (*disk_2)[TRIANGLE_ROWS], const uint8_t offset_2, const uint8_t columns_2);
+
     // update the position of the strips and draw the kaleidoscope
     void drawFrame(CRGB *leds);
 
@@ -52,6 +57,7 @@ private:
 
 extern Kaleidoscope kaleidoscope;
 
+void mode_kaleidoscope_palette();
 void mode_kaleidoscope_screensaver();
 void mode_kaleidoscope_interactive();
 void mode_kaleidoscope_select_disks();

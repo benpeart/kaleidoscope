@@ -1,20 +1,11 @@
 #include <Arduino.h>
 #include <FastLED.h>
+#include <ESP32Encoder.h>
 #include "Kaleidoscope.h"
 
 // enable debugging macros
 #define DEBUG
 #include "debug.h"
-
-#define JEWEL_STRIP_COLUMNS 28
-#define DIAMOND_STRIP_COLUMNS 28
-#define JEWEL_RED 0x770000
-#define JEWEL_GRE 0x007700
-#define JEWEL_BLU 0x000077
-#define JEWEL_ORA 0x774000
-#define JEWEL_YEL 0x777700
-#define JEWEL_PUR 0x770077
-#define JEWEL_LEA 0x27100a
 
 // With parallel updates for the LEDs so fast, we get flickering if we call
 // FastLED.Show every loop. Maintain a 'dirty' bit so we know when to call Show.
@@ -27,6 +18,48 @@ CRGB leds2[NUM_STRIPS * NUM_LEDS_PER_STRIP];
 CRGB leds3[NUM_STRIPS * NUM_LEDS_PER_STRIP];
 
 Kaleidoscope kaleidoscope;
+
+// Use qsuba for smooth pixel colouring and qsubd for non-smooth pixel colouring
+#define qsubd(x, b) ((x > b) ? b : 0)     // Digital unsigned subtraction macro. if result <0, then => 0. Otherwise, take on fixed value.
+#define qsuba(x, b) ((x > b) ? x - b : 0) // Analog Unsigned subtraction macro. if result <0, then => 0
+
+#define TRIANGLE_DISK_COLUMNS 10
+static const PROGMEM uint8_t TriangleDisk[TRIANGLE_DISK_COLUMNS][TRIANGLE_ROWS] =
+    {
+        {11, 1, 2, 3, 3, 3, 0, 4, 0, 0},
+        {1, 1, 1, 2, 3, 0, 4, 4, 4, 6},
+        {6, 1, 2, 2, 2, 3, 0, 4, 6, 6},
+        {6, 6, 7, 2, 3, 3, 3, 4, 0, 6},
+        {6, 7, 7, 7, 8, 3, 4, 4, 4, 5},
+        {0, 12, 7, 8, 8, 8, 9, 4, 5, 5},
+        {12, 12, 12, 13, 8, 9, 9, 9, 10, 5},
+        {1, 12, 13, 13, 13, 14, 9, 10, 10, 10},
+        {1, 1, 2, 13, 14, 14, 14, 15, 10, 11},
+        {1, 2, 2, 2, 3, 14, 15, 15, 15, 11}};
+
+#define SQUARE_DISK_COLUMNS 10
+static const PROGMEM uint8_t SquareDisk[SQUARE_DISK_COLUMNS][TRIANGLE_ROWS] =
+    {
+        {1, 1, 1, 2, 2, 2, 3, 3, 3, 4},
+        {1, 1, 1, 2, 2, 2, 3, 3, 3, 4},
+        {1, 1, 1, 2, 2, 2, 3, 3, 3, 4},
+        {4, 4, 5, 5, 6, 7, 7, 7, 8, 8},
+        {4, 4, 5, 5, 6, 7, 7, 7, 8, 8},
+        {4, 4, 5, 5, 6, 7, 7, 7, 8, 8},
+        {8, 9, 9, 9, 10, 10, 10, 11, 11, 11},
+        {8, 9, 9, 9, 10, 10, 10, 11, 11, 11},
+        {8, 9, 9, 9, 10, 10, 10, 11, 11, 11},
+        {12, 12, 12, 13, 13, 13, 14, 14, 14, 15}};
+
+#define JEWEL_STRIP_COLUMNS 28
+#define DIAMOND_STRIP_COLUMNS 28
+#define JEWEL_RED 0x770000
+#define JEWEL_GRE 0x007700
+#define JEWEL_BLU 0x000077
+#define JEWEL_ORA 0x774000
+#define JEWEL_YEL 0x777700
+#define JEWEL_PUR 0x770077
+#define JEWEL_LEA 0x27100a
 
 // TODO: optimize the strip array to only require 2 bytes per pixel (16 bit color)
 // TODO: I was unsuccessful in finding a way to make these CRGB structures
@@ -250,10 +283,69 @@ void Kaleidoscope::setup()
     strip_2_columns = DIAMOND_STRIP_COLUMNS;
 
     // start with random offsets to provide more variety
-    offset_1 = random(strip_1_columns);
-    offset_2 = random(strip_2_columns);
+    offset_1 = random8(strip_1_columns);
+    offset_2 = random8(strip_2_columns);
 
     ::fill_solid(leds3, NUM_STRIPS * NUM_LEDS_PER_STRIP, CRGB::Black);
+}
+
+// update the position of the strips and draw the kaleidoscope
+void Kaleidoscope::drawPaletteFrame(CRGB *leds, const struct CRGBPalette16 &pal,
+                                    const uint8_t (*disk_1)[TRIANGLE_ROWS], const uint8_t offset_1, const uint8_t columns_1,
+                                    const uint8_t (*disk_2)[TRIANGLE_ROWS], const uint8_t offset_2, const uint8_t columns_2)
+{
+    int begin = 0, end = 0, viewport_index = 0;
+
+    // draw the kaleidoscope pixels for this 'frame'
+    for (int row = 0; row < TRIANGLE_ROWS; row++)
+    {
+        for (int x = begin; x <= end; x++)
+        {
+            int column;
+
+            // the column number must wrap around as needed to stay within the number
+            // of columns available in the disk
+            column = x + offset_1;
+            if (column < 0)
+                column += columns_1;
+            else
+                column = column % columns_1;
+
+            // since the disks are stored in PROGMEM, we must read them into SRAM before using them
+            uint8_t colorIndex_1 = map(pgm_read_byte_near(&disk_1[column][row]), 0, 15, 0, 255);
+            int thisBright_1 = qsuba(colorIndex_1, beatsin8(7, 0, 64)); // qsub gives it a bit of 'black' dead space by setting sets a minimum value. If colorIndex < current value of beatsin8(), then bright = 0. Otherwise, bright = colorIndex..
+            CRGB pixel_1 = ColorFromPalette(pal, colorIndex_1, thisBright_1);
+#ifdef NDEBUG
+            DB_PRINTF("colorIndex_1 = %d; pixel_1[%d][%d] = %x\r\n", colorIndex_1, column, row, (uint32_t)pixel_1);
+#endif
+
+            // the column number must wrap around as needed to stay within the number
+            // of columns available in the disk
+            column = x + offset_2;
+            if (column < 0)
+                column += columns_2;
+            else
+                column = column % columns_2;
+
+            // since the disks are stored in PROGMEM, we must read them into SRAM before using them
+            uint8_t colorIndex_2 = map(pgm_read_byte_near(&disk_2[column][row]), 0, 15, 0, 255);
+            int thisBright_2 = qsuba(colorIndex_2, beatsin8(7, 0, 64)); // qsub gives it a bit of 'black' dead space by setting sets a minimum value. If colorIndex < current value of beatsin8(), then bright = 0. Otherwise, bright = colorIndex..
+            CRGB pixel_2 = ColorFromPalette(pal, colorIndex_2, thisBright_2);
+#ifdef NDEBUG
+            DB_PRINTF("index_2 = %d; pixel_2[%d][%d] = %x\r\n", colorIndex_2, column, row, (uint32_t)pixel_2);
+#endif
+
+            // blend the pixels from the two disks by doing 50% transparency
+            CRGB pixel = blend(pixel_1, pixel_2, 127);
+#ifdef NDEBUG
+            DB_PRINTF("blended pixel = %x\r\n", (uint32_t)pixel);
+#endif
+            drawPixel(leds, viewport_index, pixel);
+            viewport_index++;
+        }
+        begin--;
+        end++;
+    }
 }
 
 // update the position of the strips and draw the kaleidoscope
@@ -312,7 +404,6 @@ void Kaleidoscope::drawFrame(CRGB *leds)
     offset_1 = offset_1 % strip_1_columns;
     ++offset_2;
     offset_2 = offset_2 % strip_2_columns;
-    leds_dirty = true;
 }
 
 // draw a pixel mirrored and rotated 6 times to emulate a kaleidoscope
@@ -428,6 +519,62 @@ void Kaleidoscope::MirroredSetPixelColor(CRGB *leds, int strip, int index, CRGB 
 }
 
 #define MS_BETWEEN_FRAMES 512
+void mode_kaleidoscope_palette()
+{
+    // start with random offsets to provide more variety
+    static uint8_t triangle_offset = random(TRIANGLE_DISK_COLUMNS);
+    static uint8_t square_offset = random(SQUARE_DISK_COLUMNS);
+    static boolean first_array = true;
+    static int time_of_last_frame = 0;
+
+    int time = millis();
+
+    // draw the next frame into the correct led array
+    if (time >= time_of_last_frame + MS_BETWEEN_FRAMES)
+    {
+        // draw the next frame of the kaleidoscope
+        kaleidoscope.drawPaletteFrame(first_array ? leds2 : leds3, ForestColors_p,
+                                      TriangleDisk, triangle_offset, TRIANGLE_DISK_COLUMNS,
+                                      SquareDisk, square_offset, SQUARE_DISK_COLUMNS);
+        time_of_last_frame = time;
+        first_array = !first_array;
+
+        // update our offsets
+#if 1
+        --triangle_offset;
+        if (triangle_offset < 0)
+            triangle_offset += TRIANGLE_DISK_COLUMNS;
+#else
+        ++triangle_offset;
+        triangle_offset = triangle_offset % TRIANGLE_DISK_COLUMNS;
+#endif
+#if 0
+        --square_offset;
+        if (square_offset < 0)
+            square_offset += SQUARE_DISK_COLUMNS;
+#else
+        ++square_offset;
+        square_offset = square_offset % SQUARE_DISK_COLUMNS;
+#endif
+    }
+
+    // smoothly blend from one frame to the next
+    EVERY_N_MILLISECONDS(5)
+    {
+        // ratio is the percentage of time remaining for this frame mapped to 0-255
+        fract8 ratio = map(time, time_of_last_frame, time_of_last_frame + MS_BETWEEN_FRAMES, 0, 255);
+        if (!first_array)
+            ratio = 255 - ratio;
+
+        // mix the 2 arrays together
+        for (int i = 0; i < NUM_STRIPS * NUM_LEDS_PER_STRIP; i++)
+        {
+            leds[i] = blend(leds2[i], leds3[i], ratio);
+        }
+        leds_dirty = true;
+    }
+}
+
 void mode_kaleidoscope_screensaver()
 {
     static boolean first_array = true;
@@ -462,11 +609,96 @@ void mode_kaleidoscope_screensaver()
     }
 }
 
+// Instantiate rotary encoder knob objects
+extern ESP32Encoder knobRight;
+extern ESP32Encoder knobLeft;
+
 void mode_kaleidoscope_interactive()
 {
-    EVERY_N_MILLISECONDS(50)
+    // start with random offsets to provide more variety
+    static uint8_t triangle_offset = random(TRIANGLE_DISK_COLUMNS);
+    static uint8_t square_offset = random(SQUARE_DISK_COLUMNS);
+    static boolean first_array = true;
+    static int time_of_last_frame = 0;
+    static boolean drawframe = true;
+    static boolean blendframes = false;
+
+    int time = millis();
+
+#if 1
+    // use the right knob to move triangle_offset
+    static int lastRightKnob = 0;
+    int knob = knobRight.getCount();
+    if (knob != lastRightKnob)
     {
-        kaleidoscope.drawFrame(leds);
+        if (knob > lastRightKnob)
+        {
+            triangle_offset++;
+            triangle_offset = triangle_offset % TRIANGLE_DISK_COLUMNS;
+        }
+        else
+        {
+            --triangle_offset;
+            if (triangle_offset < 0)
+                triangle_offset += TRIANGLE_DISK_COLUMNS;
+        }
+        lastRightKnob = knob;
+        drawframe = true;
+    }
+
+    // use the left knob to move square_offset
+    static int lastLeftKnob = 0;
+    knob = knobLeft.getCount();
+    if (knob != lastLeftKnob)
+    {
+        if (knob > lastLeftKnob)
+        {
+            square_offset++;
+            square_offset = square_offset % SQUARE_DISK_COLUMNS;
+        }
+        else
+        {
+            --square_offset;
+            if (square_offset < 0)
+                square_offset += SQUARE_DISK_COLUMNS;
+        }
+        lastLeftKnob = knob;
+        drawframe = true;
+    }
+#endif
+
+    // draw the next frame into the correct led array
+    if (drawframe)
+    {
+        // draw the next frame of the kaleidoscope
+        kaleidoscope.drawPaletteFrame(first_array ? leds2 : leds3, RainbowStripeColors_p,
+                                      TriangleDisk, triangle_offset, TRIANGLE_DISK_COLUMNS,
+                                      SquareDisk, square_offset, SQUARE_DISK_COLUMNS);
+        time_of_last_frame = time;
+        first_array = !first_array;
+        blendframes = true;
+        drawframe = false;
+    }
+
+    // smoothly blend from one frame to the next
+    EVERY_N_MILLISECONDS(5)
+    {
+        if (blendframes)
+        {
+            // ratio is the percentage of time remaining for this frame mapped to 0-255
+            fract8 ratio = map(time, time_of_last_frame, time_of_last_frame + MS_BETWEEN_FRAMES, 0, 255);
+            if (ratio >= 250)
+                blendframes = false;
+            if (!first_array)
+                ratio = 255 - ratio;
+
+            // mix the 2 arrays together
+            for (int i = 0; i < NUM_STRIPS * NUM_LEDS_PER_STRIP; i++)
+            {
+                leds[i] = blend(leds2[i], leds3[i], ratio);
+            }
+            leds_dirty = true;
+        }
     }
 }
 

@@ -3,7 +3,7 @@
 // flags to enable turning of various parts of the app for debugging purposes
 #define BOUNCE
 #define ENCODER
-#define WIFI
+//#define WIFI
 #ifdef WIFI
 #define OTA
 //#define ALEXA // can't get Alexa to discover my devices, from the issues, seems like this is a common problem
@@ -172,7 +172,7 @@ void adjustBrightness()
   }
 #endif
 
-#ifdef ENCODER
+#if 0
   // use the right knob as a brightness increment/decrement
   static int lastRightKnob = 0;
   int knob = knobRight.getCount();
@@ -219,6 +219,7 @@ void adjustBrightness()
 // the right button.  Some functions appear repeatedly...for example,
 // we return to "mode_off" at several points in the sequence.
 void (*renderFunc[])(void){
+    mode_kaleidoscope_palette,
     mode_kaleidoscope_screensaver,
     mode_kaleidoscope_interactive,
     mode_off, // make it obvious we're entering 'setup' modes
@@ -245,6 +246,7 @@ uint8_t mode = 0; // Index of current mode in table
 
 const PROGMEM char modeNames[N_MODES][64] =
     {
+        "mode_kaleidoscope_palette",
         "mode_kaleidoscope_screensaver",
         "mode_kaleidoscope_interactive",
         "mode_off",
