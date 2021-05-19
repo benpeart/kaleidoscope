@@ -20,7 +20,7 @@ void beatwave()
 
     for (int i = 0; i < NUM_LEDS; i++)
     {
-        kaleidoscope.drawPixel(leds, i, ColorFromPalette(currentPalette, i + wave1 + wave2 + wave3 + wave4, 255, currentBlending));
+        kaleidoscope.drawPixel6(leds, i, ColorFromPalette(currentPalette, i + wave1 + wave2 + wave3 + wave4, 255, currentBlending));
     }
 }
 

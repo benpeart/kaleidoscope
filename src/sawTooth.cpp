@@ -21,7 +21,7 @@ void mode_kaleidoscope_sawTooth()
     if (cur_led == 0)
         kaleidoscope.fill_solid(leds, CRGB::Black);
     else
-        kaleidoscope.drawPixel(leds, cur_led, ColorFromPalette(currentPalette, 0, 255, currentBlending)); // I prefer to use palettes instead of CHSV or CRGB assignments.
+        kaleidoscope.drawPixel6(leds, cur_led, ColorFromPalette(currentPalette, 0, 255, currentBlending)); // I prefer to use palettes instead of CHSV or CRGB assignments.
 }
 
 #endif

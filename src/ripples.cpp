@@ -89,7 +89,7 @@ void rippless()
     { // Move the ripple if it exists
         if (ripples[i].exist)
         {
-            kaleidoscope.drawPixel(leds, ripples[i].pos, ColorFromPalette(currentPalette, ripples[i].color, ripples[i].brightness, LINEARBLEND));
+            kaleidoscope.drawPixel6(leds, ripples[i].pos, ColorFromPalette(currentPalette, ripples[i].color, ripples[i].brightness, LINEARBLEND));
             //      leds[ripples[i].pos] = ColorFromPalette(currentPalette, ripples[i].color, ripples[i].brightness, LINEARBLEND);
             ripples[i].Move();
         }

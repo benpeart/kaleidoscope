@@ -1,8 +1,6 @@
 #ifndef KALEIDOSCOPE_H
 #define KALEIDOSCOPE_H
 
-#define DEMO
-
 #define NUM_STRIPS 4
 #define NUM_LEDS_PER_STRIP 156
 
@@ -22,16 +20,26 @@ class Kaleidoscope
 public:
     void setup();
 
+    void drawTwoMirrorFrame(CRGB *leds, const struct CRGBPalette16 &pal,
+                            const uint8_t (*disk_1)[TRIANGLE_ROWS], const uint8_t offset_1, const uint8_t columns_1,
+                            const uint8_t (*disk_2)[TRIANGLE_ROWS], const uint8_t offset_2, const uint8_t columns_2);
+
     // draw the requested frame as a kaleidoscope
-    void drawPaletteFrame(CRGB *leds, const struct CRGBPalette16& pal, 
-        const uint8_t (*disk_1)[TRIANGLE_ROWS], const uint8_t offset_1, const uint8_t columns_1, 
-        const uint8_t (*disk_2)[TRIANGLE_ROWS], const uint8_t offset_2, const uint8_t columns_2);
+    void drawPaletteFrame(CRGB *leds, const struct CRGBPalette16 &pal,
+                          const uint8_t (*disk_1)[TRIANGLE_ROWS], const uint8_t offset_1, const uint8_t columns_1,
+                          const uint8_t (*disk_2)[TRIANGLE_ROWS], const uint8_t offset_2, const uint8_t columns_2);
 
     // update the position of the strips and draw the kaleidoscope
     void drawFrame(CRGB *leds);
 
     // draw a pixel mirrored and rotated 6 times to emulate a kaleidoscope
-    void drawPixel(CRGB *leds, int index, CRGB c);
+    void drawPixel6(CRGB *leds, int index, CRGB c);
+
+    // draw a pixel mirrored and rotated 6 times to emulate a kaleidoscope
+    void drawPixel12(CRGB *leds, int index, CRGB c);
+
+    // draw a pixel mirrored and rotated 6 times to emulate a kaleidoscope
+    void drawPixel24(CRGB *leds, int index, CRGB c);
 
     void fill_rainbow(CRGB *leds, uint8_t initialhue, uint8_t deltahue);
 
