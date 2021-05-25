@@ -7,6 +7,9 @@
 #include "plasma.h"
 #include "blendwave.h"
 #include "sawtooth.h"
+#include "XYIndex.h"
+#include "XYmatrix.h"
+#include "XYrainbow.h"
 #endif
 
 #ifdef BOUNCE
@@ -208,9 +211,12 @@ void (*renderFunc[])(void){
     mode_kaleidoscope_ripples,
     mode_kaleidoscope_blendWave,
     mode_kaleidoscope_beatWave,
+    mode_xy_matrix,
+    mode_xy_rainbow,
 #endif
 #ifdef DEBUG
     mode_kaleidoscope_test,
+    mode_xy_test,
 #endif
     mode_off // make it obvious we're entering 'regular' modes
 };
@@ -234,9 +240,12 @@ const PROGMEM char modeNames[N_MODES][64] =
         "mode_kaleidoscope_ripples",
         "mode_kaleidoscope_blendWave",
         "mode_kaleidoscope_beatWave",
+        "mode_xy_matrix",
+        "mode_xy_rainbow",
 #endif
 #ifdef DEBUG
         "mode_kaleidoscope_test",
+        "mode_xy_test",
 #endif
         "mode_off"};
 

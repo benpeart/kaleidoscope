@@ -660,7 +660,6 @@ void mode_kaleidoscope_select_disks()
 {
 }
 
-
 #ifdef DEBUG
 // loop through all pixels in the source triange making sure they
 // get reflected and mirrored properly
