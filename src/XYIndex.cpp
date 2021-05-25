@@ -11,13 +11,20 @@ const uint8_t Strip1_kMatrixWidth = 4;
 const uint8_t Strip2_kMatrixWidth = 4;
 const uint8_t Strip3_kMatrixWidth = 6;
 
-uint16_t XYIndex(uint8_t x, uint8_t y)
+uint16_t XYToIndex(uint8_t x, uint8_t y)
 {
   // any out of bounds address maps to the first hidden pixel
   if ((x >= kMatrixWidth) || (y >= kMatrixHeight))
     return NUM_LEDS_PER_STRIP * 2 - 1;
 
   const uint8_t XYTable[] = {
+    // 
+    // This array shows how the LED strips are laid out. There are 4 separate strips arranged 
+    // from left to right. The left half and right half are mirrored to minimize the size of the lookup
+    // tables (see drawPixel6LookupTable).
+    //
+    // TODO: fix XYTable by removing the right half of the columns and updating the code to compensate
+    //
       255, 255, 255, 255, 255, 255, 255, 255, 255, 38, 38, 255, 255, 255, 255, 255, 255, 255, 255, 255,
       255, 255, 255, 255, 255, 255, 255, 255, 39, 37, 37, 39, 255, 255, 255, 255, 255, 255, 255, 255,
       255, 255, 255, 255, 255, 255, 255, 110, 40, 36, 36, 40, 110, 255, 255, 255, 255, 255, 255, 255,
@@ -99,17 +106,17 @@ void mode_xy_test()
   EVERY_N_MILLISECONDS(75)
   {
     // erase the last pixel
-    index = XYIndex(x, y);
+    index = XYToIndex(x, y);
     leds[index] = CRGB::Black; // off
 
     // move to the next pixel
-    if (++x >= XY_COLS)
+    if (++x >= kMatrixWidth)
     {
       x = 0;
-      if (++y >= XY_ROWS)
+      if (++y >= kMatrixHeight)
         y = 0;
     }
-    index = XYIndex(x, y);
+    index = XYToIndex(x, y);
 
     DB_PRINT("x = ");
     DB_PRINT(x);
