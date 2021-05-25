@@ -1,5 +1,4 @@
-#include <Arduino.h>
-#include <FastLED.h>
+#include "main.h"
 #include "Kaleidoscope.h"
 #include "beatwave.h"
 
@@ -20,7 +19,7 @@ void beatwave()
 
     for (int i = 0; i < NUM_LEDS; i++)
     {
-        kaleidoscope.drawPixel6(leds, i, ColorFromPalette(currentPalette, i + wave1 + wave2 + wave3 + wave4, 255, currentBlending));
+        drawPixel(leds, i, ColorFromPalette(currentPalette, i + wave1 + wave2 + wave3 + wave4, 255, currentBlending));
     }
 }
 
@@ -44,6 +43,8 @@ void mode_kaleidoscope_beatWave()
             CHSV(random8(), 255, random8(128, 255)));
         leds_dirty = true;
     }
+
+    adjustBrightness();
 }
 
 #endif

@@ -1,5 +1,4 @@
-#include <Arduino.h>
-#include <FastLED.h>
+#include "main.h"
 #include "Kaleidoscope.h"
 #include "rainbowmarch.h"
 
@@ -16,8 +15,10 @@ void mode_kaleidoscope_rainbowMarch()
         // thishue = beat8(50);           // This uses a FastLED sawtooth generator. Again, the '50' should not change on the fly.
         // thishue = beatsin8(50,0,255);  // This can change speeds on the fly. You can also add these to each other.
 
-        kaleidoscope.fill_rainbow(leds, thishue, deltahue);
+        fill_kaleidoscope_rainbow(leds, thishue, deltahue);
     }
+
+    adjustBrightness();
 }
 
 #endif

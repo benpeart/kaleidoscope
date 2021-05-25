@@ -1,5 +1,4 @@
-#include <Arduino.h>
-#include <FastLED.h>
+#include "main.h"
 #include "Kaleidoscope.h"
 #include "plasma.h"
 
@@ -27,7 +26,7 @@ void mode_kaleidoscope_plasma()
             int colorIndex = cubicwave8((k * 23) + thisPhase) / 2 + cos8((k * 15) + thatPhase) / 2; // Create a wave and add a phase change and add another wave with its own phase change.. Hey, you can even change the frequencies if you wish.
             int thisBright = qsuba(colorIndex, beatsin8(7, 0, 96));                                 // qsub gives it a bit of 'black' dead space by setting sets a minimum value. If colorIndex < current value of beatsin8(), then bright = 0. Otherwise, bright = colorIndex..
 
-            kaleidoscope.drawPixel12(leds, k, ColorFromPalette(currentPalette, colorIndex, thisBright, currentBlending)); // Let's now add the foreground colour.
+            drawPixel(leds, k, ColorFromPalette(currentPalette, colorIndex, thisBright, currentBlending)); // Let's now add the foreground colour.
         }
     }
 
@@ -42,6 +41,8 @@ void mode_kaleidoscope_plasma()
         uint8_t baseC = random8(); // You can use this as a baseline colour if you want similar hues in the next line.
         targetPalette = CRGBPalette16(CHSV(baseC + random8(32), 192, random8(128, 255)), CHSV(baseC + random8(32), 255, random8(128, 255)), CHSV(baseC + random8(32), 192, random8(128, 255)), CHSV(baseC + random8(32), 255, random8(128, 255)));
     }
+
+    adjustBrightness();
 }
 
 #endif

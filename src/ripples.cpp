@@ -1,5 +1,4 @@
-#include <Arduino.h>
-#include <FastLED.h>
+#include "main.h"
 #include "Kaleidoscope.h"
 #include "ripples.h"
 
@@ -89,7 +88,7 @@ void rippless()
     { // Move the ripple if it exists
         if (ripples[i].exist)
         {
-            kaleidoscope.drawPixel6(leds, ripples[i].pos, ColorFromPalette(currentPalette, ripples[i].color, ripples[i].brightness, LINEARBLEND));
+            drawPixel(leds, ripples[i].pos, ColorFromPalette(currentPalette, ripples[i].color, ripples[i].brightness, LINEARBLEND));
             //      leds[ripples[i].pos] = ColorFromPalette(currentPalette, ripples[i].color, ripples[i].brightness, LINEARBLEND);
             ripples[i].Move();
         }
@@ -131,4 +130,6 @@ void mode_kaleidoscope_ripples()
         rippless(); // Run the ripple routine.
         leds_dirty = true;
     }
+
+    adjustBrightness();
 } // mode_kaleidoscope_ripples()

@@ -1,5 +1,4 @@
-#include <Arduino.h>
-#include <FastLED.h>
+#include "main.h"
 #include "Kaleidoscope.h"
 #include "blendwave.h"
 
@@ -22,10 +21,12 @@ void mode_kaleidoscope_blendWave()
 
         loc1 = beatsin8(10, 0, NUM_LEDS - 1);
 
-        kaleidoscope.fill_gradient_RGB(leds, 0, clr2, loc1, clr1);
-        kaleidoscope.fill_gradient_RGB(leds, loc1, clr2, NUM_LEDS - 1, clr1);
+        fill_kaleidoscope_gradient_RGB(leds, 0, clr2, loc1, clr1);
+        fill_kaleidoscope_gradient_RGB(leds, loc1, clr2, NUM_LEDS - 1, clr1);
         leds_dirty = true;
     }
+
+    adjustBrightness();
 }
 
 #endif

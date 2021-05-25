@@ -1,11 +1,8 @@
-#include <Arduino.h>
-#include <FastLED.h>
-#include <ESP32Encoder.h>
+#include "main.h"
 #include "Kaleidoscope.h"
 
-// enable debugging macros
-#define DEBUG
-#include "debug.h"
+#define VIEWPORT_HEIGHT 10  // the height of the 'viewport' triangle
+#define TRIANGLE_COLUMNS 19 // the width of the base of the 'viewport' triange
 
 // With parallel updates for the LEDs so fast, we get flickering if we call
 // FastLED.Show every loop. Maintain a 'dirty' bit so we know when to call Show.
@@ -16,12 +13,6 @@ boolean leds_dirty = true;
 CRGB leds[NUM_STRIPS * NUM_LEDS_PER_STRIP];
 CRGB leds2[NUM_STRIPS * NUM_LEDS_PER_STRIP];
 CRGB leds3[NUM_STRIPS * NUM_LEDS_PER_STRIP];
-
-Kaleidoscope kaleidoscope;
-
-// Use qsuba for smooth pixel colouring and qsubd for non-smooth pixel colouring
-#define qsubd(x, b) ((x > b) ? b : 0)     // Digital unsigned subtraction macro. if result <0, then => 0. Otherwise, take on fixed value.
-#define qsuba(x, b) ((x > b) ? x - b : 0) // Analog Unsigned subtraction macro. if result <0, then => 0
 
 // Create a lookup table where the index is the number of the triangle and the result is
 // three pairs of {strip, index} that can be passed to MirroredSetPixelColor so they are
@@ -37,7 +28,12 @@ struct Strips
     Pixel strips[3];
 };
 
-static const PROGMEM Strips drawPixel6LookupTable[TRIANGLE_COUNT] =
+// This lookup table maps from a triangular 'viewport' to the
+// proper LED strip and pixel offset to provide a 3 way reflection.
+// MirroredSetPixelColor can then be used to mirror that to the
+// other 1/2 of the hexagon for a complete 6 way kaleidoscope.
+#define DRAWPIXEL6_INDEX 100 // (VIEWPORT_HEIGHT * (TRIANGLE_COLUMNS + 1) / 2)
+static const PROGMEM Strips drawPixel6LookupTable[DRAWPIXEL6_INDEX] =
     {
         {{{1, 18}, {1, 19}, {1, 20}}},
         {{{1, 59}, {1, 58}, {1, 22}}},
@@ -140,7 +136,7 @@ static const PROGMEM Strips drawPixel6LookupTable[TRIANGLE_COUNT] =
         {{{1, 1}, {0, 137}, {0, 133}}},
         {{{1, 0}, {0, 136}, {0, 135}}}};
 
-// This 2 way lookup table can be used in combindation with the 6 way
+// This 2 way lookup table can be used in combination with the 6 way
 // mapping to simulate Kaleidoscopes made with two mirrors that
 // produces one central image in the middle of the viewing field.
 // That central image is a dodecagon (12 sided polygon).
@@ -204,10 +200,10 @@ static const PROGMEM uint8_t drawPixel12LookupTable[DRAWPIXEL12_INDEX][DRAWPIXEL
         {89, 91},
         {90, 90}};
 
-// This 4 way lookup table can be used in combindation with the 6 way
+// This 4 way lookup table can be used in combination with the 6 way
 // mapping to simulate Kaleidoscopes made with three mirrors where the
 // images are reflected throughout the entire field of view producing
-// honeycomb-like patterns.
+// honeycomb-like patterns (24 sided polygon).
 #define DRAWPIXEL24_INDEX 25
 #define DRAWPIXEL24_COLUMNS 4
 static const PROGMEM uint8_t drawPixel24LookupTable[DRAWPIXEL24_INDEX][DRAWPIXEL24_COLUMNS] =
@@ -238,37 +234,7 @@ static const PROGMEM uint8_t drawPixel24LookupTable[DRAWPIXEL24_INDEX][DRAWPIXEL
         {23, 33, 82, 47},
         {24, 34, 81, 35}};
 
-#if 0
-static const PROGMEM Strips4 LookupTable4Way[25] =
-    {
-        {{{1, 18}, {0, 1}, {0, 59}, {0, 0}}},
-        {{{1, 59}, {0, 3}, {0, 57}, {1, 143}}},
-        {{{1, 17}, {0, 2}, {1, 142}, {0, 58}}},
-        {{{1, 16}, {1, 140}, {0, 60}, {1, 141}}},
-        {{{1, 90}, {0, 5}, {0, 55}, {1, 76}}},
-        {{{1, 60}, {0, 4}, {0, 56}, {1, 77}}},
-        {{{1, 61}, {1, 138}, {0, 62}, {1, 78}}},
-        {{{1, 15}, {1, 139}, {0, 61}, {1, 79}}},
-        {{{1, 14}, {1, 81}, {0, 111}, {1, 80}}},
-        {{{1, 131}, {0, 7}, {0, 53}, {1, 75}}},
-        {{{1, 89}, {0, 6}, {0, 54}, {1, 74}}},
-        {{{1, 88}, {1, 136}, {0, 64}, {1, 73}}},
-        {{{1, 62}, {1, 137}, {0, 63}, {1, 72}}},
-        {{{1, 63}, {1, 83}, {0, 109}, {1, 71}}},
-        {{{1, 13}, {1, 82}, {0, 100}, {1, 70}}},
-        {{{1, 12}, {1, 68}, {0, 112}, {1, 69}}},
-        {{{0, 10}, {0, 9}, {0, 51}, {1, 0}}},
-        {{{1, 132}, {0, 8}, {0, 52}, {1, 1}}},
-        {{{1, 133}, {1, 134}, {0, 66}, {1, 2}}},
-        {{{1, 87}, {1, 135}, {0, 65}, {1, 3}}},
-        {{{1, 86}, {1, 85}, {0, 107}, {1, 4}}},
-        {{{1, 64}, {1, 84}, {0, 108}, {1, 5}}},
-        {{{1, 65}, {1, 66}, {0, 114}, {1, 6}}},
-        {{{1, 11}, {1, 67}, {0, 113}, {1, 7}}},
-        {{{1, 10}, {1, 9}, {0, 155}, {1, 8}}}};
-#endif
-
-void Kaleidoscope::MirroredSetPixelColor(CRGB *leds, int strip, int index, CRGB rgb)
+void MirroredSetPixelColor(CRGB *leds, int strip, int index, CRGB rgb)
 {
     if (index < 0 || index >= NUM_LEDS_PER_STRIP)
     {
@@ -300,9 +266,9 @@ void Kaleidoscope::MirroredSetPixelColor(CRGB *leds, int strip, int index, CRGB 
 }
 
 // draw a pixel mirrored and rotated 6 times to emulate a kaleidoscope
-void Kaleidoscope::drawPixel6(CRGB *leds, int index, CRGB c)
+void drawPixel6(CRGB *leds, int index, CRGB c)
 {
-    if (index < 0 || index >= TRIANGLE_COUNT)
+    if (index < 0 || index >= DRAWPIXEL6_INDEX)
     {
         DB_PRINT("drawPixel6 index out of range ");
         DB_PRINTLN(index);
@@ -315,7 +281,7 @@ void Kaleidoscope::drawPixel6(CRGB *leds, int index, CRGB c)
 }
 
 // draw a pixel mirrored and rotated 12 times to emulate a kaleidoscope
-void Kaleidoscope::drawPixel12(CRGB *leds, int index, CRGB c)
+void drawPixel12(CRGB *leds, int index, CRGB c)
 {
     if (index < 0 || index >= DRAWPIXEL12_INDEX)
     {
@@ -330,8 +296,8 @@ void Kaleidoscope::drawPixel12(CRGB *leds, int index, CRGB c)
     }
 }
 
-// draw a pixel mirrored and rotated 6 times to emulate a kaleidoscope
-void Kaleidoscope::drawPixel24(CRGB *leds, int index, CRGB c)
+// draw a pixel mirrored and rotated 24 times to emulate a kaleidoscope
+void drawPixel24(CRGB *leds, int index, CRGB c)
 {
     if (index < 0 || index >= DRAWPIXEL24_INDEX)
     {
@@ -346,26 +312,26 @@ void Kaleidoscope::drawPixel24(CRGB *leds, int index, CRGB c)
     }
 }
 
-void Kaleidoscope::fill_rainbow(CRGB *leds, uint8_t initialhue, uint8_t deltahue)
+void fill_kaleidoscope_rainbow(CRGB *leds, uint8_t initialhue, uint8_t deltahue)
 {
     CHSV hsv;
     hsv.hue = initialhue;
     hsv.val = 255;
     hsv.sat = 240;
-    for (int i = 0; i < DRAWPIXEL24_INDEX; ++i)
+    for (int i = 0; i < NUM_LEDS; ++i)
     {
-        drawPixel24(leds, i, hsv);
+        drawPixel(leds, i, hsv);
         hsv.hue += deltahue;
     }
 }
 
-void Kaleidoscope::fill_solid(CRGB *leds, const struct CRGB &color)
+void fill_kaleidoscope_solid(CRGB *leds, const struct CRGB &color)
 {
     ::fill_solid(leds, NUM_LEDS_PER_STRIP, color);
 }
 
-void Kaleidoscope::fill_gradient_RGB(CRGB *leds, uint16_t startpos, CRGB startcolor,
-                                     uint16_t endpos, CRGB endcolor)
+void fill_kaleidoscope_gradient_RGB(CRGB *leds, uint16_t startpos, CRGB startcolor,
+                                    uint16_t endpos, CRGB endcolor)
 {
     // if the points are in the wrong order, straighten them
     if (endpos < startpos)
@@ -402,18 +368,24 @@ void Kaleidoscope::fill_gradient_RGB(CRGB *leds, uint16_t startpos, CRGB startco
     accum88 b88 = startcolor.b << 8;
     for (uint16_t i = startpos; i <= endpos; ++i)
     {
-        drawPixel6(leds, i, CRGB(r88 >> 8, g88 >> 8, b88 >> 8));
+        drawPixel(leds, i, CRGB(r88 >> 8, g88 >> 8, b88 >> 8));
         r88 += rdelta87;
         g88 += gdelta87;
         b88 += bdelta87;
     }
 }
 
+// Provide a function to draw the pixels mirrored and replicated to match
+// the given kaleidoscope style. Update the number of corresponding
+// leds in the 'viewport' so that the ported modes work as expected.
+uint8_t num_leds = DRAWPIXEL6_INDEX;
+void (*drawPixel)(CRGB *leds, int index, CRGB c) = drawPixel6;
+
 // These disks define color as an index into a CRGBPalette16 rather than an absolute RGB value.
 // This takes less Flash to store and gives us flexability to change the palette separate from
 // the disk structure.
 #define TRIANGLE_DISK_COLUMNS 10
-static const PROGMEM uint8_t TriangleDisk[TRIANGLE_DISK_COLUMNS][TRIANGLE_ROWS] =
+static const PROGMEM uint8_t TriangleDisk[TRIANGLE_DISK_COLUMNS][VIEWPORT_HEIGHT] =
     {
         {11, 1, 2, 3, 3, 3, 0, 4, 0, 0},
         {1, 1, 1, 2, 3, 0, 4, 4, 4, 6},
@@ -427,7 +399,7 @@ static const PROGMEM uint8_t TriangleDisk[TRIANGLE_DISK_COLUMNS][TRIANGLE_ROWS] 
         {1, 2, 2, 2, 3, 14, 15, 15, 15, 11}};
 
 #define SQUARE_DISK_COLUMNS 10
-static const PROGMEM uint8_t SquareDisk[SQUARE_DISK_COLUMNS][TRIANGLE_ROWS] =
+static const PROGMEM uint8_t SquareDisk[SQUARE_DISK_COLUMNS][VIEWPORT_HEIGHT] =
     {
         {1, 1, 1, 2, 2, 2, 3, 3, 3, 4},
         {1, 1, 1, 2, 2, 2, 3, 3, 3, 4},
@@ -440,230 +412,84 @@ static const PROGMEM uint8_t SquareDisk[SQUARE_DISK_COLUMNS][TRIANGLE_ROWS] =
         {8, 9, 9, 9, 10, 10, 10, 11, 11, 11},
         {12, 12, 12, 13, 13, 13, 14, 14, 14, 15}};
 
-#define JEWEL_STRIP_COLUMNS 28
-#define DIAMOND_STRIP_COLUMNS 28
-#define JEWEL_RED 0x770000
-#define JEWEL_GRE 0x007700
-#define JEWEL_BLU 0x000077
-#define JEWEL_ORA 0x774000
-#define JEWEL_YEL 0x777700
-#define JEWEL_PUR 0x770077
+#define JEWEL_RED 0x800000
+#define JEWEL_PUR 0x800080
+#define JEWEL_BLU 0x000080
+#define JEWEL_GRE 0x008000
+#define JEWEL_YEL 0x808000
+#define JEWEL_ORA 0x804000
 #define JEWEL_LEA 0x27100a
 
-// TODO: optimize the strip array to only require 2 bytes per pixel (16 bit color)
-// TODO: I was unsuccessful in finding a way to make these CRGB structures
-// store the strip RGB values in program memory (flash) to save SRAM
-static const PROGMEM uint32_t JewelStrip[JEWEL_STRIP_COLUMNS][TRIANGLE_ROWS] =
+extern const TProgmemRGBPalette16 JewelColors_p FL_PROGMEM =
     {
-        {JEWEL_RED, JEWEL_RED, JEWEL_RED, JEWEL_RED, JEWEL_RED, JEWEL_RED, JEWEL_RED, JEWEL_RED, JEWEL_RED, JEWEL_RED},
-        {JEWEL_RED, JEWEL_RED, JEWEL_RED, JEWEL_RED, JEWEL_RED, JEWEL_RED, JEWEL_RED, JEWEL_RED, JEWEL_RED, JEWEL_RED},
-        {JEWEL_RED, JEWEL_RED, JEWEL_RED, JEWEL_PUR, JEWEL_PUR, JEWEL_PUR, JEWEL_PUR, JEWEL_PUR, JEWEL_PUR, JEWEL_PUR},
-        {JEWEL_RED, JEWEL_RED, JEWEL_RED, JEWEL_PUR, JEWEL_PUR, JEWEL_PUR, JEWEL_PUR, JEWEL_PUR, JEWEL_PUR, JEWEL_PUR},
-        {JEWEL_BLU, JEWEL_BLU, JEWEL_BLU, JEWEL_BLU, JEWEL_BLU, JEWEL_BLU, JEWEL_BLU, JEWEL_BLU, JEWEL_BLU, JEWEL_BLU},
-        {JEWEL_BLU, JEWEL_BLU, JEWEL_BLU, JEWEL_BLU, JEWEL_BLU, JEWEL_BLU, JEWEL_BLU, JEWEL_BLU, JEWEL_BLU, JEWEL_BLU},
-        {JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA},
+        JEWEL_RED,
+        JEWEL_RED,
+        JEWEL_PUR,
+        JEWEL_PUR,
 
-        {JEWEL_ORA, JEWEL_ORA, JEWEL_PUR, JEWEL_ORA, JEWEL_ORA, JEWEL_PUR, JEWEL_PUR, JEWEL_PUR, JEWEL_GRE, JEWEL_GRE},
-        {JEWEL_ORA, JEWEL_ORA, JEWEL_PUR, JEWEL_ORA, JEWEL_ORA, JEWEL_PUR, JEWEL_PUR, JEWEL_PUR, JEWEL_GRE, JEWEL_GRE},
-        {JEWEL_ORA, JEWEL_ORA, JEWEL_PUR, JEWEL_ORA, JEWEL_ORA, JEWEL_PUR, JEWEL_PUR, JEWEL_PUR, JEWEL_GRE, JEWEL_GRE},
-        {JEWEL_ORA, JEWEL_ORA, JEWEL_PUR, JEWEL_ORA, JEWEL_ORA, JEWEL_PUR, JEWEL_PUR, JEWEL_PUR, JEWEL_GRE, JEWEL_GRE},
-        {JEWEL_ORA, JEWEL_ORA, JEWEL_PUR, JEWEL_ORA, JEWEL_ORA, JEWEL_PUR, JEWEL_PUR, JEWEL_PUR, JEWEL_GRE, JEWEL_GRE},
-        {JEWEL_ORA, JEWEL_ORA, JEWEL_PUR, JEWEL_ORA, JEWEL_ORA, JEWEL_PUR, JEWEL_PUR, JEWEL_PUR, JEWEL_GRE, JEWEL_GRE},
-        {JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA},
+        JEWEL_BLU,
+        JEWEL_BLU,
+        JEWEL_GRE,
+        JEWEL_GRE,
 
-        {JEWEL_PUR, JEWEL_PUR, JEWEL_PUR, JEWEL_PUR, JEWEL_PUR, JEWEL_PUR, JEWEL_PUR, JEWEL_PUR, JEWEL_PUR, JEWEL_PUR},
-        {JEWEL_PUR, JEWEL_PUR, JEWEL_PUR, JEWEL_PUR, JEWEL_PUR, JEWEL_PUR, JEWEL_PUR, JEWEL_PUR, JEWEL_PUR, JEWEL_PUR},
-        {JEWEL_RED, JEWEL_RED, JEWEL_RED, JEWEL_RED, JEWEL_RED, JEWEL_RED, JEWEL_RED, JEWEL_RED, JEWEL_RED, JEWEL_RED},
-        {JEWEL_RED, JEWEL_RED, JEWEL_RED, JEWEL_RED, JEWEL_RED, JEWEL_RED, JEWEL_RED, JEWEL_RED, JEWEL_RED, JEWEL_RED},
-        {JEWEL_YEL, JEWEL_YEL, JEWEL_YEL, JEWEL_YEL, JEWEL_YEL, JEWEL_YEL, JEWEL_YEL, JEWEL_YEL, JEWEL_YEL, JEWEL_YEL},
-        {JEWEL_YEL, JEWEL_YEL, JEWEL_YEL, JEWEL_YEL, JEWEL_YEL, JEWEL_YEL, JEWEL_YEL, JEWEL_YEL, JEWEL_YEL, JEWEL_YEL},
-        {JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA},
+        JEWEL_YEL,
+        JEWEL_YEL,
+        JEWEL_ORA,
+        JEWEL_ORA,
 
-        {JEWEL_YEL, JEWEL_YEL, JEWEL_YEL, JEWEL_BLU, JEWEL_BLU, JEWEL_BLU, JEWEL_BLU, JEWEL_ORA, JEWEL_ORA, JEWEL_ORA},
-        {JEWEL_YEL, JEWEL_YEL, JEWEL_YEL, JEWEL_BLU, JEWEL_BLU, JEWEL_BLU, JEWEL_BLU, JEWEL_ORA, JEWEL_ORA, JEWEL_ORA},
-        {JEWEL_YEL, JEWEL_YEL, JEWEL_YEL, JEWEL_BLU, JEWEL_BLU, JEWEL_BLU, JEWEL_BLU, JEWEL_ORA, JEWEL_ORA, JEWEL_ORA},
-        {JEWEL_YEL, JEWEL_YEL, JEWEL_YEL, JEWEL_BLU, JEWEL_BLU, JEWEL_BLU, JEWEL_BLU, JEWEL_ORA, JEWEL_ORA, JEWEL_ORA},
-        {JEWEL_YEL, JEWEL_YEL, JEWEL_YEL, JEWEL_BLU, JEWEL_BLU, JEWEL_BLU, JEWEL_BLU, JEWEL_ORA, JEWEL_ORA, JEWEL_ORA},
-        {JEWEL_YEL, JEWEL_YEL, JEWEL_YEL, JEWEL_BLU, JEWEL_BLU, JEWEL_BLU, JEWEL_BLU, JEWEL_ORA, JEWEL_ORA, JEWEL_ORA},
-        {JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA}};
+        JEWEL_RED,
+        JEWEL_RED,
+        JEWEL_LEA,
+        JEWEL_LEA};
 
-static const PROGMEM uint32_t DiamondStrip[DIAMOND_STRIP_COLUMNS][TRIANGLE_ROWS] =
-    {
-        {JEWEL_LEA, JEWEL_RED, JEWEL_LEA, JEWEL_LEA, JEWEL_GRE, JEWEL_LEA, JEWEL_LEA, JEWEL_BLU, JEWEL_LEA, JEWEL_LEA},
-        {JEWEL_RED, JEWEL_RED, JEWEL_RED, JEWEL_GRE, JEWEL_GRE, JEWEL_GRE, JEWEL_BLU, JEWEL_BLU, JEWEL_BLU, JEWEL_LEA},
-        {JEWEL_ORA, JEWEL_RED, JEWEL_LEA, JEWEL_YEL, JEWEL_GRE, JEWEL_LEA, JEWEL_PUR, JEWEL_BLU, JEWEL_LEA, JEWEL_RED},
-        {JEWEL_ORA, JEWEL_ORA, JEWEL_YEL, JEWEL_YEL, JEWEL_YEL, JEWEL_PUR, JEWEL_PUR, JEWEL_PUR, JEWEL_RED, JEWEL_RED},
-        {JEWEL_ORA, JEWEL_GRE, JEWEL_LEA, JEWEL_YEL, JEWEL_BLU, JEWEL_LEA, JEWEL_PUR, JEWEL_ORA, JEWEL_LEA, JEWEL_RED},
-        {JEWEL_GRE, JEWEL_GRE, JEWEL_GRE, JEWEL_BLU, JEWEL_BLU, JEWEL_BLU, JEWEL_ORA, JEWEL_ORA, JEWEL_ORA, JEWEL_LEA},
-        {JEWEL_LEA, JEWEL_GRE, JEWEL_LEA, JEWEL_LEA, JEWEL_BLU, JEWEL_LEA, JEWEL_LEA, JEWEL_ORA, JEWEL_LEA, JEWEL_LEA},
-
-        {JEWEL_LEA, JEWEL_RED, JEWEL_LEA, JEWEL_LEA, JEWEL_GRE, JEWEL_LEA, JEWEL_LEA, JEWEL_BLU, JEWEL_LEA, JEWEL_LEA},
-        {JEWEL_RED, JEWEL_RED, JEWEL_RED, JEWEL_GRE, JEWEL_GRE, JEWEL_GRE, JEWEL_BLU, JEWEL_BLU, JEWEL_BLU, JEWEL_LEA},
-        {JEWEL_ORA, JEWEL_RED, JEWEL_LEA, JEWEL_YEL, JEWEL_GRE, JEWEL_LEA, JEWEL_PUR, JEWEL_BLU, JEWEL_LEA, JEWEL_RED},
-        {JEWEL_ORA, JEWEL_ORA, JEWEL_YEL, JEWEL_YEL, JEWEL_YEL, JEWEL_PUR, JEWEL_PUR, JEWEL_PUR, JEWEL_RED, JEWEL_RED},
-        {JEWEL_ORA, JEWEL_GRE, JEWEL_LEA, JEWEL_YEL, JEWEL_BLU, JEWEL_LEA, JEWEL_PUR, JEWEL_ORA, JEWEL_LEA, JEWEL_RED},
-        {JEWEL_GRE, JEWEL_GRE, JEWEL_GRE, JEWEL_BLU, JEWEL_BLU, JEWEL_BLU, JEWEL_ORA, JEWEL_ORA, JEWEL_ORA, JEWEL_LEA},
-        {JEWEL_LEA, JEWEL_GRE, JEWEL_LEA, JEWEL_LEA, JEWEL_BLU, JEWEL_LEA, JEWEL_LEA, JEWEL_ORA, JEWEL_LEA, JEWEL_LEA},
-
-        {JEWEL_LEA, JEWEL_RED, JEWEL_LEA, JEWEL_LEA, JEWEL_GRE, JEWEL_LEA, JEWEL_LEA, JEWEL_BLU, JEWEL_LEA, JEWEL_LEA},
-        {JEWEL_RED, JEWEL_RED, JEWEL_RED, JEWEL_GRE, JEWEL_GRE, JEWEL_GRE, JEWEL_BLU, JEWEL_BLU, JEWEL_BLU, JEWEL_LEA},
-        {JEWEL_ORA, JEWEL_RED, JEWEL_LEA, JEWEL_YEL, JEWEL_GRE, JEWEL_LEA, JEWEL_PUR, JEWEL_BLU, JEWEL_LEA, JEWEL_RED},
-        {JEWEL_ORA, JEWEL_ORA, JEWEL_YEL, JEWEL_YEL, JEWEL_YEL, JEWEL_PUR, JEWEL_PUR, JEWEL_PUR, JEWEL_RED, JEWEL_RED},
-        {JEWEL_ORA, JEWEL_GRE, JEWEL_LEA, JEWEL_YEL, JEWEL_BLU, JEWEL_LEA, JEWEL_PUR, JEWEL_ORA, JEWEL_LEA, JEWEL_RED},
-        {JEWEL_GRE, JEWEL_GRE, JEWEL_GRE, JEWEL_BLU, JEWEL_BLU, JEWEL_BLU, JEWEL_ORA, JEWEL_ORA, JEWEL_ORA, JEWEL_LEA},
-        {JEWEL_LEA, JEWEL_GRE, JEWEL_LEA, JEWEL_LEA, JEWEL_BLU, JEWEL_LEA, JEWEL_LEA, JEWEL_ORA, JEWEL_LEA, JEWEL_LEA},
-
-        {JEWEL_LEA, JEWEL_RED, JEWEL_LEA, JEWEL_LEA, JEWEL_GRE, JEWEL_LEA, JEWEL_LEA, JEWEL_BLU, JEWEL_LEA, JEWEL_LEA},
-        {JEWEL_RED, JEWEL_RED, JEWEL_RED, JEWEL_GRE, JEWEL_GRE, JEWEL_GRE, JEWEL_BLU, JEWEL_BLU, JEWEL_BLU, JEWEL_LEA},
-        {JEWEL_ORA, JEWEL_RED, JEWEL_LEA, JEWEL_YEL, JEWEL_GRE, JEWEL_LEA, JEWEL_PUR, JEWEL_BLU, JEWEL_LEA, JEWEL_RED},
-        {JEWEL_ORA, JEWEL_ORA, JEWEL_YEL, JEWEL_YEL, JEWEL_YEL, JEWEL_PUR, JEWEL_PUR, JEWEL_PUR, JEWEL_RED, JEWEL_RED},
-        {JEWEL_ORA, JEWEL_GRE, JEWEL_LEA, JEWEL_YEL, JEWEL_BLU, JEWEL_LEA, JEWEL_PUR, JEWEL_ORA, JEWEL_LEA, JEWEL_RED},
-        {JEWEL_GRE, JEWEL_GRE, JEWEL_GRE, JEWEL_BLU, JEWEL_BLU, JEWEL_BLU, JEWEL_ORA, JEWEL_ORA, JEWEL_ORA, JEWEL_LEA},
-        {JEWEL_LEA, JEWEL_GRE, JEWEL_LEA, JEWEL_LEA, JEWEL_BLU, JEWEL_LEA, JEWEL_LEA, JEWEL_ORA, JEWEL_LEA, JEWEL_LEA}};
-/*
-        {JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA},
-        {JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA},
-        {JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA},
-        {JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA},
-        {JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA},
-        {JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA},
-        {JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA},
-
-        {JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA},
-        {JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA},
-        {JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA},
-        {JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA},
-        {JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA},
-        {JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA},
-        {JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA},
-
-        {JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA},
-        {JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA},
-        {JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA},
-        {JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA},
-        {JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA},
-        {JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA},
-        {JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA, JEWEL_LEA}};
-        */
-
-void Kaleidoscope::setup()
-{
-    DB_PRINTLN(F("Kaleidoscope.setup"));
-    rgb_strip_1 = JewelStrip;
-    strip_1_columns = JEWEL_STRIP_COLUMNS;
-    rgb_strip_2 = DiamondStrip;
-    strip_2_columns = DIAMOND_STRIP_COLUMNS;
-
-    // start with random offsets to provide more variety
-    offset_1 = random8(strip_1_columns);
-    offset_2 = random8(strip_2_columns);
-
-    ::fill_solid(leds3, NUM_STRIPS * NUM_LEDS_PER_STRIP, CRGB::Black);
-}
-
-// draw a dodecagon kaleidoscope using the given color palette
-void Kaleidoscope::drawTwoMirrorFrame(CRGB *leds, const struct CRGBPalette16 &pal,
-                                      const uint8_t (*disk_1)[TRIANGLE_ROWS], const uint8_t offset_1, const uint8_t columns_1,
-                                      const uint8_t (*disk_2)[TRIANGLE_ROWS], const uint8_t offset_2, const uint8_t columns_2)
-{
-    int begin = 0, end = 0, viewport_index = 0;
-
-    // draw the kaleidoscope pixels for this 'frame'
-    for (int row = 0; row < TRIANGLE_ROWS; row++)
-    {
-        for (int x = begin; x <= end; x++)
-        {
-            int column;
-
-            // the column number must wrap around as needed to stay within the number
-            // of columns available in the disk
-            column = x + offset_1;
-            if (column < 0)
-                column += columns_1;
-            else
-                column = column % columns_1;
-
-            // since the disks are stored in PROGMEM, we must read them into SRAM before using them
-            uint8_t colorIndex_1 = map(pgm_read_byte_near(&disk_1[column][row]), 0, 15, 0, 255);
-            int thisBright_1 = qsuba(colorIndex_1, beatsin8(7, 0, 64)); // qsub gives it a bit of 'black' dead space by setting sets a minimum value. If colorIndex < current value of beatsin8(), then bright = 0. Otherwise, bright = colorIndex..
-            CRGB pixel_1 = ColorFromPalette(pal, colorIndex_1, thisBright_1);
-#ifdef NDEBUG
-            DB_PRINTF("colorIndex_1 = %d; pixel_1[%d][%d] = %x\r\n", colorIndex_1, column, row, (uint32_t)pixel_1);
-#endif
-
-            // the column number must wrap around as needed to stay within the number
-            // of columns available in the disk
-            column = x + offset_2;
-            if (column < 0)
-                column += columns_2;
-            else
-                column = column % columns_2;
-
-            // since the disks are stored in PROGMEM, we must read them into SRAM before using them
-            uint8_t colorIndex_2 = map(pgm_read_byte_near(&disk_2[column][row]), 0, 15, 0, 255);
-            int thisBright_2 = qsuba(colorIndex_2, beatsin8(7, 0, 64)); // qsub gives it a bit of 'black' dead space by setting sets a minimum value. If colorIndex < current value of beatsin8(), then bright = 0. Otherwise, bright = colorIndex..
-            CRGB pixel_2 = ColorFromPalette(pal, colorIndex_2, thisBright_2);
-#ifdef NDEBUG
-            DB_PRINTF("index_2 = %d; pixel_2[%d][%d] = %x\r\n", colorIndex_2, column, row, (uint32_t)pixel_2);
-#endif
-
-            // blend the pixels from the two disks by doing 50% transparency
-            CRGB pixel = blend(pixel_1, pixel_2, 127);
-#ifdef NDEBUG
-            DB_PRINTF("blended pixel = %x\r\n", (uint32_t)pixel);
-#endif
-            drawPixel6(leds, viewport_index, pixel);
-            viewport_index++;
-        }
-        begin--;
-        end++;
-    }
-}
+// Use qsuba for smooth pixel colouring and qsubd for non-smooth pixel colouring
+#define qsubd(x, b) ((x > b) ? b : 0)     // Digital unsigned subtraction macro. if result <0, then => 0. Otherwise, take on fixed value.
+#define qsuba(x, b) ((x > b) ? x - b : 0) // Analog Unsigned subtraction macro. if result <0, then => 0
 
 // draw the kaleidoscope using a color palette
-void Kaleidoscope::drawPaletteFrame(CRGB *leds, const struct CRGBPalette16 &pal,
-                                    const uint8_t (*disk_1)[TRIANGLE_ROWS], const uint8_t offset_1, const uint8_t columns_1,
-                                    const uint8_t (*disk_2)[TRIANGLE_ROWS], const uint8_t offset_2, const uint8_t columns_2)
+void drawPaletteFrame(CRGB *leds, const struct CRGBPalette16 &pal,
+                      const uint8_t (*disk_1)[VIEWPORT_HEIGHT], const uint8_t offset_1, const uint8_t rows_1,
+                      const uint8_t (*disk_2)[VIEWPORT_HEIGHT], const uint8_t offset_2, const uint8_t rows_2)
 {
     int begin = 0, end = 0, viewport_index = 0;
 
     // draw the kaleidoscope pixels for this 'frame'
-    for (int row = 0; row < TRIANGLE_ROWS; row++)
+    for (int column = 0; column < VIEWPORT_HEIGHT; column++)
     {
         for (int x = begin; x <= end; x++)
         {
-            int column;
+            int row;
 
-            // the column number must wrap around as needed to stay within the number
-            // of columns available in the disk
-            column = x + offset_1;
-            if (column < 0)
-                column += columns_1;
+            // the row number must wrap around as needed to stay within the number of rows available in the disk
+            row = x + offset_1;
+            if (row < 0)
+                row = (row % rows_1) + rows_1 - 1;
             else
-                column = column % columns_1;
+                row = row % rows_1;
 
             // since the disks are stored in PROGMEM, we must read them into SRAM before using them
-            uint8_t colorIndex_1 = map(pgm_read_byte_near(&disk_1[column][row]), 0, 15, 0, 255);
+            uint8_t colorIndex_1 = map(pgm_read_byte_near(&disk_1[row][column]), 0, 15, 0, 255);
             int thisBright_1 = qsuba(colorIndex_1, beatsin8(7, 0, 64)); // qsub gives it a bit of 'black' dead space by setting sets a minimum value. If colorIndex < current value of beatsin8(), then bright = 0. Otherwise, bright = colorIndex..
             CRGB pixel_1 = ColorFromPalette(pal, colorIndex_1, thisBright_1);
-#ifdef NDEBUG
-            DB_PRINTF("colorIndex_1 = %d; pixel_1[%d][%d] = %x\r\n", colorIndex_1, column, row, (uint32_t)pixel_1);
+#ifdef DEBUG
+            if (row < 0 || row >= rows_1 || column < 0 || column >= VIEWPORT_HEIGHT)
+                DB_PRINTF("colorIndex_1 = %d; pixel_1[%d][%d] = %x\r\n", colorIndex_1, row, column, (uint32_t)pixel_1);
 #endif
 
-            // the column number must wrap around as needed to stay within the number
-            // of columns available in the disk
-            column = x + offset_2;
-            if (column < 0)
-                column += columns_2;
+            // the row number must wrap around as needed to stay within the number of rows available in the disk
+            row = x + offset_2;
+            if (row < 0)
+                row = (row % rows_2) + rows_2 - 1;
             else
-                column = column % columns_2;
+                row = row % rows_2;
 
             // since the disks are stored in PROGMEM, we must read them into SRAM before using them
-            uint8_t colorIndex_2 = map(pgm_read_byte_near(&disk_2[column][row]), 0, 15, 0, 255);
+            uint8_t colorIndex_2 = map(pgm_read_byte_near(&disk_2[row][column]), 0, 15, 0, 255);
             int thisBright_2 = qsuba(colorIndex_2, beatsin8(7, 0, 64)); // qsub gives it a bit of 'black' dead space by setting sets a minimum value. If colorIndex < current value of beatsin8(), then bright = 0. Otherwise, bright = colorIndex..
             CRGB pixel_2 = ColorFromPalette(pal, colorIndex_2, thisBright_2);
-#ifdef NDEBUG
-            DB_PRINTF("index_2 = %d; pixel_2[%d][%d] = %x\r\n", colorIndex_2, column, row, (uint32_t)pixel_2);
+#ifdef DEBUG
+            if (row < 0 || row >= rows_1 || column < 0 || column >= VIEWPORT_HEIGHT)
+                DB_PRINTF("colorIndex_2 = %d; pixel_2[%d][%d] = %x\r\n", colorIndex_2, row, column, (uint32_t)pixel_2);
 #endif
 
             // blend the pixels from the two disks by doing 50% transparency
@@ -671,7 +497,7 @@ void Kaleidoscope::drawPaletteFrame(CRGB *leds, const struct CRGBPalette16 &pal,
 #ifdef NDEBUG
             DB_PRINTF("blended pixel = %x\r\n", (uint32_t)pixel);
 #endif
-            drawPixel6(leds, viewport_index, pixel);
+            drawPixel(leds, viewport_index, pixel);
             viewport_index++;
         }
         begin--;
@@ -679,66 +505,8 @@ void Kaleidoscope::drawPaletteFrame(CRGB *leds, const struct CRGBPalette16 &pal,
     }
 }
 
-// update the position of the strips and draw the kaleidoscope
-void Kaleidoscope::drawFrame(CRGB *leds)
-{
-    int begin = 0, end = 0, viewport_index = 0;
-
-    // draw the kaleidoscope pixels for this 'frame'
-    for (int row = 0; row < TRIANGLE_ROWS; row++)
-    {
-        for (int x = begin; x <= end; x++)
-        {
-            int column;
-
-            // the column number must wrap around as needed to stay within the number
-            // of columns available in the strip
-            column = x + offset_1;
-            if (column < 0)
-                column = (column % strip_1_columns) + strip_1_columns - 1;
-            else
-                column = column % strip_1_columns;
-
-            // since the strips are stored in PROGMEM, we must read them into SRAM before using them
-            uint32_t pixel_1 = pgm_read_dword_near(&rgb_strip_1[column][row]);
-#ifdef NDEBUG
-            DB_PRINTF("pixel_1[%d][%d] = %x\r\n", column, row, pixel_1);
-#endif
-
-            // the column number must wrap around as needed to stay within the number
-            // of columns available in the strip
-            column = x + offset_2;
-            if (column < 0)
-                column = (column % strip_2_columns) + strip_2_columns - 1;
-            else
-                column = column % strip_2_columns;
-
-            // since the strips are stored in PROGMEM, we must read them into SRAM before using them
-            uint32_t pixel_2 = pgm_read_dword_near(&rgb_strip_2[column][row]);
-#ifdef NDEBUG
-            DB_PRINTF("pixel_2[%d][%d] = %x\r\n", column, row, pixel_2);
-#endif
-
-            // blend the pixels from the two strips by doing 50% transparency
-            CRGB pixel = blend(CRGB(pixel_1), CRGB(pixel_2), 127);
-#ifdef NDEBUG
-            DB_PRINTF("blended pixel = %x\r\n", pixel);
-#endif
-            drawPixel6(leds, viewport_index, pixel);
-            viewport_index++;
-        }
-        begin--;
-        end++;
-    }
-
-    ++offset_1;
-    offset_1 = offset_1 % strip_1_columns;
-    ++offset_2;
-    offset_2 = offset_2 % strip_2_columns;
-}
-
-#define MS_BETWEEN_FRAMES 512
-void mode_kaleidoscope_palette()
+#define MS_BETWEEN_FRAMES 1000
+void mode_kaleidoscope_screensaver()
 {
     // start with random offsets to provide more variety
     static uint8_t triangle_offset = random(TRIANGLE_DISK_COLUMNS);
@@ -752,14 +520,14 @@ void mode_kaleidoscope_palette()
     if (time >= time_of_last_frame + MS_BETWEEN_FRAMES)
     {
         // draw the next frame of the kaleidoscope
-        kaleidoscope.drawPaletteFrame(first_array ? leds2 : leds3, ForestColors_p,
-                                      TriangleDisk, triangle_offset, TRIANGLE_DISK_COLUMNS,
-                                      SquareDisk, square_offset, SQUARE_DISK_COLUMNS);
+        drawPaletteFrame(first_array ? leds2 : leds3, ForestColors_p,
+                         TriangleDisk, triangle_offset, TRIANGLE_DISK_COLUMNS,
+                         SquareDisk, square_offset, SQUARE_DISK_COLUMNS);
         time_of_last_frame = time;
         first_array = !first_array;
 
         // update our offsets
-#if 1
+#if 0
         --triangle_offset;
         if (triangle_offset < 0)
             triangle_offset += TRIANGLE_DISK_COLUMNS;
@@ -782,55 +550,18 @@ void mode_kaleidoscope_palette()
     {
         // ratio is the percentage of time remaining for this frame mapped to 0-255
         fract8 ratio = map(time, time_of_last_frame, time_of_last_frame + MS_BETWEEN_FRAMES, 0, 255);
+
+        // reverse the blend ratio if we're blending from leds3 to leds2
         if (!first_array)
             ratio = 255 - ratio;
 
         // mix the 2 arrays together
-        for (int i = 0; i < NUM_STRIPS * NUM_LEDS_PER_STRIP; i++)
-        {
-            leds[i] = blend(leds2[i], leds3[i], ratio);
-        }
+        blend(leds2, leds3, leds, NUM_STRIPS * NUM_LEDS_PER_STRIP, ratio);
         leds_dirty = true;
     }
+
+    adjustBrightness();
 }
-
-void mode_kaleidoscope_screensaver()
-{
-    static boolean first_array = true;
-    static int time_of_last_frame = 0;
-
-    int time = millis();
-
-    // draw the next frame into the correct led array
-    if (time >= time_of_last_frame + MS_BETWEEN_FRAMES)
-    {
-        // draw the next frame of the kaleidoscope
-        kaleidoscope.drawFrame(first_array ? leds2 : leds3);
-        time_of_last_frame = time;
-        first_array = !first_array;
-        leds_dirty = true;
-    }
-
-    // smoothly blend from one frame to the next
-    EVERY_N_MILLISECONDS(5)
-    {
-        // ratio is the percentage of time remaining for this frame mapped to 0-255
-        fract8 ratio = map(time, time_of_last_frame, time_of_last_frame + MS_BETWEEN_FRAMES, 0, 255);
-        if (!first_array)
-            ratio = 255 - ratio;
-
-        // mix the 2 arrays together
-        for (int i = 0; i < NUM_STRIPS * NUM_LEDS_PER_STRIP; i++)
-        {
-            leds[i] = blend(leds2[i], leds3[i], ratio);
-        }
-        leds_dirty = true;
-    }
-}
-
-// Instantiate rotary encoder knob objects
-extern ESP32Encoder knobRight;
-extern ESP32Encoder knobLeft;
 
 void mode_kaleidoscope_interactive()
 {
@@ -844,23 +575,25 @@ void mode_kaleidoscope_interactive()
 
     int time = millis();
 
-#if 1
     // use the right knob to move triangle_offset
     static int lastRightKnob = 0;
     int knob = knobRight.getCount();
     if (knob != lastRightKnob)
     {
-        if (knob > lastRightKnob)
+        DB_PRINTF("right knob = %d\r\n", knob);
+        if (knob < lastRightKnob)
         {
             triangle_offset++;
             triangle_offset = triangle_offset % TRIANGLE_DISK_COLUMNS;
         }
         else
         {
-            --triangle_offset;
-            if (triangle_offset < 0)
+            // offset is an unsigned 8 bits so can't go negative
+            if (triangle_offset == 0)
                 triangle_offset += TRIANGLE_DISK_COLUMNS;
+            --triangle_offset;
         }
+        DB_PRINTF("triangle offset = %d\r\n", triangle_offset);
         lastRightKnob = knob;
         drawframe = true;
     }
@@ -870,29 +603,31 @@ void mode_kaleidoscope_interactive()
     knob = knobLeft.getCount();
     if (knob != lastLeftKnob)
     {
-        if (knob > lastLeftKnob)
+        DB_PRINTF("left knob = %d\r\n", knob);
+        if (knob < lastLeftKnob)
         {
             square_offset++;
             square_offset = square_offset % SQUARE_DISK_COLUMNS;
         }
         else
         {
-            --square_offset;
-            if (square_offset < 0)
+            // offset is an unsigned 8 bits so can't go negative
+            if (square_offset == 0)
                 square_offset += SQUARE_DISK_COLUMNS;
+            --square_offset;
         }
+        DB_PRINTF("square offset = %d\r\n", square_offset);
         lastLeftKnob = knob;
         drawframe = true;
     }
-#endif
 
     // draw the next frame into the correct led array
     if (drawframe)
     {
         // draw the next frame of the kaleidoscope
-        kaleidoscope.drawPaletteFrame(first_array ? leds2 : leds3, RainbowStripeColors_p,
-                                      TriangleDisk, triangle_offset, TRIANGLE_DISK_COLUMNS,
-                                      SquareDisk, square_offset, SQUARE_DISK_COLUMNS);
+        drawPaletteFrame(first_array ? leds2 : leds3, RainbowStripeColors_p,
+                         TriangleDisk, triangle_offset, TRIANGLE_DISK_COLUMNS,
+                         SquareDisk, square_offset, SQUARE_DISK_COLUMNS);
         time_of_last_frame = time;
         first_array = !first_array;
         blendframes = true;
@@ -925,6 +660,7 @@ void mode_kaleidoscope_select_disks()
 {
 }
 
+
 #ifdef DEBUG
 // loop through all pixels in the source triange making sure they
 // get reflected and mirrored properly
@@ -935,15 +671,17 @@ void mode_kaleidoscope_test()
     EVERY_N_MILLISECONDS(100)
     {
         // erase the last pixel
-        kaleidoscope.drawPixel6(leds, index, CRGB::Black); // off
+        drawPixel(leds, index, CRGB::Black); // off
 
         // move to the next pixel
-        if (++index >= TRIANGLE_COUNT)
+        if (++index >= DRAWPIXEL6_INDEX)
             index = 0;
         DB_PRINTLN(index);
 
         // light up the next pixel
-        kaleidoscope.drawPixel6(leds, index, CRGB::Red);
+        drawPixel(leds, index, CRGB::Red);
     }
+
+    adjustBrightness();
 }
 #endif

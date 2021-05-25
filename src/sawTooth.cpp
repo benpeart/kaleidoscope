@@ -1,5 +1,4 @@
-#include <Arduino.h>
-#include <FastLED.h>
+#include "main.h"
 #include "Kaleidoscope.h"
 #include "sawtooth.h"
 
@@ -19,9 +18,11 @@ void mode_kaleidoscope_sawTooth()
     int cur_led = ((millis() % ms_per_beat) / ms_per_led) % (NUM_LEDS); // Using millis to count up the strand, with %NUM_LEDS at the end as a safety factor.
 
     if (cur_led == 0)
-        kaleidoscope.fill_solid(leds, CRGB::Black);
+        fill_kaleidoscope_solid(leds, CRGB::Black);
     else
-        kaleidoscope.drawPixel6(leds, cur_led, ColorFromPalette(currentPalette, 0, 255, currentBlending)); // I prefer to use palettes instead of CHSV or CRGB assignments.
+        drawPixel(leds, cur_led, ColorFromPalette(currentPalette, 0, 255, currentBlending)); // I prefer to use palettes instead of CHSV or CRGB assignments.
+
+    adjustBrightness();
 }
 
 #endif

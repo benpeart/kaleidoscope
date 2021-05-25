@@ -1,34 +1,18 @@
-#include <Arduino.h>
-
-// flags to enable turning of various parts of the app for debugging purposes
-#define BOUNCE
-#define ENCODER
-//#define WIFI
-#ifdef WIFI
-#define OTA
-//#define ALEXA // can't get Alexa to discover my devices, from the issues, seems like this is a common problem
-#define TIME
+#include "main.h"
+#include "Kaleidoscope.h"
+#ifdef DEMO
+#include "ripples.h"
+#include "beatwave.h"
+#include "rainbowmarch.h"
+#include "plasma.h"
+#include "blendwave.h"
+#include "sawtooth.h"
 #endif
-#define PHOTOCELL
-
-// enable debugging macros
-#define DEBUG
-#include "debug.h"
 
 #ifdef BOUNCE
 // https://github.com/thomasfredericks/Bounce2
 #include <Bounce2.h>
 #endif
-
-#ifdef ENCODER
-// https://github.com/madhephaestus/ESP32Encoder
-#include <ESP32Encoder.h>
-#endif
-
-// https://github.com/FastLED/FastLED
-#define FASTLED_RMT_MAX_CHANNELS 2 // why 2 channels instead of 4 (one per strip?)
-//#define FASTLED_ESP32_FLASH_LOCK 1 // TODO: hack to enable OTA that doesn't work
-#include <FastLED.h>
 
 #ifdef WIFI
 // https://github.com/khoih-prog/ESPAsync_WiFiManager
@@ -63,14 +47,14 @@
 
 #ifdef BOUNCE
 // Change these pin numbers to the button pins on your encoder.
-#define ENCODER_BUTTON_PIN_LEFT 17
-#define ENCODER_BUTTON_PIN_RIGHT 23
+#define ENCODER_SWITCH_PIN_LEFT 5
+#define ENCODER_SWITCH_PIN_RIGHT 23
 #endif
 
 #ifdef ENCODER
 // Change these pin numbers to the pins connected to your encoder.
-#define ENCODER_CLK_PIN_LEFT 4
-#define ENCODER_DIRECTION_PIN_LEFT 16
+#define ENCODER_CLK_PIN_LEFT 16
+#define ENCODER_DIRECTION_PIN_LEFT 17
 #define ENCODER_CLK_PIN_RIGHT 21
 #define ENCODER_DIRECTION_PIN_RIGHT 22
 #endif
@@ -83,14 +67,6 @@
 #define LED_TYPE WS2812B
 #define COLOR_ORDER GRB
 
-#include "Kaleidoscope.h"
-#include "ripples.h"
-#include "beatwave.h"
-#include "rainbowmarch.h"
-#include "plasma.h"
-#include "blendwave.h"
-#include "sawtooth.h"
-
 //
 // Global variables  -------------------------------------------------
 //
@@ -99,7 +75,7 @@
 // Instantiate Button objects from the Bounce2 namespace
 Bounce2::Button leftButton = Bounce2::Button();
 Bounce2::Button rightButton = Bounce2::Button();
-#define DEBOUNCE_MS 5 // Button debounce time, in milliseconds
+#define DEBOUNCE_MS 15 // Button debounce time, in milliseconds
 #endif
 
 #ifdef ENCODER
@@ -172,7 +148,6 @@ void adjustBrightness()
   }
 #endif
 
-#if 0
   // use the right knob as a brightness increment/decrement
   static int lastRightKnob = 0;
   int knob = knobRight.getCount();
@@ -197,7 +172,6 @@ void adjustBrightness()
     lastLeftKnob = knob;
     DB_PRINTF("Left knob count = %d\r\n", lastLeftKnob);
   }
-#endif
 
   // map our total brightness from 0-4095 to 0-255 since that is the range for setBrightness
   int newBrightness = map(lastPhotocell + LEDBrightnessManualOffset, 0, 4095, 0, 255);
@@ -219,7 +193,6 @@ void adjustBrightness()
 // the right button.  Some functions appear repeatedly...for example,
 // we return to "mode_off" at several points in the sequence.
 void (*renderFunc[])(void){
-    mode_kaleidoscope_palette,
     mode_kaleidoscope_screensaver,
     mode_kaleidoscope_interactive,
     mode_off, // make it obvious we're entering 'setup' modes
@@ -246,7 +219,6 @@ uint8_t mode = 0; // Index of current mode in table
 
 const PROGMEM char modeNames[N_MODES][64] =
     {
-        "mode_kaleidoscope_palette",
         "mode_kaleidoscope_screensaver",
         "mode_kaleidoscope_interactive",
         "mode_off",
@@ -267,7 +239,6 @@ const PROGMEM char modeNames[N_MODES][64] =
         "mode_kaleidoscope_test",
 #endif
         "mode_off"};
-
 
 #ifdef ALEXA
 //our Alexa callback function
@@ -373,7 +344,7 @@ void setup()
   {
     // write the timezone string into persistant memory
     DB_PRINTF("Saving timezone '%s'\r\n", timezoneName.c_str());
-    const char * tz = ESPAsync_wifiManager.getTZ(timezoneName);
+    const char *tz = ESPAsync_wifiManager.getTZ(timezoneName);
     Preferences preferences;
     preferences.begin("kaleidoscope", false);
     preferences.putString("tz", tz);
@@ -392,27 +363,32 @@ void setup()
 #ifdef PHOTOCELL
   // Testing shows that the internal pullup resistors on the ESP32 are complete crap and
   // unusable. Probably why every example does their own external pullup/down resistors.
-  pinMode(PHOTOCELL_PIN, INPUT);
+  pinMode(PHOTOCELL_PIN, INPUT/*_PULLUP*/);
+
+  // D:\src\kaleidoscope\.pio\libdeps\node32s\ESP32Encoder\src\ESP32Encoder.cpp
+  //gpio_pullup_en((gpio_num_t)PHOTOCELL_PIN);
 #endif
 
   // initialize the random number generator using noise from an analog pin
   randomSeed(analogRead(33));
 
 #ifdef BOUNCE
-  // initialize the rotary encoder buttons using the pullup resistor
-  leftButton.attach(ENCODER_BUTTON_PIN_LEFT, INPUT_PULLUP);
+  // initialize the rotary encoder switches using the pullup resistor
+  leftButton.attach(ENCODER_SWITCH_PIN_LEFT, INPUT_PULLUP);
   leftButton.interval(DEBOUNCE_MS);
   leftButton.setPressedState(LOW);
-  rightButton.attach(ENCODER_BUTTON_PIN_RIGHT, INPUT_PULLUP);
+  rightButton.attach(ENCODER_SWITCH_PIN_RIGHT, INPUT_PULLUP);
   rightButton.interval(DEBOUNCE_MS);
   rightButton.setPressedState(LOW);
 #endif
 
 #ifdef ENCODER
-  // initialize the rotary encoders
+  // initialize the rotary encoders with filters re https://github.com/madhephaestus/ESP32Encoder#a-note-on-ky-040-and-similar
   ESP32Encoder::useInternalWeakPullResistors = UP;
-  knobRight.attachHalfQuad(ENCODER_CLK_PIN_RIGHT, ENCODER_DIRECTION_PIN_RIGHT);
-  knobLeft.attachHalfQuad(ENCODER_CLK_PIN_LEFT, ENCODER_DIRECTION_PIN_LEFT);
+  knobRight.attachSingleEdge(ENCODER_CLK_PIN_RIGHT, ENCODER_DIRECTION_PIN_RIGHT);
+  knobRight.setFilter(1024);
+  knobLeft.attachSingleEdge(ENCODER_CLK_PIN_LEFT, ENCODER_DIRECTION_PIN_LEFT);
+  knobLeft.setFilter(1024);
 #endif
 
   // intialize the LED strips for parallel output
@@ -422,9 +398,6 @@ void setup()
   FastLED.addLeds<LED_TYPE, LED_STRIP_PIN_4, COLOR_ORDER>(leds + 3 * NUM_LEDS_PER_STRIP, NUM_LEDS_PER_STRIP).setCorrection(TypicalLEDStrip);
   leds_dirty = true;
   DB_PRINTLN(modeNames[mode]);
-
-  // initialize the kaleidoscope
-  kaleidoscope.setup();
 }
 
 //
@@ -479,9 +452,6 @@ void loop()
   rtc_loop();
 #endif
 #endif // WIFI
-
-  // automatically adjust the brightness of the LED strips to match the ambient lighting
-  adjustBrightness();
 
   // Render one frame in current mode. To control the speed of updates, use the
   // EVERY_N_MILLISECONDS(N) macro to only update the frame when it is needed.
