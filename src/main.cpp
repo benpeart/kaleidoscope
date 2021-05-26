@@ -18,9 +18,21 @@
 #endif
 
 #ifdef WIFI
+
 // https://github.com/khoih-prog/ESPAsync_WiFiManager
+#ifdef DRD
+//#define USE_SPIFFS true
+#define ESP_DRD_USE_EEPROM true
+#endif
 #define USE_ESP_WIFIMANAGER_NTP true
 #include <ESPAsync_WiFiManager.h>
+
+#ifdef DRD
+// https://github.com/khoih-prog/ESP_DoubleResetDetector
+#define DRD_TIMEOUT 10
+#define DRD_ADDRESS 0
+#include <ESP_DoubleResetDetector.h>
+#endif
 
 #ifdef OTA
 // https://github.com/ayushsharma82/AsyncElegantOTA
@@ -90,6 +102,11 @@ ESP32Encoder knobLeft;
 #ifdef WIFI
 AsyncWebServer webServer(80);
 DNSServer dnsServer;
+bool initialConfig = false;
+
+#ifdef DRD
+DoubleResetDetector *drd;
+#endif
 
 #ifdef ALEXA
 Espalexa espalexa;
@@ -109,7 +126,7 @@ void mode_off()
 #define KNOB_INCREMENT 100
 
 #ifdef PHOTOCELL
-#define FILTER_LEN 15
+#define FILTER_LEN 50
 uint32_t readADC_Avg(int ADC_Raw)
 {
   static uint32_t ADCBuffer[FILTER_LEN];
@@ -303,10 +320,37 @@ void setup()
   // connect to wifi or enter AP mode so it can be configured
   DB_PRINT("\nStarting Kaleidoscope on " + String(ARDUINO_BOARD));
   DB_PRINTLN(ESP_ASYNC_WIFIMANAGER_VERSION);
+
+#ifdef DRD
+  drd = new DoubleResetDetector(DRD_TIMEOUT, DRD_ADDRESS);
+  if (drd->detectDoubleReset())
+  {
+    DB_PRINTLN("Double reset detected");
+    initialConfig = true;
+  }
+#endif
+
   ESPAsync_WiFiManager ESPAsync_wifiManager(&webServer, &dnsServer, "Kaleidoscope");
+  //ESPAsync_wifiManager.setAPStaticIPConfig(IPAddress(192, 168, 132, 1), IPAddress(192, 168, 132, 1), IPAddress(255, 255, 255, 0));
   //ESPAsync_wifiManager.resetSettings();   //reset saved settings
-  ESPAsync_wifiManager.setAPStaticIPConfig(IPAddress(192, 168, 132, 1), IPAddress(192, 168, 132, 1), IPAddress(255, 255, 255, 0));
-  ESPAsync_wifiManager.autoConnect("KaleidoscopeAP");
+  if (ESPAsync_wifiManager.WiFi_SSID() == "")
+  {
+    DB_PRINTLN(F("No AP credentials"));
+    initialConfig = true;
+  }
+  if (initialConfig)
+  {
+    DB_PRINTLN(F("Starting Config Portal"));
+    ESPAsync_wifiManager.startConfigPortal("KaleidoscopeAP");
+  }
+  else
+  {
+    ESPAsync_wifiManager.autoConnect("KaleidoscopeAP");
+//    WiFi.mode(WIFI_STA);
+//    WiFi.begin();
+  }
+
+  // report on our WiFi connection status
   if (WiFi.status() == WL_CONNECTED)
   {
     DB_PRINT(F("Connected. Local IP: "));
@@ -372,7 +416,7 @@ void setup()
 #ifdef PHOTOCELL
   // Testing shows that the internal pullup resistors on the ESP32 are complete crap and
   // unusable. Probably why every example does their own external pullup/down resistors.
-  pinMode(PHOTOCELL_PIN, INPUT/*_PULLUP*/);
+  pinMode(PHOTOCELL_PIN, INPUT /*_PULLUP*/);
 
   // D:\src\kaleidoscope\.pio\libdeps\node32s\ESP32Encoder\src\ESP32Encoder.cpp
   //gpio_pullup_en((gpio_num_t)PHOTOCELL_PIN);
@@ -395,9 +439,9 @@ void setup()
   // initialize the rotary encoders with filters re https://github.com/madhephaestus/ESP32Encoder#a-note-on-ky-040-and-similar
   ESP32Encoder::useInternalWeakPullResistors = UP;
   knobRight.attachSingleEdge(ENCODER_CLK_PIN_RIGHT, ENCODER_DIRECTION_PIN_RIGHT);
-  knobRight.setFilter(1024);
+  knobRight.setFilter(1023);
   knobLeft.attachSingleEdge(ENCODER_CLK_PIN_LEFT, ENCODER_DIRECTION_PIN_LEFT);
-  knobLeft.setFilter(1024);
+  knobLeft.setFilter(1023);
 #endif
 
   // intialize the LED strips for parallel output
@@ -450,6 +494,10 @@ void loop()
 #ifdef WIFI
 #ifdef OTA
   AsyncElegantOTA.loop();
+#endif
+
+#ifdef DRD
+  drd->loop();
 #endif
 
 #ifdef ALEXA

@@ -7,6 +7,7 @@
 #define PHOTOCELL
 #define WIFI
 #ifdef WIFI
+#define DRD
 #define OTA
 //#define ALEXA // can't get Alexa to discover my devices, from the issues, seems like this is a common problem
 #define TIME
