@@ -60,18 +60,18 @@
 #define PHOTOCELL_PIN 33
 #endif
 
-#ifdef BOUNCE
-// Change these pin numbers to the button pins on your encoder.
-#define ENCODER_SWITCH_PIN_LEFT 5
-#define ENCODER_SWITCH_PIN_RIGHT 23
-#endif
-
 #ifdef ENCODER
 // Change these pin numbers to the pins connected to your encoder.
-#define ENCODER_CLK_PIN_LEFT 16
-#define ENCODER_DIRECTION_PIN_LEFT 17
+#define ENCODER_CLK_PIN_LEFT 4
+#define ENCODER_DT_PIN_LEFT 16
 #define ENCODER_CLK_PIN_RIGHT 21
-#define ENCODER_DIRECTION_PIN_RIGHT 22
+#define ENCODER_DT_PIN_RIGHT 22
+#endif
+
+#ifdef BOUNCE
+// Change these pin numbers to the button pins on your encoder.
+#define ENCODER_SW_PIN_LEFT 17
+#define ENCODER_SW_PIN_RIGHT 23
 #endif
 
 // setup our LED strips for parallel output using FastLED
@@ -427,10 +427,10 @@ void setup()
 
 #ifdef BOUNCE
   // initialize the rotary encoder switches using the pullup resistor
-  leftButton.attach(ENCODER_SWITCH_PIN_LEFT, INPUT_PULLUP);
+  leftButton.attach(ENCODER_SW_PIN_LEFT, INPUT_PULLUP);
   leftButton.interval(DEBOUNCE_MS);
   leftButton.setPressedState(LOW);
-  rightButton.attach(ENCODER_SWITCH_PIN_RIGHT, INPUT_PULLUP);
+  rightButton.attach(ENCODER_SW_PIN_RIGHT, INPUT_PULLUP);
   rightButton.interval(DEBOUNCE_MS);
   rightButton.setPressedState(LOW);
 #endif
@@ -438,9 +438,9 @@ void setup()
 #ifdef ENCODER
   // initialize the rotary encoders with filters re https://github.com/madhephaestus/ESP32Encoder#a-note-on-ky-040-and-similar
   ESP32Encoder::useInternalWeakPullResistors = UP;
-  knobRight.attachSingleEdge(ENCODER_CLK_PIN_RIGHT, ENCODER_DIRECTION_PIN_RIGHT);
+  knobRight.attachSingleEdge(ENCODER_CLK_PIN_RIGHT, ENCODER_DT_PIN_RIGHT);
   knobRight.setFilter(1023);
-  knobLeft.attachSingleEdge(ENCODER_CLK_PIN_LEFT, ENCODER_DIRECTION_PIN_LEFT);
+  knobLeft.attachSingleEdge(ENCODER_CLK_PIN_LEFT, ENCODER_DT_PIN_LEFT);
   knobLeft.setFilter(1023);
 #endif
 
