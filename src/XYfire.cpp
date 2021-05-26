@@ -71,6 +71,7 @@ void mode_xy_fire()
             leds[XYToIndex(x, y)] = ColorFromPalette(_currentPalette, constrain(index * indexScale, 0, 255), 255, LINEARBLEND);
         }
     }
+
     leds_dirty = true;
 }
 

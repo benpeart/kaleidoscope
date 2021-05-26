@@ -58,6 +58,8 @@ void mode_xy_matrix()
 
         leds_dirty = true;
     }
+
+    adjustBrightness();
 }
 
 #endif

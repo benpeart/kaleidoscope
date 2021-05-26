@@ -420,7 +420,7 @@ static const PROGMEM uint8_t SquareDisk[SQUARE_DISK_COLUMNS][VIEWPORT_HEIGHT] =
 #define JEWEL_ORA 0x804000
 #define JEWEL_LEA 0x27100a
 
-extern const TProgmemRGBPalette16 JewelColors_p FL_PROGMEM =
+const TProgmemRGBPalette16 JewelColors_p FL_PROGMEM =
     {
         JEWEL_RED,
         JEWEL_RED,
@@ -520,7 +520,7 @@ void mode_kaleidoscope_screensaver()
     if (time >= time_of_last_frame + MS_BETWEEN_FRAMES)
     {
         // draw the next frame of the kaleidoscope
-        drawPaletteFrame(first_array ? leds2 : leds3, ForestColors_p,
+        drawPaletteFrame(first_array ? leds2 : leds3, JewelColors_p,
                          TriangleDisk, triangle_offset, TRIANGLE_DISK_COLUMNS,
                          SquareDisk, square_offset, SQUARE_DISK_COLUMNS);
         time_of_last_frame = time;

@@ -30,6 +30,8 @@ void mode_xy_rainbow()
         int32_t xHueDelta32 = ((int32_t)cos16(ms * (39 / 1)) * (310 / kMatrixHeight));
         drawOneFrame(ms / 65536, yHueDelta32 / 32768, xHueDelta32 / 32768);
     }
+
+    adjustBrightness();
 }
 
 #endif
