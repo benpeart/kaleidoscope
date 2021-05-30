@@ -95,8 +95,8 @@ Bounce2::Button rightButton = Bounce2::Button();
 
 #ifdef ENCODER
 // Instantiate rotary encoder knob objects
-ESP32Encoder knobRight;
-ESP32Encoder knobLeft;
+ESP32StateMachineEncoder knobRight;
+ESP32StateMachineEncoder knobLeft;
 #endif
 
 #ifdef WIFI
@@ -436,12 +436,9 @@ void setup()
 #endif
 
 #ifdef ENCODER
-  // initialize the rotary encoders with filters re https://github.com/madhephaestus/ESP32Encoder#a-note-on-ky-040-and-similar
-  ESP32Encoder::useInternalWeakPullResistors = UP;
-  knobRight.attachSingleEdge(ENCODER_CLK_PIN_RIGHT, ENCODER_DT_PIN_RIGHT);
-  knobRight.setFilter(1023);
-  knobLeft.attachSingleEdge(ENCODER_CLK_PIN_LEFT, ENCODER_DT_PIN_LEFT);
-  knobLeft.setFilter(1023);
+  // initialize the rotary encoders
+  knobRight.attachSingleEdge(ENCODER_CLK_PIN_RIGHT, ENCODER_DT_PIN_RIGHT, INPUT_PULLUP);
+  knobLeft.attachSingleEdge(ENCODER_CLK_PIN_LEFT, ENCODER_DT_PIN_LEFT, INPUT_PULLUP);
 #endif
 
   // intialize the LED strips for parallel output

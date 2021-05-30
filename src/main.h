@@ -18,12 +18,11 @@
 #include "debug.h"
 
 #ifdef ENCODER
-// https://github.com/madhephaestus/ESP32Encoder
-#include <ESP32Encoder.h>
+#include <ESP32StateMachineEncoder.h>
 #endif
 
 // adjust the brightness of the LED strips to match the ambient lighting using a photo cell
 // and rotary encoders for manual adjustment.
-extern ESP32Encoder knobRight;
-extern ESP32Encoder knobLeft;
+extern ESP32StateMachineEncoder knobRight;
+extern ESP32StateMachineEncoder knobLeft;
 void adjustBrightness();
