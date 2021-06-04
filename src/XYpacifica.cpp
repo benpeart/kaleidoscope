@@ -5,7 +5,7 @@
 
 #ifdef DEMO
 
-CRGB gOneRowOfLEDs[NUM_COLS]; // perform the pacfica work on an offscreen array of LEDs
+CRGB gOneRowOfLEDs[NUM_ROWS]; // perform the pacfica work on an offscreen array of LEDs
 
 //////////////////////////////////////////////////////////////////////////
 //
@@ -48,7 +48,7 @@ void pacifica_one_layer(CRGBPalette16 &p, uint16_t cistart, uint16_t wavescale, 
     uint16_t ci = cistart;
     uint16_t waveangle = ioff;
     uint16_t wavescale_half = (wavescale / 2) + 20;
-    for (uint16_t i = 0; i < NUM_COLS; i++)
+    for (uint16_t i = 0; i < NUM_ROWS; i++)
     {
         waveangle += 250;
         uint16_t s16 = sin16(waveangle) + 32768;
@@ -67,7 +67,7 @@ void pacifica_add_whitecaps()
     uint8_t basethreshold = beatsin8(9, 55, 65);
     uint8_t wave = beat8(7);
 
-    for (uint16_t i = 0; i < NUM_COLS; i++)
+    for (uint16_t i = 0; i < NUM_ROWS; i++)
     {
         uint8_t threshold = scale8(sin8(wave), 20) + basethreshold;
         wave += 7;
@@ -84,7 +84,7 @@ void pacifica_add_whitecaps()
 // Deepen the blues and greens
 void pacifica_deepen_colors()
 {
-    for (uint16_t i = 0; i < NUM_COLS; i++)
+    for (uint16_t i = 0; i < NUM_ROWS; i++)
     {
         gOneRowOfLEDs[i].blue = scale8(gOneRowOfLEDs[i].blue, 145);
         gOneRowOfLEDs[i].green = scale8(gOneRowOfLEDs[i].green, 200);
@@ -112,7 +112,7 @@ void pacifica_loop()
     sCIStart4 -= (deltams2 * beatsin88(257, 4, 6));
 
     // Clear out the LED array to a dim background blue-green
-    fill_solid(gOneRowOfLEDs, NUM_COLS, CRGB(2, 6, 10));
+    fill_solid(gOneRowOfLEDs, NUM_ROWS, CRGB(2, 6, 10));
 
     // Render each of four layers, with different scales and speeds, that vary over time
     pacifica_one_layer(pacifica_palette_1, sCIStart1, beatsin16(3, 11 * 256, 14 * 256), beatsin8(10, 70, 130), 0 - beat16(301));
@@ -127,16 +127,17 @@ void pacifica_loop()
     pacifica_deepen_colors();
 }
 
+// https://github.com/dprice2000/FastLEDMusings/blob/master/pacifica_4_matrix.ino
 void mode_xy_pacifica()
 {
     EVERY_N_MILLISECONDS(20)
     {
         pacifica_loop();
-        for (uint8_t down = 0; down < NUM_ROWS; down++)
+        for (uint8_t y = 0; y < NUM_ROWS; y++)
         {
-            for (uint8_t across = 0; across < NUM_COLS; across++)
+            for (uint8_t x = 0; x < NUM_COLS; x++)
             {
-                leds[XYToIndex(across, down)] = gOneRowOfLEDs[across];
+                leds[XYToIndex(x, y)] = gOneRowOfLEDs[y];
             }
         }
         leds_dirty = true;
