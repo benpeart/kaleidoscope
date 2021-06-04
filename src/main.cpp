@@ -6,10 +6,10 @@
 #include "rainbowmarch.h"
 #include "plasma.h"
 #include "blendwave.h"
-#include "pacifica.h"
 #include "sawtooth.h"
 #include "XYIndex.h"
 #include "XYmatrix.h"
+#include "XYpacifica.h"
 #include "XYrainbow.h"
 #endif
 
@@ -224,13 +224,13 @@ void (*renderFunc[])(void){
 #ifdef DEMO
     mode_off, // make it obvious we're entering 'demo' modes
     mode_kaleidoscope_rainbowMarch,
-    mode_pacifica,
     mode_kaleidoscope_plasma,
     mode_kaleidoscope_sawTooth,
     mode_kaleidoscope_ripples,
     mode_kaleidoscope_blendWave,
     mode_kaleidoscope_beatWave,
     mode_xy_matrix,
+    mode_xy_pacifica,
     mode_xy_rainbow,
 #endif
 #ifdef DEBUG
@@ -254,13 +254,13 @@ const PROGMEM char modeNames[N_MODES][64] =
 #ifdef DEMO
         "mode_off",
         "mode_kaleidoscope_rainbowMarch",
-        "mode_pacifica",
         "mode_kaleidoscope_plasma",
         "mode_kaleidoscope_sawTooth",
         "mode_kaleidoscope_ripples",
         "mode_kaleidoscope_blendWave",
         "mode_kaleidoscope_beatWave",
         "mode_xy_matrix",
+        "mode_xy_pacifica",
         "mode_xy_rainbow",
 #endif
 #ifdef DEBUG

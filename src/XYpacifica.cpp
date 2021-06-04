@@ -1,8 +1,11 @@
 #include "main.h"
 #include "Kaleidoscope.h"
-#include "pacifica.h"
+#include "XYIndex.h"
+#include "XYpacifica.h"
 
 #ifdef DEMO
+
+CRGB gOneRowOfLEDs[NUM_COLS]; // perform the pacfica work on an offscreen array of LEDs
 
 //////////////////////////////////////////////////////////////////////////
 //
@@ -45,7 +48,7 @@ void pacifica_one_layer(CRGBPalette16 &p, uint16_t cistart, uint16_t wavescale, 
     uint16_t ci = cistart;
     uint16_t waveangle = ioff;
     uint16_t wavescale_half = (wavescale / 2) + 20;
-    for (uint16_t i = 0; i < NUM_LEDS; i++)
+    for (uint16_t i = 0; i < NUM_COLS; i++)
     {
         waveangle += 250;
         uint16_t s16 = sin16(waveangle) + 32768;
@@ -54,7 +57,7 @@ void pacifica_one_layer(CRGBPalette16 &p, uint16_t cistart, uint16_t wavescale, 
         uint16_t sindex16 = sin16(ci) + 32768;
         uint8_t sindex8 = scale16(sindex16, 240);
         CRGB c = ColorFromPalette(p, sindex8, bri, LINEARBLEND);
-        leds[i] += c;
+        gOneRowOfLEDs[i] += c;
     }
 }
 
@@ -64,16 +67,16 @@ void pacifica_add_whitecaps()
     uint8_t basethreshold = beatsin8(9, 55, 65);
     uint8_t wave = beat8(7);
 
-    for (uint16_t i = 0; i < NUM_LEDS; i++)
+    for (uint16_t i = 0; i < NUM_COLS; i++)
     {
         uint8_t threshold = scale8(sin8(wave), 20) + basethreshold;
         wave += 7;
-        uint8_t l = leds[i].getAverageLight();
+        uint8_t l = gOneRowOfLEDs[i].getAverageLight();
         if (l > threshold)
         {
             uint8_t overage = l - threshold;
             uint8_t overage2 = qadd8(overage, overage);
-            leds[i] += CRGB(overage, overage2, qadd8(overage2, overage2));
+            gOneRowOfLEDs[i] += CRGB(overage, overage2, qadd8(overage2, overage2));
         }
     }
 }
@@ -81,15 +84,15 @@ void pacifica_add_whitecaps()
 // Deepen the blues and greens
 void pacifica_deepen_colors()
 {
-    for (uint16_t i = 0; i < NUM_LEDS; i++)
+    for (uint16_t i = 0; i < NUM_COLS; i++)
     {
-        leds[i].blue = scale8(leds[i].blue, 145);
-        leds[i].green = scale8(leds[i].green, 200);
-        leds[i] |= CRGB(2, 5, 7);
+        gOneRowOfLEDs[i].blue = scale8(gOneRowOfLEDs[i].blue, 145);
+        gOneRowOfLEDs[i].green = scale8(gOneRowOfLEDs[i].green, 200);
+        gOneRowOfLEDs[i] |= CRGB(2, 5, 7);
     }
 }
 
-void mode_pacifica()
+void pacifica_loop()
 {
     // Increment the four "color index start" counters, one for each wave layer.
     // Each is incremented at a different speed, and the speeds vary over time.
@@ -109,7 +112,7 @@ void mode_pacifica()
     sCIStart4 -= (deltams2 * beatsin88(257, 4, 6));
 
     // Clear out the LED array to a dim background blue-green
-    fill_solid(leds, NUM_LEDS, CRGB(2, 6, 10));
+    fill_solid(gOneRowOfLEDs, NUM_COLS, CRGB(2, 6, 10));
 
     // Render each of four layers, with different scales and speeds, that vary over time
     pacifica_one_layer(pacifica_palette_1, sCIStart1, beatsin16(3, 11 * 256, 14 * 256), beatsin8(10, 70, 130), 0 - beat16(301));
@@ -122,6 +125,22 @@ void mode_pacifica()
 
     // Deepen the blues and greens a bit
     pacifica_deepen_colors();
+}
+
+void mode_xy_pacifica()
+{
+    EVERY_N_MILLISECONDS(20)
+    {
+        pacifica_loop();
+        for (uint8_t down = 0; down < NUM_ROWS; down++)
+        {
+            for (uint8_t across = 0; across < NUM_COLS; across++)
+            {
+                leds[XYToIndex(across, down)] = gOneRowOfLEDs[across];
+            }
+        }
+        leds_dirty = true;
+    }
 
     adjustBrightness();
 }

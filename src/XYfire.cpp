@@ -20,33 +20,33 @@ void spreadFire(uint16_t src)
 {
     if (firePixels[src] == 0)
     {
-        firePixels[src - kMatrixWidth] = 0;
+        firePixels[src - NUM_COLS] = 0;
     }
     else
     {
         // Commented lines moves fire sideways as well as up, but doesn't look good on low res matrix:
         // int16_t dst = src - rand + 1;
-        // firePixels[dst - kMatrixWidth] = firePixels[src] - random8(1);
-        firePixels[src - kMatrixWidth] = firePixels[src] - random8(3);
+        // firePixels[dst - NUM_COLS] = firePixels[src] - random8(1);
+        firePixels[src - NUM_COLS] = firePixels[src] - random8(3);
     }
 }
 
 void doFire()
 {
-    for (uint16_t x = 0; x < kMatrixWidth; x++)
+    for (uint16_t x = 0; x < NUM_COLS; x++)
     {
-        for (uint16_t y = 1; y < kMatrixHeight; y++)
+        for (uint16_t y = 1; y < NUM_ROWS; y++)
         {
-            spreadFire(y * kMatrixWidth + x);
+            spreadFire(y * NUM_COLS + x);
         }
     }
 }
 
 void setBottomRow(uint16_t col)
 {
-    for (uint16_t i = 0; i < kMatrixWidth; i++)
+    for (uint16_t i = 0; i < NUM_COLS; i++)
     {
-        firePixels[(kMatrixHeight - 1) * kMatrixWidth + i] = col;
+        firePixels[(NUM_ROWS - 1) * NUM_COLS + i] = col;
     }
 }
 
@@ -56,18 +56,18 @@ void mode_xy_fire()
     // Set bottom row to highest index in palette (white)
     if (!initialized)
     {
-        setBottomRow(kMatrixHeight);
+        setBottomRow(NUM_ROWS);
         initialized = true;
     }
 
     doFire();
-    for (int y = 0; y < kMatrixHeight; y++)
+    for (int y = 0; y < NUM_ROWS; y++)
     {
-        for (int x = 0; x < kMatrixWidth; x++)
+        for (int x = 0; x < NUM_COLS; x++)
         {
-            int index = firePixels[kMatrixWidth * y + x];
-            // Index goes from 0 -> kMatrixHeight, palette goes from 0 -> 255 so need to scale it
-            uint8_t indexScale = 255 / kMatrixHeight;
+            int index = firePixels[NUM_COLS * y + x];
+            // Index goes from 0 -> NUM_ROWS, palette goes from 0 -> 255 so need to scale it
+            uint8_t indexScale = 255 / NUM_ROWS;
             leds[XYToIndex(x, y)] = ColorFromPalette(_currentPalette, constrain(index * indexScale, 0, 255), 255, LINEARBLEND);
         }
     }

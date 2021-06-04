@@ -2,22 +2,18 @@
 #include "XYIndex.h"
 #include "Kaleidoscope.h"
 
-// Params for width and height
-const uint8_t kMatrixWidth = 20;
-const uint8_t kMatrixHeight = 39;
-
-const uint8_t Strip0_kMatrixWidth = 6;
-const uint8_t Strip1_kMatrixWidth = 4;
-const uint8_t Strip2_kMatrixWidth = 4;
-const uint8_t Strip3_kMatrixWidth = 6;
+#define STRIP_0_NUM_COLS 6
+#define STRIP_1_NUM_COLS 4
+#define STRIP_2_NUM_COLS 4
+#define STRIP_3_NUM_COLS 6
 
 uint16_t XYToIndex(uint8_t x, uint8_t y)
 {
   // any out of bounds address maps to the first hidden pixel
-  if ((x >= kMatrixWidth) || (y >= kMatrixHeight))
+  if ((x >= NUM_COLS) || (y >= NUM_ROWS))
     return NUM_LEDS_PER_STRIP * 2 - 1;
 
-  const uint8_t XYTable[] = {
+  const uint8_t XYTable[NUM_ROWS * NUM_COLS] = {
     // 
     // This array shows how the LED strips are laid out. There are 4 separate strips arranged 
     // from left to right. The left half and right half are mirrored to minimize the size of the lookup
@@ -65,7 +61,7 @@ uint16_t XYToIndex(uint8_t x, uint8_t y)
       255, 255, 255, 255, 255, 255, 255, 255,  75,   1,   1,  75, 255, 255, 255, 255, 255, 255, 255, 255,
       255, 255, 255, 255, 255, 255, 255, 255, 255,   0,   0, 255, 255, 255, 255, 255, 255, 255, 255, 255};
 
-  uint16_t i = (y * kMatrixWidth) + x;
+  uint16_t i = (y * NUM_COLS) + x;
   uint16_t j = XYTable[i];
   uint8_t strip = 0;
 
@@ -74,19 +70,19 @@ uint16_t XYToIndex(uint8_t x, uint8_t y)
   if (j > NUM_LEDS_PER_STRIP)
     return NUM_LEDS_PER_STRIP * 2 - 1;
 
-  if (x < Strip0_kMatrixWidth)
+  if (x < STRIP_0_NUM_COLS)
   {
     strip = 0;
   }
-  else if (x < Strip0_kMatrixWidth + Strip1_kMatrixWidth)
+  else if (x < STRIP_0_NUM_COLS + STRIP_1_NUM_COLS)
   {
     strip = 1;
   }
-  else if (x < Strip0_kMatrixWidth + Strip1_kMatrixWidth + Strip2_kMatrixWidth)
+  else if (x < STRIP_0_NUM_COLS + STRIP_1_NUM_COLS + STRIP_2_NUM_COLS)
   {
     strip = 2;
   }
-  else if (x < Strip0_kMatrixWidth + Strip1_kMatrixWidth + Strip2_kMatrixWidth + Strip3_kMatrixWidth)
+  else if (x < STRIP_0_NUM_COLS + STRIP_1_NUM_COLS + STRIP_2_NUM_COLS + STRIP_3_NUM_COLS)
   {
     strip = 3;
   }
@@ -110,10 +106,10 @@ void mode_xy_test()
     leds[index] = CRGB::Black; // off
 
     // move to the next pixel
-    if (++x >= kMatrixWidth)
+    if (++x >= NUM_COLS)
     {
       x = 0;
-      if (++y >= kMatrixHeight)
+      if (++y >= NUM_ROWS)
         y = 0;
     }
     index = XYToIndex(x, y);

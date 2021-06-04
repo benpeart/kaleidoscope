@@ -18,14 +18,14 @@ void mode_xy_matrix()
     {
         // move code downward
         // start with lowest row to allow proper overlapping on each column
-        for (int8_t row = kMatrixHeight - 1; row >= 0; row--)
+        for (int8_t row = NUM_ROWS - 1; row >= 0; row--)
         {
-            for (int8_t col = 0; col < kMatrixWidth; col++)
+            for (int8_t col = 0; col < NUM_COLS; col++)
             {
                 if (leds[XYToIndex(col, row)] == CRGB(175, 255, 175))
                 {
                     leds[XYToIndex(col, row)] = CRGB(27, 130, 39); // create trail
-                    if (row < kMatrixHeight - col_to_top_row[col] - 1)
+                    if (row < NUM_ROWS - col_to_top_row[col] - 1)
                         leds[XYToIndex(col, row + 1)] = CRGB(175, 255, 175);
                 }
             }
@@ -52,7 +52,7 @@ void mode_xy_matrix()
         // spawn new falling code
         if (random8(3) == 0 || emptyScreen) // lower number == more frequent spawns
         {
-            int8_t spawnX = random8(kMatrixWidth);
+            int8_t spawnX = random8(NUM_COLS);
             leds[XYToIndex(spawnX, col_to_top_row[spawnX])] = CRGB(175, 255, 175);
         }
 
