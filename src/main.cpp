@@ -82,8 +82,8 @@
 
 #define LED_STRIP_PIN_1 11
 #define LED_STRIP_PIN_2 10
-#define LED_STRIP_PIN_3 13
-#define LED_STRIP_PIN_4 12
+#define LED_STRIP_PIN_3 12
+#define LED_STRIP_PIN_4 13
 #else
 
 // this will compile for ESP32
@@ -138,6 +138,35 @@ void mode_off()
 {
   // nothing to see here... (the pixels got cleared by the button press)
 }
+
+#ifdef DEBUG
+// test the wiring and ensure all pixels light up correctly
+// Q: Why does led[300] ==> led[312] not light up?
+// A: Our strips aren't the same length (156 vs 144) so the shorter strips (1 and 2)
+// have extra leds[x] positions that don't have physical LEDs.
+void mode_test()
+{
+  static int index = 0;
+
+  EVERY_N_MILLISECONDS(50)
+  {
+    // erase the last pixel
+    leds[index] = CRGB::Black; // off
+
+    // move to the next pixel
+    if (++index >= NUM_STRIPS * NUM_LEDS_PER_STRIP)
+      index = 0;
+    DB_PRINTLN(index);
+
+    // light up the next pixel
+    leds[index] = CRGB::Red;
+
+    leds_dirty = true;
+  }
+
+  adjustBrightness();
+}
+#endif
 
 //
 // BRIGHTNESS helpers -------------------------------------------------
@@ -257,6 +286,7 @@ void (*renderFunc[])(void){
 #ifdef DEBUG
     mode_kaleidoscope_test,
     mode_xy_test,
+    mode_test,
 #endif
     mode_off // make it obvious we're entering 'regular' modes
 };
@@ -287,6 +317,7 @@ const PROGMEM char modeNames[N_MODES][64] =
 #ifdef DEBUG
         "mode_kaleidoscope_test",
         "mode_xy_test",
+        "mode_test",
 #endif
         "mode_off"};
 
