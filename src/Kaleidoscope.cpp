@@ -575,6 +575,7 @@ void mode_kaleidoscope_interactive()
 
     int time = millis();
 
+#ifdef ENCODER
     // use the right knob to move triangle_offset
     static int lastRightKnob = 0;
     int knob = knobRight.getCount();
@@ -620,6 +621,7 @@ void mode_kaleidoscope_interactive()
         lastLeftKnob = knob;
         drawframe = true;
     }
+#endif
 
     // draw the next frame into the correct led array
     if (drawframe)

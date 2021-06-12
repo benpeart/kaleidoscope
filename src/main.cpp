@@ -69,17 +69,36 @@
 #define ENCODER_DT_PIN_RIGHT 22
 #endif
 
+// setup our LED strips for parallel output using FastLED
+#if defined(__AVR_ATmega1280__) || defined(__AVR_ATmega2560__)
+
+// this will compile for Arduino Mega
+
+#ifdef BOUNCE
+// Change these pin numbers to the button pins on your encoder.
+#define ENCODER_SW_PIN_LEFT 2
+#define ENCODER_SW_PIN_RIGHT 3
+#endif
+
+#define LED_STRIP_PIN_1 11
+#define LED_STRIP_PIN_2 10
+#define LED_STRIP_PIN_3 13
+#define LED_STRIP_PIN_4 12
+#else
+
+// this will compile for ESP32
+
 #ifdef BOUNCE
 // Change these pin numbers to the button pins on your encoder.
 #define ENCODER_SW_PIN_LEFT 17
 #define ENCODER_SW_PIN_RIGHT 23
 #endif
 
-// setup our LED strips for parallel output using FastLED
 #define LED_STRIP_PIN_1 14
 #define LED_STRIP_PIN_2 27
 #define LED_STRIP_PIN_3 26
 #define LED_STRIP_PIN_4 25
+#endif
 #define LED_TYPE WS2812B
 #define COLOR_ORDER GRB
 
@@ -169,6 +188,7 @@ void adjustBrightness()
   }
 #endif
 
+#ifdef ENCODER
   // use the right knob as a brightness increment/decrement
   static int lastRightKnob = 0;
   int knob = knobRight.getCount();
@@ -193,6 +213,7 @@ void adjustBrightness()
     lastLeftKnob = knob;
     DB_PRINTF("Left knob count = %d\r\n", lastLeftKnob);
   }
+#endif
 
   // map our total brightness from 0-4095 to 0-255 since that is the range for setBrightness
   int newBrightness = map(lastPhotocell + LEDBrightnessManualOffset, 0, 4095, 0, 255);
@@ -349,8 +370,6 @@ void setup()
   else
   {
     ESPAsync_wifiManager.autoConnect("KaleidoscopeAP");
-//    WiFi.mode(WIFI_STA);
-//    WiFi.begin();
   }
 
   // report on our WiFi connection status
@@ -366,9 +385,8 @@ void setup()
 
 #ifdef OTA
   // add a simple home page (OTA update UI is on /update)
-  webServer.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
-    request->send(200, "text/plain", "Hi! I an a digital Kaleidoscope.");
-  });
+  webServer.on("/", HTTP_GET, [](AsyncWebServerRequest *request)
+               { request->send(200, "text/plain", "Hi! I an a digital Kaleidoscope."); });
 
   // Start ElegantOTA and require a username/password
   AsyncElegantOTA.begin(&webServer, "admin", "admin");
@@ -376,14 +394,15 @@ void setup()
 #endif
 
 #ifdef ALEXA
-  webServer.onNotFound([](AsyncWebServerRequest *request) {
-    // if you don't know the URI, ask espalexa whether it is an Alexa control request
-    if (!espalexa.handleAlexaApiCall(request))
-    {
-      // handle the 404 error
-      request->send(404, "text/plain", "Not found");
-    }
-  });
+  webServer.onNotFound([](AsyncWebServerRequest *request)
+                       {
+                         // if you don't know the URI, ask espalexa whether it is an Alexa control request
+                         if (!espalexa.handleAlexaApiCall(request))
+                         {
+                           // handle the 404 error
+                           request->send(404, "text/plain", "Not found");
+                         }
+                       });
 
   // Define your devices here.
   espalexa.addDevice("Hue", hueChanged, EspalexaDeviceType::extendedcolor); //color + color temperature
