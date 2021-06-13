@@ -35,106 +35,106 @@ struct Strips
 #define DRAWPIXEL6_INDEX 100 // (VIEWPORT_HEIGHT * (TRIANGLE_COLUMNS + 1) / 2)
 static const PROGMEM Strips drawPixel6LookupTable[DRAWPIXEL6_INDEX] =
     {
-        {{{1, 18}, {1, 19}, {1, 20}}},
-        {{{1, 59}, {1, 58}, {1, 22}}},
-        {{{1, 17}, {1, 57}, {1, 21}}},
-        {{{1, 16}, {1, 56}, {1, 55}}},
-        {{{1, 90}, {1, 91}, {1, 24}}},
-        {{{1, 60}, {1, 92}, {1, 23}}},
-        {{{1, 61}, {1, 93}, {1, 53}}},
-        {{{1, 15}, {1, 94}, {1, 54}}},
-        {{{1, 14}, {1, 95}, {1, 96}}},
-        {{{1, 131}, {1, 130}, {1, 26}}},
-        {{{1, 89}, {1, 129}, {1, 25}}},
-        {{{1, 88}, {1, 128}, {1, 51}}},
-        {{{1, 62}, {1, 127}, {1, 52}}},
-        {{{1, 63}, {1, 126}, {1, 98}}},
-        {{{1, 13}, {1, 125}, {1, 97}}},
-        {{{1, 12}, {1, 124}, {1, 123}}},
-        {{{0, 10}, {0, 11}, {1, 28}}},
-        {{{1, 132}, {0, 12}, {1, 27}}},
-        {{{1, 133}, {0, 13}, {1, 49}}},
-        {{{1, 87}, {0, 14}, {1, 50}}},
-        {{{1, 86}, {0, 15}, {1, 100}}},
-        {{{1, 64}, {0, 16}, {1, 99}}},
-        {{{1, 65}, {0, 17}, {1, 121}}},
-        {{{1, 11}, {0, 18}, {1, 122}}},
-        {{{1, 10}, {0, 19}, {0, 20}}},
-        {{{0, 51}, {0, 50}, {1, 30}}},
-        {{{0, 9}, {0, 49}, {1, 29}}},
-        {{{0, 8}, {0, 48}, {1, 47}}},
-        {{{1, 134}, {0, 47}, {1, 48}}},
-        {{{1, 135}, {0, 46}, {1, 102}}},
-        {{{1, 85}, {0, 45}, {1, 101}}},
-        {{{1, 84}, {0, 44}, {1, 119}}},
-        {{{1, 66}, {0, 43}, {1, 120}}},
-        {{{1, 67}, {0, 42}, {0, 22}}},
-        {{{1, 9}, {0, 41}, {0, 21}}},
-        {{{1, 8}, {0, 40}, {0, 39}}},
-        {{{0, 66}, {0, 67}, {1, 32}}},
-        {{{0, 52}, {0, 68}, {1, 31}}},
-        {{{0, 53}, {0, 69}, {1, 45}}},
-        {{{0, 7}, {0, 70}, {1, 46}}},
-        {{{0, 6}, {0, 71}, {1, 104}}},
-        {{{1, 136}, {0, 72}, {1, 103}}},
-        {{{1, 137}, {0, 73}, {1, 117}}},
-        {{{1, 83}, {0, 74}, {1, 118}}},
-        {{{1, 82}, {0, 75}, {0, 24}}},
-        {{{1, 68}, {0, 76}, {0, 23}}},
-        {{{1, 69}, {0, 77}, {0, 37}}},
-        {{{1, 7}, {0, 78}, {0, 38}}},
-        {{{1, 6}, {0, 79}, {0, 80}}},
-        {{{0, 107}, {0, 106}, {1, 34}}},
-        {{{0, 65}, {0, 105}, {1, 33}}},
-        {{{0, 64}, {0, 104}, {1, 43}}},
-        {{{0, 54}, {0, 103}, {1, 44}}},
-        {{{0, 55}, {0, 102}, {1, 106}}},
-        {{{0, 5}, {0, 101}, {1, 105}}},
-        {{{0, 4}, {0, 100}, {1, 115}}},
-        {{{1, 138}, {0, 99}, {1, 116}}},
-        {{{1, 139}, {0, 98}, {0, 26}}},
-        {{{1, 81}, {0, 97}, {0, 25}}},
-        {{{1, 80}, {0, 96}, {0, 35}}},
-        {{{1, 70}, {0, 95}, {0, 36}}},
-        {{{1, 71}, {0, 94}, {0, 82}}},
-        {{{1, 5}, {0, 93}, {0, 81}}},
-        {{{1, 4}, {0, 92}, {0, 91}}},
-        {{{0, 114}, {0, 115}, {1, 36}}},
-        {{{0, 108}, {0, 116}, {1, 35}}},
-        {{{0, 109}, {0, 117}, {1, 41}}},
-        {{{0, 63}, {0, 118}, {1, 42}}},
-        {{{0, 62}, {0, 119}, {1, 108}}},
-        {{{0, 56}, {0, 120}, {1, 107}}},
-        {{{0, 57}, {0, 121}, {1, 113}}},
-        {{{0, 3}, {0, 122}, {1, 114}}},
-        {{{0, 2}, {0, 123}, {0, 28}}},
-        {{{1, 140}, {0, 124}, {0, 27}}},
-        {{{1, 141}, {0, 125}, {0, 33}}},
-        {{{1, 79}, {0, 126}, {0, 34}}},
-        {{{1, 78}, {0, 127}, {0, 84}}},
-        {{{1, 72}, {0, 128}, {0, 83}}},
-        {{{1, 73}, {0, 129}, {0, 89}}},
-        {{{1, 3}, {0, 130}, {0, 90}}},
-        {{{1, 2}, {0, 131}, {0, 132}}},
-        {{{0, 155}, {0, 154}, {1, 38}}},
-        {{{0, 113}, {0, 153}, {1, 37}}},
-        {{{0, 112}, {0, 152}, {1, 39}}},
-        {{{0, 110}, {0, 151}, {1, 40}}},
-        {{{0, 111}, {0, 150}, {1, 110}}},
-        {{{0, 61}, {0, 149}, {1, 109}}},
-        {{{0, 60}, {0, 148}, {1, 111}}},
-        {{{0, 58}, {0, 147}, {1, 112}}},
-        {{{0, 59}, {0, 146}, {0, 30}}},
-        {{{0, 1}, {0, 145}, {0, 29}}},
-        {{{0, 0}, {0, 144}, {0, 31}}},
-        {{{1, 142}, {0, 143}, {0, 32}}},
-        {{{1, 143}, {0, 142}, {0, 86}}},
-        {{{1, 77}, {0, 141}, {0, 85}}},
-        {{{1, 76}, {0, 140}, {0, 87}}},
-        {{{1, 74}, {0, 139}, {0, 88}}},
-        {{{1, 75}, {0, 138}, {0, 134}}},
-        {{{1, 1}, {0, 137}, {0, 133}}},
-        {{{1, 0}, {0, 136}, {0, 135}}}};
+        {{{1, 9}, {1, 29}, {1, 10}}},
+        {{{1, 47}, {1, 67}, {1, 11}}},
+        {{{1, 30}, {1, 48}, {1, 28}}},
+        {{{1, 8}, {1, 66}, {1, 49}}},
+        {{{1, 83}, {1, 103}, {1, 12}}},
+        {{{1, 68}, {1, 84}, {1, 27}}},
+        {{{1, 46}, {1, 102}, {1, 50}}},
+        {{{1, 31}, {1, 85}, {1, 65}}},
+        {{{1, 7}, {1, 101}, {1, 86}}},
+        {{{1, 117}, {1, 137}, {1, 13}}},
+        {{{1, 104}, {1, 118}, {1, 26}}},
+        {{{1, 82}, {1, 136}, {1, 51}}},
+        {{{1, 69}, {1, 119}, {1, 64}}},
+        {{{1, 45}, {1, 135}, {1, 87}}},
+        {{{1, 32}, {1, 120}, {1, 100}}},
+        {{{1, 6}, {1, 134}, {1, 121}}},
+        {{{0, 5}, {0, 25}, {1, 14}}},
+        {{{1, 138}, {0, 6}, {1, 25}}},
+        {{{1, 116}, {0, 24}, {1, 52}}},
+        {{{1, 105}, {0, 7}, {1, 63}}},
+        {{{1, 81}, {0, 23}, {1, 88}}},
+        {{{1, 70}, {0, 8}, {1, 99}}},
+        {{{1, 44}, {0, 22}, {1, 122}}},
+        {{{1, 33}, {0, 9}, {1, 133}}},
+        {{{1, 5}, {0, 21}, {0, 10}}},
+        {{{0, 35}, {0, 55}, {1, 15}}},
+        {{{0, 26}, {0, 36}, {1, 24}}},
+        {{{0, 4}, {0, 54}, {1, 53}}},
+        {{{1, 139}, {0, 37}, {1, 62}}},
+        {{{1, 115}, {0, 53}, {1, 89}}},
+        {{{1, 106}, {0, 38}, {1, 98}}},
+        {{{1, 80}, {0, 52}, {1, 123}}},
+        {{{1, 71}, {0, 39}, {1, 132}}},
+        {{{1, 43}, {0, 51}, {0, 11}}},
+        {{{1, 34}, {0, 40}, {0, 20}}},
+        {{{1, 4}, {0, 50}, {0, 41}}},
+        {{{0, 63}, {0, 83}, {1, 16}}},
+        {{{0, 56}, {0, 64}, {1, 23}}},
+        {{{0, 34}, {0, 82}, {1, 54}}},
+        {{{0, 27}, {0, 65}, {1, 61}}},
+        {{{0, 3}, {0, 81}, {1, 90}}},
+        {{{1, 140}, {0, 66}, {1, 97}}},
+        {{{1, 114}, {0, 80}, {1, 124}}},
+        {{{1, 107}, {0, 67}, {1, 131}}},
+        {{{1, 79}, {0, 79}, {0, 12}}},
+        {{{1, 72}, {0, 68}, {0, 19}}},
+        {{{1, 42}, {0, 78}, {0, 42}}},
+        {{{1, 35}, {0, 69}, {0, 49}}},
+        {{{1, 3}, {0, 77}, {0, 70}}},
+        {{{0, 89}, {0, 109}, {1, 17}}},
+        {{{0, 84}, {0, 90}, {1, 22}}},
+        {{{0, 62}, {0, 108}, {1, 55}}},
+        {{{0, 57}, {0, 91}, {1, 60}}},
+        {{{0, 33}, {0, 107}, {1, 91}}},
+        {{{0, 28}, {0, 92}, {1, 96}}},
+        {{{0, 2}, {0, 106}, {1, 125}}},
+        {{{1, 141}, {0, 93}, {1, 130}}},
+        {{{1, 113}, {0, 105}, {0, 13}}},
+        {{{1, 108}, {0, 94}, {0, 18}}},
+        {{{1, 78}, {0, 104}, {0, 43}}},
+        {{{1, 73}, {0, 95}, {0, 48}}},
+        {{{1, 41}, {0, 103}, {0, 71}}},
+        {{{1, 36}, {0, 96}, {0, 76}}},
+        {{{1, 2}, {0, 102}, {0, 97}}},
+        {{{0, 113}, {0, 133}, {1, 18}}},
+        {{{0, 110}, {0, 114}, {1, 21}}},
+        {{{0, 88}, {0, 132}, {1, 56}}},
+        {{{0, 85}, {0, 115}, {1, 59}}},
+        {{{0, 61}, {0, 131}, {1, 92}}},
+        {{{0, 58}, {0, 116}, {1, 95}}},
+        {{{0, 32}, {0, 130}, {1, 126}}},
+        {{{0, 29}, {0, 117}, {1, 129}}},
+        {{{0, 1}, {0, 129}, {0, 14}}},
+        {{{1, 142}, {0, 118}, {0, 17}}},
+        {{{1, 112}, {0, 128}, {0, 44}}},
+        {{{1, 109}, {0, 119}, {0, 47}}},
+        {{{1, 77}, {0, 127}, {0, 72}}},
+        {{{1, 74}, {0, 120}, {0, 75}}},
+        {{{1, 40}, {0, 126}, {0, 98}}},
+        {{{1, 37}, {0, 121}, {0, 101}}},
+        {{{1, 1}, {0, 125}, {0, 122}}},
+        {{{0, 135}, {0, 155}, {1, 19}}},
+        {{{0, 134}, {0, 136}, {1, 20}}},
+        {{{0, 112}, {0, 154}, {1, 57}}},
+        {{{0, 111}, {0, 137}, {1, 58}}},
+        {{{0, 87}, {0, 153}, {1, 93}}},
+        {{{0, 86}, {0, 138}, {1, 94}}},
+        {{{0, 60}, {0, 152}, {1, 127}}},
+        {{{0, 59}, {0, 139}, {1, 128}}},
+        {{{0, 31}, {0, 151}, {0, 15}}},
+        {{{0, 30}, {0, 140}, {0, 16}}},
+        {{{0, 0}, {0, 150}, {0, 45}}},
+        {{{1, 143}, {0, 141}, {0, 46}}},
+        {{{1, 111}, {0, 149}, {0, 73}}},
+        {{{1, 110}, {0, 142}, {0, 74}}},
+        {{{1, 76}, {0, 148}, {0, 99}}},
+        {{{1, 75}, {0, 143}, {0, 100}}},
+        {{{1, 39}, {0, 147}, {0, 123}}},
+        {{{1, 38}, {0, 144}, {0, 124}}},
+        {{{1, 0}, {0, 146}, {0, 145}}}};
 
 // This 2 way lookup table can be used in combination with the 6 way
 // mapping to simulate Kaleidoscopes made with two mirrors that
@@ -381,37 +381,6 @@ void fill_kaleidoscope_gradient_RGB(CRGB *leds, uint16_t startpos, CRGB startcol
 uint8_t num_leds = DRAWPIXEL6_INDEX;
 void (*drawPixel)(CRGB *leds, int index, CRGB c) = drawPixel6;
 
-// These disks define color as an index into a CRGBPalette16 rather than an absolute RGB value.
-// This takes less Flash to store and gives us flexability to change the palette separate from
-// the disk structure.
-#define TRIANGLE_DISK_COLUMNS 10
-static const PROGMEM uint8_t TriangleDisk[TRIANGLE_DISK_COLUMNS][VIEWPORT_HEIGHT] =
-    {
-        {11, 1, 2, 3, 3, 3, 0, 4, 0, 0},
-        {1, 1, 1, 2, 3, 0, 4, 4, 4, 6},
-        {6, 1, 2, 2, 2, 3, 0, 4, 6, 6},
-        {6, 6, 7, 2, 3, 3, 3, 4, 0, 6},
-        {6, 7, 7, 7, 8, 3, 4, 4, 4, 5},
-        {0, 12, 7, 8, 8, 8, 9, 4, 5, 5},
-        {12, 12, 12, 13, 8, 9, 9, 9, 10, 5},
-        {1, 12, 13, 13, 13, 14, 9, 10, 10, 10},
-        {1, 1, 2, 13, 14, 14, 14, 15, 10, 11},
-        {1, 2, 2, 2, 3, 14, 15, 15, 15, 11}};
-
-#define SQUARE_DISK_COLUMNS 10
-static const PROGMEM uint8_t SquareDisk[SQUARE_DISK_COLUMNS][VIEWPORT_HEIGHT] =
-    {
-        {1, 1, 1, 2, 2, 2, 3, 3, 3, 4},
-        {1, 1, 1, 2, 2, 2, 3, 3, 3, 4},
-        {1, 1, 1, 2, 2, 2, 3, 3, 3, 4},
-        {4, 4, 5, 5, 6, 7, 7, 7, 8, 8},
-        {4, 4, 5, 5, 6, 7, 7, 7, 8, 8},
-        {4, 4, 5, 5, 6, 7, 7, 7, 8, 8},
-        {8, 9, 9, 9, 10, 10, 10, 11, 11, 11},
-        {8, 9, 9, 9, 10, 10, 10, 11, 11, 11},
-        {8, 9, 9, 9, 10, 10, 10, 11, 11, 11},
-        {12, 12, 12, 13, 13, 13, 14, 14, 14, 15}};
-
 #define JEWEL_RED 0x800000
 #define JEWEL_PUR 0x800080
 #define JEWEL_BLU 0x000080
@@ -442,54 +411,85 @@ const TProgmemRGBPalette16 JewelColors_p FL_PROGMEM =
         JEWEL_LEA,
         JEWEL_LEA};
 
+// These disks define color as an index into a CRGBPalette16 rather than an absolute RGB value.
+// This takes less Flash to store and gives us flexability to change the palette separate from
+// the disk structure.
+#define TRIANGLE_DISK_COLUMNS 9
+static const PROGMEM uint8_t TriangleDisk[VIEWPORT_HEIGHT][TRIANGLE_DISK_COLUMNS] =
+    {
+        {11,  1,  2,  3,  3,  3,  0,  4,  0},
+        { 1,  1,  1,  2,  3,  0,  4,  4,  4},
+        { 6,  1,  2,  2,  2,  3,  0,  4,  6},
+        { 6,  6,  7,  2,  3,  3,  3,  4,  0},
+        { 6,  7,  7,  7,  8,  3,  4,  4,  4},
+        { 0, 12,  7,  8,  8,  8,  9,  4,  5},
+        {12, 12, 12, 13,  8,  9,  9,  9, 10},
+        { 1, 12, 13, 13, 13, 14,  9, 10, 10},
+        { 1,  1,  2, 13, 14, 14, 14, 15, 10},
+        { 1,  2,  2,  2,  3, 14, 15, 15, 15}};
+
+#define SQUARE_DISK_COLUMNS 12
+static const PROGMEM uint8_t SquareDisk[VIEWPORT_HEIGHT][SQUARE_DISK_COLUMNS] =
+    {
+        { 1,  1,  1,  2,  2,  2,  3,  3,  3,  4,  4,  4,  5,  5,  5},
+        { 1,  1,  1,  2,  2,  2,  3,  3,  3,  4,  4,  4,  5,  5,  5},
+        { 1,  1,  1,  2,  2,  2,  3,  3,  3,  4,  4,  4,  5,  5,  5},
+        { 6,  6,  6,  7,  7,  7,  8,  8,  6,  6,  6,  6,  6,  6,  6},
+        { 6,  6,  6,  7,  7,  7,  8,  8,  6,  6,  6,  6,  6,  6,  6},
+        { 6,  6,  6,  7,  7,  7,  8,  8,  6,  6,  6,  6,  6,  6,  6},
+        { 7,  7,  7,  8,  8,  9, 10, 10, 10, 10, 10, 10, 10, 10, 10},
+        { 7,  7,  7,  8,  8,  9, 10, 10, 10, 10, 10, 10, 10, 10, 10},
+        { 7,  7,  7,  8,  8,  9, 10, 10, 10, 10, 10, 10, 10, 10, 10},
+        { 7,  7,  7,  8,  8,  9, 10, 10, 10, 10, 10, 10, 10, 10, 10}};
+
 // Use qsuba for smooth pixel colouring and qsubd for non-smooth pixel colouring
 #define qsubd(x, b) ((x > b) ? b : 0)     // Digital unsigned subtraction macro. if result <0, then => 0. Otherwise, take on fixed value.
 #define qsuba(x, b) ((x > b) ? x - b : 0) // Analog Unsigned subtraction macro. if result <0, then => 0
 
 // draw the kaleidoscope using a color palette
 void drawPaletteFrame(CRGB *leds, const struct CRGBPalette16 &pal,
-                      const uint8_t (*disk_1)[VIEWPORT_HEIGHT], const uint8_t offset_1, const uint8_t rows_1,
-                      const uint8_t (*disk_2)[VIEWPORT_HEIGHT], const uint8_t offset_2, const uint8_t rows_2)
+                      const uint8_t *disk_1, uint8_t disk_1_cols, uint8_t offset_1,
+                      const uint8_t *disk_2, uint8_t disk_2_cols, uint8_t offset_2)
 {
     int begin = 0, end = 0, viewport_index = 0;
 
     // draw the kaleidoscope pixels for this 'frame'
-    for (int column = 0; column < VIEWPORT_HEIGHT; column++)
+    for (int row = 0; row < VIEWPORT_HEIGHT; row++)
     {
         for (int x = begin; x <= end; x++)
         {
-            int row;
+            int column;
 
             // the row number must wrap around as needed to stay within the number of rows available in the disk
-            row = x + offset_1;
-            if (row < 0)
-                row = (row % rows_1) + rows_1 - 1;
+            column = x + offset_1;
+            if (column < 0)
+                column = (column % disk_1_cols) + disk_1_cols - 1;
             else
-                row = row % rows_1;
+                column = column % disk_1_cols;
 
             // since the disks are stored in PROGMEM, we must read them into SRAM before using them
-            uint8_t colorIndex_1 = map(pgm_read_byte_near(&disk_1[row][column]), 0, 15, 0, 255);
+            uint8_t colorIndex_1 = map(pgm_read_byte_near(&disk_1[column * disk_1_cols + row]), 0, 15, 0, 255);
             int thisBright_1 = qsuba(colorIndex_1, beatsin8(7, 0, 64)); // qsub gives it a bit of 'black' dead space by setting sets a minimum value. If colorIndex < current value of beatsin8(), then bright = 0. Otherwise, bright = colorIndex..
             CRGB pixel_1 = ColorFromPalette(pal, colorIndex_1, thisBright_1);
 #ifdef DEBUG
-            if (row < 0 || row >= rows_1 || column < 0 || column >= VIEWPORT_HEIGHT)
-                DB_PRINTF("colorIndex_1 = %d; pixel_1[%d][%d] = %x\r\n", colorIndex_1, row, column, (uint32_t)pixel_1);
+            if (column < 0 || column >= disk_1_cols || row < 0 || row >= VIEWPORT_HEIGHT)
+                DB_PRINTF("colorIndex_1 = %d; pixel_1[%d][%d] = %x\r\n", colorIndex_1, column, row, (uint32_t)pixel_1);
 #endif
 
             // the row number must wrap around as needed to stay within the number of rows available in the disk
-            row = x + offset_2;
-            if (row < 0)
-                row = (row % rows_2) + rows_2 - 1;
+            column = x + offset_2;
+            if (column < 0)
+                column = (column % disk_2_cols) + disk_2_cols - 1;
             else
-                row = row % rows_2;
+                column = column % disk_2_cols;
 
             // since the disks are stored in PROGMEM, we must read them into SRAM before using them
-            uint8_t colorIndex_2 = map(pgm_read_byte_near(&disk_2[row][column]), 0, 15, 0, 255);
+            uint8_t colorIndex_2 = map(pgm_read_byte_near(&disk_2[column * disk_2_cols + row]), 0, 15, 0, 255);
             int thisBright_2 = qsuba(colorIndex_2, beatsin8(7, 0, 64)); // qsub gives it a bit of 'black' dead space by setting sets a minimum value. If colorIndex < current value of beatsin8(), then bright = 0. Otherwise, bright = colorIndex..
             CRGB pixel_2 = ColorFromPalette(pal, colorIndex_2, thisBright_2);
 #ifdef DEBUG
-            if (row < 0 || row >= rows_1 || column < 0 || column >= VIEWPORT_HEIGHT)
-                DB_PRINTF("colorIndex_2 = %d; pixel_2[%d][%d] = %x\r\n", colorIndex_2, row, column, (uint32_t)pixel_2);
+            if (column < 0 || column >= disk_2_cols || row < 0 || row >= VIEWPORT_HEIGHT)
+                DB_PRINTF("colorIndex_2 = %d; pixel_2[%d][%d] = %x\r\n", colorIndex_2, column, row, (uint32_t)pixel_2);
 #endif
 
             // blend the pixels from the two disks by doing 50% transparency
@@ -521,8 +521,8 @@ void mode_kaleidoscope_screensaver()
     {
         // draw the next frame of the kaleidoscope
         drawPaletteFrame(first_array ? leds2 : leds3, JewelColors_p,
-                         TriangleDisk, triangle_offset, TRIANGLE_DISK_COLUMNS,
-                         SquareDisk, square_offset, SQUARE_DISK_COLUMNS);
+                         TriangleDisk, TRIANGLE_DISK_COLUMNS, triangle_offset, 
+                         SquareDisk, SQUARE_DISK_COLUMNS, square_offset);
         time_of_last_frame = time;
         first_array = !first_array;
 
@@ -628,8 +628,8 @@ void mode_kaleidoscope_interactive()
     {
         // draw the next frame of the kaleidoscope
         drawPaletteFrame(first_array ? leds2 : leds3, RainbowStripeColors_p,
-                         TriangleDisk, triangle_offset, TRIANGLE_DISK_COLUMNS,
-                         SquareDisk, square_offset, SQUARE_DISK_COLUMNS);
+                         TriangleDisk, TRIANGLE_DISK_COLUMNS, triangle_offset,
+                         SquareDisk, SQUARE_DISK_COLUMNS, square_offset);
         time_of_last_frame = time;
         first_array = !first_array;
         blendframes = true;

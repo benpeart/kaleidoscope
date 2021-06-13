@@ -2,7 +2,7 @@
 #define KALEIDOSCOPE_H
 
 // https://github.com/FastLED/FastLED
-#define FASTLED_RMT_MAX_CHANNELS 2 // why 2 channels instead of 4 (one per strip?)
+#define FASTLED_RMT_MAX_CHANNELS 2 // TODO: why 2 channels instead of 4 (one per strip?)
 //#define FASTLED_ESP32_FLASH_LOCK 1 // TODO: hack to enable OTA that doesn't work
 #include <FastLED.h>
 
