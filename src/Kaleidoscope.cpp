@@ -415,32 +415,68 @@ const TProgmemRGBPalette16 JewelColors_p FL_PROGMEM =
 // This takes less Flash to store and gives us flexability to change the palette separate from
 // the disk structure.
 #define TRIANGLE_DISK_COLUMNS 9
-static const PROGMEM uint8_t TriangleDisk[VIEWPORT_HEIGHT][TRIANGLE_DISK_COLUMNS] =
+static const PROGMEM uint8_t TriangleDisk[VIEWPORT_HEIGHT * TRIANGLE_DISK_COLUMNS] =
     {
-        {11,  1,  2,  3,  3,  3,  0,  4,  0},
-        { 1,  1,  1,  2,  3,  0,  4,  4,  4},
-        { 6,  1,  2,  2,  2,  3,  0,  4,  6},
-        { 6,  6,  7,  2,  3,  3,  3,  4,  0},
-        { 6,  7,  7,  7,  8,  3,  4,  4,  4},
-        { 0, 12,  7,  8,  8,  8,  9,  4,  5},
-        {12, 12, 12, 13,  8,  9,  9,  9, 10},
-        { 1, 12, 13, 13, 13, 14,  9, 10, 10},
-        { 1,  1,  2, 13, 14, 14, 14, 15, 10},
-        { 1,  2,  2,  2,  3, 14, 15, 15, 15}};
+        11,  1,  2,  3,  3,  3,  0,  4,  0,
+         1,  1,  1,  2,  3,  0,  4,  4,  4,
+         6,  1,  2,  2,  2,  3,  0,  4,  6,
+         6,  6,  7,  2,  3,  3,  3,  4,  0,
+         6,  7,  7,  7,  8,  3,  4,  4,  4,
+         0, 12,  7,  8,  8,  8,  9,  4,  5,
+        12, 12, 12, 13,  8,  9,  9,  9, 10,
+         1, 12, 13, 13, 13, 14,  9, 10, 10,
+         1,  1,  2, 13, 14, 14, 14, 15, 10,
+         1,  2,  2,  2,  3, 14, 15, 15, 15};
 
-#define SQUARE_DISK_COLUMNS 12
-static const PROGMEM uint8_t SquareDisk[VIEWPORT_HEIGHT][SQUARE_DISK_COLUMNS] =
+#define SQUARE_DISK_COLUMNS 15
+static const PROGMEM uint8_t SquareDisk[VIEWPORT_HEIGHT * SQUARE_DISK_COLUMNS] =
     {
-        { 1,  1,  1,  2,  2,  2,  3,  3,  3,  4,  4,  4,  5,  5,  5},
-        { 1,  1,  1,  2,  2,  2,  3,  3,  3,  4,  4,  4,  5,  5,  5},
-        { 1,  1,  1,  2,  2,  2,  3,  3,  3,  4,  4,  4,  5,  5,  5},
-        { 6,  6,  6,  7,  7,  7,  8,  8,  6,  6,  6,  6,  6,  6,  6},
-        { 6,  6,  6,  7,  7,  7,  8,  8,  6,  6,  6,  6,  6,  6,  6},
-        { 6,  6,  6,  7,  7,  7,  8,  8,  6,  6,  6,  6,  6,  6,  6},
-        { 7,  7,  7,  8,  8,  9, 10, 10, 10, 10, 10, 10, 10, 10, 10},
-        { 7,  7,  7,  8,  8,  9, 10, 10, 10, 10, 10, 10, 10, 10, 10},
-        { 7,  7,  7,  8,  8,  9, 10, 10, 10, 10, 10, 10, 10, 10, 10},
-        { 7,  7,  7,  8,  8,  9, 10, 10, 10, 10, 10, 10, 10, 10, 10}};
+          0,  0,  0,  1,  1,  1,  2,  2,  2,  3,  3,  3,  4,  4,  4,
+          0,  0,  0,  1,  1,  1,  2,  2,  2,  3,  3,  3,  4,  4,  4,
+          0,  0,  0,  1,  1,  1,  2,  2,  2,  3,  3,  3,  4,  4,  4,
+          5,  5,  5,  6,  6,  6,  7,  7,  7,  8,  8,  8,  9,  9,  9,
+          5,  5,  5,  6,  6,  6,  7,  7,  7,  8,  8,  8,  9,  9,  9,
+          5,  5,  5,  6,  6,  6,  7,  7,  7,  8,  8,  8,  9,  9,  9,
+         10, 10, 10, 11, 12, 13, 14, 14, 14, 15, 15, 15,  0,  0,  0,
+         10, 10, 10, 11, 12, 13, 14, 14, 14, 15, 15, 15,  0,  0,  0,
+         10, 10, 10, 11, 12, 13, 14, 14, 14, 15, 15, 15,  0,  0,  0,
+         10, 10, 10, 11, 12, 13, 14, 14, 14, 15, 15, 15,  0,  0,  0};
+
+#ifdef DEBUG
+const TProgmemRGBPalette16 BlackAndWhiteColors_p FL_PROGMEM =
+    {
+        0x000000,
+        0xFFFFFF,
+        0x000000,
+        0xFFFFFF,
+        0x000000,
+        0xFFFFFF,
+        0x000000,
+        0xFFFFFF,
+        0x000000,
+        0xFFFFFF,
+        0x000000,
+        0xFFFFFF,
+        0x000000,
+        0xFFFFFF,
+        0x000000,
+        0xFFFFFF};
+
+#define TEST_DISK_COLUMNS 4
+static const PROGMEM uint8_t TestDisk[VIEWPORT_HEIGHT * TEST_DISK_COLUMNS] =
+    {
+         0,  1,  0,  1,
+         0,  1,  0,  1,
+         0,  1,  0,  1,
+         0,  1,  0,  1,
+         0,  1,  0,  1,
+         0,  1,  0,  1,
+         0,  1,  0,  1,
+         0,  1,  0,  1,
+         0,  1,  0,  1,
+         0,  1,  0,  1};
+
+#endif
 
 // Use qsuba for smooth pixel colouring and qsubd for non-smooth pixel colouring
 #define qsubd(x, b) ((x > b) ? b : 0)     // Digital unsigned subtraction macro. if result <0, then => 0. Otherwise, take on fixed value.
@@ -452,6 +488,7 @@ void drawPaletteFrame(CRGB *leds, const struct CRGBPalette16 &pal,
                       const uint8_t *disk_2, uint8_t disk_2_cols, uint8_t offset_2)
 {
     int begin = 0, end = 0, viewport_index = 0;
+    CRGB pixel_1 = CRGB::Gray, pixel_2 = CRGB::Gray;
 
     // draw the kaleidoscope pixels for this 'frame'
     for (int row = 0; row < VIEWPORT_HEIGHT; row++)
@@ -460,41 +497,47 @@ void drawPaletteFrame(CRGB *leds, const struct CRGBPalette16 &pal,
         {
             int column;
 
-            // the row number must wrap around as needed to stay within the number of rows available in the disk
-            column = x + offset_1;
-            if (column < 0)
-                column = (column % disk_1_cols) + disk_1_cols - 1;
-            else
-                column = column % disk_1_cols;
+            if (disk_1)
+            {
+                // the row number must wrap around as needed to stay within the number of rows available in the disk
+                column = x + offset_1;
+                if (column < 0)
+                    column = (column % disk_1_cols) + disk_1_cols - 1;
+                else
+                    column = column % disk_1_cols;
 
-            // since the disks are stored in PROGMEM, we must read them into SRAM before using them
-            uint8_t colorIndex_1 = map(pgm_read_byte_near(&disk_1[column * disk_1_cols + row]), 0, 15, 0, 255);
-            int thisBright_1 = qsuba(colorIndex_1, beatsin8(7, 0, 64)); // qsub gives it a bit of 'black' dead space by setting sets a minimum value. If colorIndex < current value of beatsin8(), then bright = 0. Otherwise, bright = colorIndex..
-            CRGB pixel_1 = ColorFromPalette(pal, colorIndex_1, thisBright_1);
+                // since the disks are stored in PROGMEM, we must read them into SRAM before using them
+                uint8_t colorIndex_1 = map(pgm_read_byte_near(&disk_1[column * disk_1_cols + row]), 0, 15, 0, 255);
+                int thisBright_1 = qsuba(colorIndex_1, beatsin8(7, 0, 64)); // qsub gives it a bit of 'black' dead space by setting sets a minimum value. If colorIndex < current value of beatsin8(), then bright = 0. Otherwise, bright = colorIndex..
+                pixel_1 = ColorFromPalette(pal, colorIndex_1, thisBright_1);
 #ifdef DEBUG
-            if (column < 0 || column >= disk_1_cols || row < 0 || row >= VIEWPORT_HEIGHT)
-                DB_PRINTF("colorIndex_1 = %d; pixel_1[%d][%d] = %x\r\n", colorIndex_1, column, row, (uint32_t)pixel_1);
+                if (column < 0 || column >= disk_1_cols || row < 0 || row >= VIEWPORT_HEIGHT)
+                    DB_PRINTF("colorIndex_1 = %d; pixel_1[%d][%d] = %x\r\n", colorIndex_1, column, row, (uint32_t)pixel_1);
 #endif
+            }
 
-            // the row number must wrap around as needed to stay within the number of rows available in the disk
-            column = x + offset_2;
-            if (column < 0)
-                column = (column % disk_2_cols) + disk_2_cols - 1;
-            else
-                column = column % disk_2_cols;
+            if (disk_2)
+            {
+                // the row number must wrap around as needed to stay within the number of rows available in the disk
+                column = x + offset_2;
+                if (column < 0)
+                    column = (column % disk_2_cols) + disk_2_cols - 1;
+                else
+                    column = column % disk_2_cols;
 
-            // since the disks are stored in PROGMEM, we must read them into SRAM before using them
-            uint8_t colorIndex_2 = map(pgm_read_byte_near(&disk_2[column * disk_2_cols + row]), 0, 15, 0, 255);
-            int thisBright_2 = qsuba(colorIndex_2, beatsin8(7, 0, 64)); // qsub gives it a bit of 'black' dead space by setting sets a minimum value. If colorIndex < current value of beatsin8(), then bright = 0. Otherwise, bright = colorIndex..
-            CRGB pixel_2 = ColorFromPalette(pal, colorIndex_2, thisBright_2);
+                // since the disks are stored in PROGMEM, we must read them into SRAM before using them
+                uint8_t colorIndex_2 = map(pgm_read_byte_near(&disk_2[column * disk_2_cols + row]), 0, 15, 0, 255);
+                int thisBright_2 = qsuba(colorIndex_2, beatsin8(7, 0, 64)); // qsub gives it a bit of 'black' dead space by setting sets a minimum value. If colorIndex < current value of beatsin8(), then bright = 0. Otherwise, bright = colorIndex..
+                pixel_2 = ColorFromPalette(pal, colorIndex_2, thisBright_2);
 #ifdef DEBUG
-            if (column < 0 || column >= disk_2_cols || row < 0 || row >= VIEWPORT_HEIGHT)
-                DB_PRINTF("colorIndex_2 = %d; pixel_2[%d][%d] = %x\r\n", colorIndex_2, column, row, (uint32_t)pixel_2);
+                if (column < 0 || column >= disk_2_cols || row < 0 || row >= VIEWPORT_HEIGHT)
+                    DB_PRINTF("colorIndex_2 = %d; pixel_2[%d][%d] = %x\r\n", colorIndex_2, column, row, (uint32_t)pixel_2);
 #endif
+            }
 
             // blend the pixels from the two disks by doing 50% transparency
             CRGB pixel = blend(pixel_1, pixel_2, 127);
-#ifdef NDEBUG
+#ifdef DEBUG
             DB_PRINTF("blended pixel = %x\r\n", (uint32_t)pixel);
 #endif
             drawPixel(leds, viewport_index, pixel);
@@ -509,8 +552,12 @@ void drawPaletteFrame(CRGB *leds, const struct CRGBPalette16 &pal,
 void mode_kaleidoscope_screensaver()
 {
     // start with random offsets to provide more variety
-    static uint8_t triangle_offset = random(TRIANGLE_DISK_COLUMNS);
-    static uint8_t square_offset = random(SQUARE_DISK_COLUMNS);
+#ifdef DEBUG    
+    static uint8_t disk_1_offset = random(TEST_DISK_COLUMNS);
+#else
+    static uint8_t disk_1_offset = random(TRIANGLE_DISK_COLUMNS);
+#endif    
+    static uint8_t disk_2_offset = random(SQUARE_DISK_COLUMNS);
     static boolean first_array = true;
     static int time_of_last_frame = 0;
 
@@ -519,10 +566,18 @@ void mode_kaleidoscope_screensaver()
     // draw the next frame into the correct led array
     if (time >= time_of_last_frame + MS_BETWEEN_FRAMES)
     {
+#ifdef DEBUG
+
+        // draw the next frame of the kaleidoscope
+        drawPaletteFrame(first_array ? leds2 : leds3, BlackAndWhiteColors_p,
+                         TestDisk, TEST_DISK_COLUMNS, disk_1_offset, 
+                         NULL, 0, 0);
+#else
         // draw the next frame of the kaleidoscope
         drawPaletteFrame(first_array ? leds2 : leds3, JewelColors_p,
                          TriangleDisk, TRIANGLE_DISK_COLUMNS, triangle_offset, 
                          SquareDisk, SQUARE_DISK_COLUMNS, square_offset);
+#endif        
         time_of_last_frame = time;
         first_array = !first_array;
 
@@ -532,16 +587,16 @@ void mode_kaleidoscope_screensaver()
         if (triangle_offset < 0)
             triangle_offset += TRIANGLE_DISK_COLUMNS;
 #else
-        ++triangle_offset;
-        triangle_offset = triangle_offset % TRIANGLE_DISK_COLUMNS;
+        ++disk_1_offset;
+        disk_1_offset = disk_1_offset % TRIANGLE_DISK_COLUMNS;
 #endif
 #if 0
         --square_offset;
         if (square_offset < 0)
             square_offset += SQUARE_DISK_COLUMNS;
 #else
-        ++square_offset;
-        square_offset = square_offset % SQUARE_DISK_COLUMNS;
+        ++disk_2_offset;
+        disk_2_offset = disk_2_offset % SQUARE_DISK_COLUMNS;
 #endif
     }
 
