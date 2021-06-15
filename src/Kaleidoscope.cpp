@@ -507,9 +507,9 @@ void drawPaletteFrame(CRGB *leds, const struct CRGBPalette16 &pal,
                     column = column % disk_1_cols;
 
                 // since the disks are stored in PROGMEM, we must read them into SRAM before using them
-                uint8_t colorIndex_1 = map(pgm_read_byte_near(&disk_1[column * disk_1_cols + row]), 0, 15, 0, 255);
+                uint8_t colorIndex_1 = map(pgm_read_byte_near(&disk_1[row * disk_1_cols + column]), 0, 15, 0, 255);
                 int thisBright_1 = qsuba(colorIndex_1, beatsin8(7, 0, 64)); // qsub gives it a bit of 'black' dead space by setting sets a minimum value. If colorIndex < current value of beatsin8(), then bright = 0. Otherwise, bright = colorIndex..
-                pixel_1 = ColorFromPalette(pal, colorIndex_1, thisBright_1);
+                pixel_1 = ColorFromPalette(pal, colorIndex_1/*, thisBright_1*/);
 #ifdef DEBUG
                 if (column < 0 || column >= disk_1_cols || row < 0 || row >= VIEWPORT_HEIGHT)
                     DB_PRINTF("colorIndex_1 = %d; pixel_1[%d][%d] = %x\r\n", colorIndex_1, column, row, (uint32_t)pixel_1);
@@ -526,9 +526,9 @@ void drawPaletteFrame(CRGB *leds, const struct CRGBPalette16 &pal,
                     column = column % disk_2_cols;
 
                 // since the disks are stored in PROGMEM, we must read them into SRAM before using them
-                uint8_t colorIndex_2 = map(pgm_read_byte_near(&disk_2[column * disk_2_cols + row]), 0, 15, 0, 255);
+                uint8_t colorIndex_2 = map(pgm_read_byte_near(&disk_2[row * disk_2_cols + column]), 0, 15, 0, 255);
                 int thisBright_2 = qsuba(colorIndex_2, beatsin8(7, 0, 64)); // qsub gives it a bit of 'black' dead space by setting sets a minimum value. If colorIndex < current value of beatsin8(), then bright = 0. Otherwise, bright = colorIndex..
-                pixel_2 = ColorFromPalette(pal, colorIndex_2, thisBright_2);
+                pixel_2 = ColorFromPalette(pal, colorIndex_2/*, thisBright_2*/);
 #ifdef DEBUG
                 if (column < 0 || column >= disk_2_cols || row < 0 || row >= VIEWPORT_HEIGHT)
                     DB_PRINTF("colorIndex_2 = %d; pixel_2[%d][%d] = %x\r\n", colorIndex_2, column, row, (uint32_t)pixel_2);
@@ -540,7 +540,7 @@ void drawPaletteFrame(CRGB *leds, const struct CRGBPalette16 &pal,
 #ifdef DEBUG
             DB_PRINTF("blended pixel = %x\r\n", (uint32_t)pixel);
 #endif
-            drawPixel(leds, viewport_index, pixel);
+            drawPixel(leds, viewport_index, pixel_2 == (CRGB)CRGB::Gray ? pixel_1 : pixel);
             viewport_index++;
         }
         begin--;
@@ -548,11 +548,11 @@ void drawPaletteFrame(CRGB *leds, const struct CRGBPalette16 &pal,
     }
 }
 
-#define MS_BETWEEN_FRAMES 1000
+#define MS_BETWEEN_FRAMES 500
 void mode_kaleidoscope_screensaver()
 {
     // start with random offsets to provide more variety
-#ifdef DEBUG    
+#ifdef NDEBUG    
     static uint8_t disk_1_offset = random(TEST_DISK_COLUMNS);
 #else
     static uint8_t disk_1_offset = random(TRIANGLE_DISK_COLUMNS);
@@ -566,7 +566,7 @@ void mode_kaleidoscope_screensaver()
     // draw the next frame into the correct led array
     if (time >= time_of_last_frame + MS_BETWEEN_FRAMES)
     {
-#ifdef DEBUG
+#ifdef NDEBUG
 
         // draw the next frame of the kaleidoscope
         drawPaletteFrame(first_array ? leds2 : leds3, BlackAndWhiteColors_p,
@@ -575,25 +575,25 @@ void mode_kaleidoscope_screensaver()
 #else
         // draw the next frame of the kaleidoscope
         drawPaletteFrame(first_array ? leds2 : leds3, JewelColors_p,
-                         TriangleDisk, TRIANGLE_DISK_COLUMNS, triangle_offset, 
-                         SquareDisk, SQUARE_DISK_COLUMNS, square_offset);
+                         TriangleDisk, TRIANGLE_DISK_COLUMNS, disk_1_offset, 
+                         SquareDisk, SQUARE_DISK_COLUMNS, disk_2_offset);
 #endif        
         time_of_last_frame = time;
         first_array = !first_array;
 
         // update our offsets
 #if 0
-        --triangle_offset;
-        if (triangle_offset < 0)
-            triangle_offset += TRIANGLE_DISK_COLUMNS;
+        --disk_1_offset;
+        if (disk_1_offset < 0)
+            disk_1_offset += TRIANGLE_DISK_COLUMNS;
 #else
         ++disk_1_offset;
         disk_1_offset = disk_1_offset % TRIANGLE_DISK_COLUMNS;
 #endif
-#if 0
-        --square_offset;
-        if (square_offset < 0)
-            square_offset += SQUARE_DISK_COLUMNS;
+#if 1
+        --disk_2_offset;
+        if (disk_2_offset < 0)
+            disk_2_offset += SQUARE_DISK_COLUMNS;
 #else
         ++disk_2_offset;
         disk_2_offset = disk_2_offset % SQUARE_DISK_COLUMNS;
