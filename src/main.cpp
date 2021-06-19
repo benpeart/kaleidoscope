@@ -6,7 +6,6 @@
 #include "rainbowmarch.h"
 #include "plasma.h"
 #include "blendwave.h"
-#include "sawtooth.h"
 #include "XYIndex.h"
 #include "XYmatrix.h"
 #include "XYpacifica.h"
@@ -275,7 +274,6 @@ void (*renderFunc[])(void){
     mode_off, // make it obvious we're entering 'demo' modes
     mode_kaleidoscope_rainbowMarch,
     mode_kaleidoscope_plasma,
-    mode_kaleidoscope_sawTooth,
     mode_kaleidoscope_ripples,
     mode_kaleidoscope_blendWave,
     mode_kaleidoscope_beatWave,
@@ -306,7 +304,6 @@ const PROGMEM char modeNames[N_MODES][64] =
         "mode_off",
         "mode_kaleidoscope_rainbowMarch",
         "mode_kaleidoscope_plasma",
-        "mode_kaleidoscope_sawTooth",
         "mode_kaleidoscope_ripples",
         "mode_kaleidoscope_blendWave",
         "mode_kaleidoscope_beatWave",
@@ -571,4 +568,11 @@ void loop()
     FastLED.show();
     leds_dirty = false;
   }
+
+#ifdef DEBUG
+  EVERY_N_MILLISECONDS(100)
+  {
+    DB_PRINTF("\r%d fps\r", FastLED.getFPS());
+  }
+#endif
 }
