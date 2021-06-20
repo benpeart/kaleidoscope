@@ -17,4 +17,6 @@ public:
     ~ESP32StateMachineEncoder();
     void attachSingleEdge(uint8_t aPintNumber, uint8_t bPinNumber, uint8_t mode);
     int64_t getCount() { return count; }
+    int64_t clearCount() { return count = 0; }
+    void setCount(int64_t value) { count = value; }
 };

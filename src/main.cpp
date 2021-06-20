@@ -318,6 +318,39 @@ const PROGMEM char modeNames[N_MODES][64] =
 #endif
         "mode_off"};
 
+#ifdef ENCODER
+// We need to save/restore the count for the rotary encoders
+// when we switch between modes so that each mode doesn't impact
+// the other modes.
+#define LEFT_ENCODER 0
+#define RIGHT_ENCODER 1
+int modeEncoderCounts[N_MODES][2] =
+    {
+        {0, 0},
+        {0, 0},
+        {0, 0},
+        {0, 0},
+#ifdef TIME
+        {0, 0},
+#endif
+#ifdef DEMO
+        {0, 0},
+        {0, 0},
+        {0, 0},
+        {0, 0},
+        {0, 0},
+        {0, 0},
+        {0, 0},
+        {0, 0},
+#endif
+#ifdef DEBUG
+        {0, 0},
+        {0, 0},
+        {0, 0},
+#endif
+        {0, 0}};
+#endif
+
 #ifdef ALEXA
 //our Alexa callback function
 void hueChanged(EspalexaDevice *d)
@@ -507,6 +540,9 @@ void loop()
 {
 
 #ifdef BOUNCE
+  // save the current mode
+  uint8_t old_mode = mode;
+
   // Left button pressed?
   leftButton.update();
   if (leftButton.pressed())
@@ -515,11 +551,6 @@ void loop()
       mode--; // Go to prior mode
     else
       mode = N_MODES - 1; // or "wrap around" to last mode
-    DB_PRINTLN(modeNames[mode]);
-
-    // clear the led strips for the new mode
-    FastLED.clear();
-    leds_dirty = true;
   }
 
   // Right button pressed?
@@ -530,9 +561,21 @@ void loop()
       mode++; // Advance to next mode
     else
       mode = 0; // or "wrap around" to start
-    DB_PRINTLN(modeNames[mode]);
+  }
 
-    // clear the led strips for the new mode
+  // if the mode changed
+  if (old_mode != mode)
+  {
+#ifdef ENCODER
+    // save the encoder count for the old mode and restore the new mode count
+    modeEncoderCounts[old_mode][LEFT_ENCODER] = knobLeft.getCount();
+    knobLeft.setCount(modeEncoderCounts[mode][LEFT_ENCODER]);
+    modeEncoderCounts[old_mode][RIGHT_ENCODER] = knobRight.getCount();
+    knobRight.setCount(modeEncoderCounts[mode][RIGHT_ENCODER]);
+#endif
+
+    // output the new mode name and clear the led strips for the new mode
+    DB_PRINTLN(modeNames[mode]);
     FastLED.clear();
     leds_dirty = true;
   }
