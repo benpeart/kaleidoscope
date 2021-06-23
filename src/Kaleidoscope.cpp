@@ -428,19 +428,19 @@ static const PROGMEM uint8_t TriangleDisk[VIEWPORT_HEIGHT * TRIANGLE_DISK_COLUMN
          1,  1,  2, 13, 14, 14, 14, 15, 10,
          1,  2,  2,  2,  3, 14, 15, 15, 15};
 
-#define SQUARE_DISK_COLUMNS 15
+#define SQUARE_DISK_COLUMNS 16
 static const PROGMEM uint8_t SquareDisk[VIEWPORT_HEIGHT * SQUARE_DISK_COLUMNS] =
     {
-          0,  0,  0,  1,  1,  1,  2,  2,  2,  3,  3,  3,  4,  4,  4,
-          0,  0,  0,  1,  1,  1,  2,  2,  2,  3,  3,  3,  4,  4,  4,
-          0,  0,  0,  1,  1,  1,  2,  2,  2,  3,  3,  3,  4,  4,  4,
-          5,  5,  5,  6,  6,  6,  7,  7,  7,  8,  8,  8,  9,  9,  9,
-          5,  5,  5,  6,  6,  6,  7,  7,  7,  8,  8,  8,  9,  9,  9,
-          5,  5,  5,  6,  6,  6,  7,  7,  7,  8,  8,  8,  9,  9,  9,
-         10, 10, 10, 11, 12, 13, 14, 14, 14, 15, 15, 15,  0,  0,  0,
-         10, 10, 10, 11, 12, 13, 14, 14, 14, 15, 15, 15,  0,  0,  0,
-         10, 10, 10, 11, 12, 13, 14, 14, 14, 15, 15, 15,  0,  0,  0,
-         10, 10, 10, 11, 12, 13, 14, 14, 14, 15, 15, 15,  0,  0,  0};
+          0,  0,  0,  6,  6,  6,  8,  8,  8,  2,  2,  2,  4,  4,  4, 15,
+          0,  0,  0,  6,  6,  6,  8,  8,  8,  2,  2,  2,  4,  4,  4, 15,
+          0,  0,  0,  6,  6,  6,  8,  8,  8,  2,  2,  2,  4,  4,  4, 15,
+          6,  6,  6, 10, 10, 10,  4,  4,  4,  8,  8,  8,  0,  0,  0, 15,
+          6,  6,  6, 10, 10, 10,  4,  4,  4,  8,  8,  8,  0,  0,  0, 15,
+          6,  6,  6, 10, 10, 10,  4,  4,  4,  8,  8,  8,  0,  0,  0, 15,
+         10, 10, 10,  2,  2,  2,  6,  6,  6, 10, 10, 10,  0,  0,  0, 15,
+         10, 10, 10,  2,  2,  2,  6,  6,  6, 10, 10, 10,  0,  0,  0, 15,
+         10, 10, 10,  2,  2,  2,  6,  6,  6, 10, 10, 10,  0,  0,  0, 15,
+         10, 10, 10,  2,  2,  2,  6,  6,  6, 10, 10, 10,  0,  0,  0, 15};
 
 #ifdef DEBUG
 const TProgmemRGBPalette16 BlackAndWhiteColors_p FL_PROGMEM =
@@ -711,7 +711,7 @@ void mode_kaleidoscope_interactive()
     if (drawframe)
     {
         // draw the next frame of the kaleidoscope
-        drawPaletteFrame(first_array ? leds2 : leds3, RainbowStripeColors_p,
+        drawPaletteFrame(first_array ? leds2 : leds3, JewelColors_p,
                          TriangleDisk, TRIANGLE_DISK_COLUMNS, triangle_offset,
                          SquareDisk, SQUARE_DISK_COLUMNS, square_offset);
         time_of_last_frame = time;

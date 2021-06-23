@@ -7,7 +7,9 @@
  */
 #include <ESP32StateMachineEncoder.h>
 
-ESP32StateMachineEncoder::ESP32StateMachineEncoder()
+enum puType ESP32Encoder::useInternalWeakPullResistors = DOWN;
+
+ESP32Encoder::ESP32Encoder()
 {
     attached = false;
     aPinNumber = 0;
@@ -17,7 +19,7 @@ ESP32StateMachineEncoder::ESP32StateMachineEncoder()
     encval = 0; // Encoder value
 }
 
-ESP32StateMachineEncoder::~ESP32StateMachineEncoder()
+ESP32Encoder::~ESP32Encoder()
 {
     detachInterrupt(aPinNumber);
     detachInterrupt(bPinNumber);
@@ -25,9 +27,9 @@ ESP32StateMachineEncoder::~ESP32StateMachineEncoder()
 
 // Encoder interrupt routine for both pins. Updates counter
 // if they are valid and have rotated a full indent
-void IRAM_ATTR ESP32StateMachineEncoder::read_encoder(void *arg)
+void IRAM_ATTR ESP32Encoder::read_encoder(void *arg)
 {
-    ESP32StateMachineEncoder *ptr = (ESP32StateMachineEncoder *)arg;
+    ESP32Encoder *ptr = (ESP32Encoder *)arg;
 
     static const int8_t enc_states[] = {0, -1, 1, 0, 1, 0, 0, -1, -1, 0, 0, 1, 0, 1, -1, 0}; // Lookup table
 
@@ -53,7 +55,7 @@ void IRAM_ATTR ESP32StateMachineEncoder::read_encoder(void *arg)
     }
 }
 
-void ESP32StateMachineEncoder::attachSingleEdge(uint8_t aPin, uint8_t bPin, uint8_t mode)
+void ESP32Encoder::attachSingleEdge(uint8_t aPin, uint8_t bPin)
 {
     if (attached)
         return;
@@ -62,8 +64,23 @@ void ESP32StateMachineEncoder::attachSingleEdge(uint8_t aPin, uint8_t bPin, uint
     bPinNumber = bPin;
 
     // Set encoder pins and attach interrupts
-    pinMode(aPinNumber, mode);
-    pinMode(aPinNumber, mode);
+    switch (useInternalWeakPullResistors)
+    {
+    case UP:
+        pinMode(aPinNumber, INPUT_PULLUP);
+        pinMode(bPinNumber, INPUT_PULLUP);
+        break;
+
+    case DOWN:
+        pinMode(aPinNumber, INPUT_PULLDOWN);
+        pinMode(bPinNumber, INPUT_PULLDOWN);
+        break;
+
+    default:
+        pinMode(aPinNumber, INPUT);
+        pinMode(bPinNumber, INPUT);
+        break;
+    }
     attachInterruptArg(aPinNumber, read_encoder, this, CHANGE);
     attachInterruptArg(bPinNumber, read_encoder, this, CHANGE);
     attached = true;

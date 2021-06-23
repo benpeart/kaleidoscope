@@ -6,6 +6,7 @@
 #include "rainbowmarch.h"
 #include "plasma.h"
 #include "blendwave.h"
+#include "XYDistortionWaves.h"
 #include "XYIndex.h"
 #include "XYmatrix.h"
 #include "XYpacifica.h"
@@ -64,8 +65,8 @@
 // Change these pin numbers to the pins connected to your encoder.
 #define ENCODER_CLK_PIN_LEFT 4
 #define ENCODER_DT_PIN_LEFT 16
-#define ENCODER_CLK_PIN_RIGHT 21
-#define ENCODER_DT_PIN_RIGHT 22
+#define ENCODER_CLK_PIN_RIGHT 5
+#define ENCODER_DT_PIN_RIGHT 18
 #endif
 
 // setup our LED strips for parallel output using FastLED
@@ -90,7 +91,7 @@
 #ifdef BOUNCE
 // Change these pin numbers to the button pins on your encoder.
 #define ENCODER_SW_PIN_LEFT 17
-#define ENCODER_SW_PIN_RIGHT 23
+#define ENCODER_SW_PIN_RIGHT 19
 #endif
 
 #define LED_STRIP_PIN_1 14
@@ -114,8 +115,8 @@ Bounce2::Button rightButton = Bounce2::Button();
 
 #ifdef ENCODER
 // Instantiate rotary encoder knob objects
-ESP32StateMachineEncoder knobRight;
-ESP32StateMachineEncoder knobLeft;
+ESP32Encoder knobRight;
+ESP32Encoder knobLeft;
 #endif
 
 #ifdef WIFI
@@ -277,6 +278,7 @@ void (*renderFunc[])(void){
     mode_kaleidoscope_ripples,
     mode_kaleidoscope_blendWave,
     mode_kaleidoscope_beatWave,
+    mode_xy_distortion_waves,
     mode_xy_matrix,
     mode_xy_pacifica,
     mode_xy_rainbow,
@@ -307,6 +309,7 @@ const PROGMEM char modeNames[N_MODES][64] =
         "mode_kaleidoscope_ripples",
         "mode_kaleidoscope_blendWave",
         "mode_kaleidoscope_beatWave",
+        "mode_xy_distortion_waves",
         "mode_xy_matrix",
         "mode_xy_pacifica",
         "mode_xy_rainbow",
@@ -334,6 +337,7 @@ int modeEncoderCounts[N_MODES][2] =
         {0, 0},
 #endif
 #ifdef DEMO
+        {0, 0},
         {0, 0},
         {0, 0},
         {0, 0},
@@ -519,9 +523,12 @@ void setup()
 #endif
 
 #ifdef ENCODER
-  // initialize the rotary encoders
-  knobRight.attachSingleEdge(ENCODER_CLK_PIN_RIGHT, ENCODER_DT_PIN_RIGHT, INPUT_PULLUP);
-  knobLeft.attachSingleEdge(ENCODER_CLK_PIN_LEFT, ENCODER_DT_PIN_LEFT, INPUT_PULLUP);
+  // initialize the rotary encoders using the weak pull up resistors
+  ESP32Encoder::useInternalWeakPullResistors = UP;
+  knobRight.attachSingleEdge(ENCODER_CLK_PIN_RIGHT, ENCODER_DT_PIN_RIGHT);
+  knobRight.setFilter(1023);
+  knobLeft.attachSingleEdge(ENCODER_CLK_PIN_LEFT, ENCODER_DT_PIN_LEFT);
+  knobLeft.setFilter(1023);
 #endif
 
   // intialize the LED strips for parallel output

@@ -1,7 +1,14 @@
 #pragma once
 #include <Arduino.h>
 
-class ESP32StateMachineEncoder
+enum puType
+{
+    UP,
+    DOWN,
+    NONE
+};
+
+class ESP32Encoder
 {
 private:
     boolean attached;
@@ -13,10 +20,12 @@ private:
     int8_t encval;  // Encoder value
 
 public:
-    ESP32StateMachineEncoder();
-    ~ESP32StateMachineEncoder();
-    void attachSingleEdge(uint8_t aPintNumber, uint8_t bPinNumber, uint8_t mode);
+    ESP32Encoder();
+    ~ESP32Encoder();
+    void attachSingleEdge(uint8_t aPintNumber, uint8_t bPinNumber);
     int64_t getCount() { return count; }
     int64_t clearCount() { return count = 0; }
     void setCount(int64_t value) { count = value; }
+    void setFilter(uint16_t value){};
+    static enum puType useInternalWeakPullResistors;
 };

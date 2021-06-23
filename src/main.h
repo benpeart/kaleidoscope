@@ -8,7 +8,7 @@
 #define PHOTOCELL
 
 // don't include components that require WiFi unless it is included
-#define WIFI
+//#define WIFI
 #ifdef WIFI
 #define DRD
 #define OTA
@@ -20,9 +20,13 @@
 #include "debug.h"
 
 #ifdef ENCODER
+#ifndef STATEMACHINEENCODER
 #include <ESP32StateMachineEncoder.h>
-extern ESP32StateMachineEncoder knobRight;
-extern ESP32StateMachineEncoder knobLeft;
+#else
+#include <ESP32Encoder.h>
+#endif
+extern ESP32Encoder knobRight;
+extern ESP32Encoder knobLeft;
 #endif
 
 // adjust the brightness of the LED strips to match the ambient lighting using a photo cell
