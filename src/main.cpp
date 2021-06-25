@@ -1,11 +1,12 @@
 #include "main.h"
 #include "Kaleidoscope.h"
 #ifdef DEMO
-#include "ripples.h"
 #include "beatwave.h"
-#include "rainbowmarch.h"
-#include "plasma.h"
 #include "blendwave.h"
+#include "plasma.h"
+#include "rainbowmarch.h"
+#include "ripples.h"
+#include "TwinkleFox.h"
 #include "XYDistortionWaves.h"
 #include "XYIndex.h"
 #include "XYmatrix.h"
@@ -273,11 +274,12 @@ void (*renderFunc[])(void){
 #endif
 #ifdef DEMO
     mode_off, // make it obvious we're entering 'demo' modes
-    mode_kaleidoscope_rainbowMarch,
-    mode_kaleidoscope_plasma,
-    mode_kaleidoscope_ripples,
-    mode_kaleidoscope_blendWave,
     mode_kaleidoscope_beatWave,
+    mode_kaleidoscope_blendWave,
+    mode_kaleidoscope_plasma,
+    mode_kaleidoscope_rainbowMarch,
+    mode_kaleidoscope_ripples,
+    mode_kaleidoscope_twinkle_fox,
     mode_xy_distortion_waves,
     mode_xy_matrix,
     mode_xy_pacifica,
@@ -304,11 +306,12 @@ const PROGMEM char modeNames[N_MODES][64] =
 #endif
 #ifdef DEMO
         "mode_off",
-        "mode_kaleidoscope_rainbowMarch",
-        "mode_kaleidoscope_plasma",
-        "mode_kaleidoscope_ripples",
-        "mode_kaleidoscope_blendWave",
         "mode_kaleidoscope_beatWave",
+        "mode_kaleidoscope_blendWave",
+        "mode_kaleidoscope_plasma",
+        "mode_kaleidoscope_rainbowMarch",
+        "mode_kaleidoscope_ripples",
+        "mode_kaleidoscope_twinkle_fox",
         "mode_xy_distortion_waves",
         "mode_xy_matrix",
         "mode_xy_pacifica",
@@ -337,6 +340,7 @@ int modeEncoderCounts[N_MODES][2] =
         {0, 0},
 #endif
 #ifdef DEMO
+        {0, 0},
         {0, 0},
         {0, 0},
         {0, 0},
