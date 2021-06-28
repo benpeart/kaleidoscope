@@ -517,18 +517,20 @@ void setup()
   randomSeed(analogRead(33));
 
 #ifdef BOUNCE
-  // initialize the rotary encoder switches using the pullup resistor
-  leftButton.attach(ENCODER_SW_PIN_LEFT, INPUT_PULLUP);
+  // initialize the rotary encoder switches. The KY-040 rotary encoders already contain
+  // 10k-Ohm pull up resisters so we don't need to turn on the internal ones
+  leftButton.attach(ENCODER_SW_PIN_LEFT, INPUT);
   leftButton.interval(DEBOUNCE_MS);
   leftButton.setPressedState(LOW);
-  rightButton.attach(ENCODER_SW_PIN_RIGHT, INPUT_PULLUP);
+  rightButton.attach(ENCODER_SW_PIN_RIGHT, INPUT);
   rightButton.interval(DEBOUNCE_MS);
   rightButton.setPressedState(LOW);
 #endif
 
 #ifdef ENCODER
-  // initialize the rotary encoders using the weak pull up resistors
-  ESP32Encoder::useInternalWeakPullResistors = UP;
+  // Initialize the rotary encoders. The KY-040 rotary encoders already contain
+  // 10k-Ohm pull up resisters so we don't need to turn on the internal ones
+  ESP32Encoder::useInternalWeakPullResistors = NONE;
   knobRight.attachSingleEdge(ENCODER_CLK_PIN_RIGHT, ENCODER_DT_PIN_RIGHT);
   knobRight.setFilter(1023);
   knobLeft.attachSingleEdge(ENCODER_CLK_PIN_LEFT, ENCODER_DT_PIN_LEFT);
