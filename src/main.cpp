@@ -269,6 +269,7 @@ void (*renderFunc[])(void){
     mode_kaleidoscope_interactive,
     mode_off, // make it obvious we're entering 'setup' modes
     mode_kaleidoscope_select_disks,
+    mode_kaleidoscope_select_reflection_style,
 #ifdef TIME
     mode_select_clock_face,
 #endif
@@ -301,6 +302,7 @@ const PROGMEM char modeNames[N_MODES][64] =
         "mode_kaleidoscope_interactive",
         "mode_off",
         "mode_kaleidoscope_select_disks",
+        "mode_kaleidoscope_select_reflection_style",
 #ifdef TIME
         "mode_select_clock_face",
 #endif
@@ -332,6 +334,7 @@ const PROGMEM char modeNames[N_MODES][64] =
 #define RIGHT_ENCODER 1
 int modeEncoderCounts[N_MODES][2] =
     {
+        {0, 0},
         {0, 0},
         {0, 0},
         {0, 0},

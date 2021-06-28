@@ -2,7 +2,7 @@
 #define KALEIDOSCOPE_H
 
 // https://github.com/FastLED/FastLED
-#define FASTLED_RMT_MAX_CHANNELS 2 // TODO: why 2 channels instead of 4 (one per strip?)
+#define FASTLED_RMT_MAX_CHANNELS 4 // ESP32 support is provided using the RMT peripheral device, use 4 channels (one per strip)
 //#define FASTLED_ESP32_FLASH_LOCK 1 // TODO: hack to enable OTA that doesn't work
 #include <FastLED.h>
 
@@ -29,6 +29,7 @@ void fill_kaleidoscope_gradient_RGB(CRGB *leds, uint16_t startpos, CRGB startcol
 void mode_kaleidoscope_screensaver();
 void mode_kaleidoscope_interactive();
 void mode_kaleidoscope_select_disks();
+void mode_kaleidoscope_select_reflection_style();
 
 #ifdef DEBUG
 // loop through all pixels in the source triange making sure they

@@ -312,6 +312,18 @@ void drawPixel24(CRGB *leds, int index, CRGB c)
     }
 }
 
+// Provide functions to draw the pixels mirrored and replicated to match
+// the given kaleidoscope style. Update the number of corresponding
+// leds in the 'viewport' so that the ported modes work as expected.
+uint8_t num_leds = DRAWPIXEL6_INDEX;
+void (*drawPixel)(CRGB *leds, int index, CRGB c) = drawPixel6;
+void (*drawPixelFunc[])(CRGB *leds, int index, CRGB c){
+    drawPixel6,
+    drawPixel12,
+    drawPixel24};
+#define N_DRAW_STYLES (sizeof(drawPixelFunc) / sizeof(drawPixelFunc[0]))
+uint8_t draw_style = 0; // Index of current draw mode in table
+
 void fill_kaleidoscope_rainbow(CRGB *leds, uint8_t initialhue, uint8_t deltahue)
 {
     CHSV hsv;
@@ -374,12 +386,6 @@ void fill_kaleidoscope_gradient_RGB(CRGB *leds, uint16_t startpos, CRGB startcol
         b88 += bdelta87;
     }
 }
-
-// Provide a function to draw the pixels mirrored and replicated to match
-// the given kaleidoscope style. Update the number of corresponding
-// leds in the 'viewport' so that the ported modes work as expected.
-uint8_t num_leds = DRAWPIXEL6_INDEX;
-void (*drawPixel)(CRGB *leds, int index, CRGB c) = drawPixel6;
 
 #define JEWEL_RED 0x800000
 #define JEWEL_PUR 0x800080
@@ -508,7 +514,7 @@ void drawPaletteFrame(CRGB *leds, const struct CRGBPalette16 &pal,
 
                 // since the disks are stored in PROGMEM, we must read them into SRAM before using them
                 uint8_t colorIndex_1 = map(pgm_read_byte_near(&disk_1[row * disk_1_cols + column]), 0, 15, 0, 255);
-                int thisBright_1 = qsuba(colorIndex_1, beatsin8(7, 0, 64)); // qsub gives it a bit of 'black' dead space by setting sets a minimum value. If colorIndex < current value of beatsin8(), then bright = 0. Otherwise, bright = colorIndex..
+                //int thisBright_1 = qsuba(colorIndex_1, beatsin8(7, 0, 64)); // qsub gives it a bit of 'black' dead space by setting sets a minimum value. If colorIndex < current value of beatsin8(), then bright = 0. Otherwise, bright = colorIndex..
                 pixel_1 = ColorFromPalette(pal, colorIndex_1 /*, thisBright_1*/);
 #ifdef DEBUG
                 if (column < 0 || column >= disk_1_cols || row < 0 || row >= VIEWPORT_HEIGHT)
@@ -527,7 +533,7 @@ void drawPaletteFrame(CRGB *leds, const struct CRGBPalette16 &pal,
 
                 // since the disks are stored in PROGMEM, we must read them into SRAM before using them
                 uint8_t colorIndex_2 = map(pgm_read_byte_near(&disk_2[row * disk_2_cols + column]), 0, 15, 0, 255);
-                int thisBright_2 = qsuba(colorIndex_2, beatsin8(7, 0, 64)); // qsub gives it a bit of 'black' dead space by setting sets a minimum value. If colorIndex < current value of beatsin8(), then bright = 0. Otherwise, bright = colorIndex..
+                //int thisBright_2 = qsuba(colorIndex_2, beatsin8(7, 0, 64)); // qsub gives it a bit of 'black' dead space by setting sets a minimum value. If colorIndex < current value of beatsin8(), then bright = 0. Otherwise, bright = colorIndex..
                 pixel_2 = ColorFromPalette(pal, colorIndex_2 /*, thisBright_2*/);
 #ifdef DEBUG
                 if (column < 0 || column >= disk_2_cols || row < 0 || row >= VIEWPORT_HEIGHT)
@@ -542,6 +548,11 @@ void drawPaletteFrame(CRGB *leds, const struct CRGBPalette16 &pal,
 #endif
             drawPixel(leds, viewport_index, pixel_2 == (CRGB)CRGB::Gray ? pixel_1 : pixel);
             viewport_index++;
+
+            // bail out early if the number of unique pixels in the viewport exceeds the
+            // number allowed by the current draw style
+            if (viewport_index >= num_leds)
+                return;
         }
         begin--;
         end++;
@@ -576,15 +587,15 @@ int adjustSpeed()
     return ms_between_frames;
 }
 
+// start with random offsets to provide more variety
+#ifdef NDEBUG
+static uint8_t disk_1_offset = random(TEST_DISK_COLUMNS);
+#else
+static uint8_t disk_1_offset = random(TRIANGLE_DISK_COLUMNS);
+#endif
+static uint8_t disk_2_offset = random(SQUARE_DISK_COLUMNS);
 void mode_kaleidoscope_screensaver()
 {
-    // start with random offsets to provide more variety
-#ifdef NDEBUG
-    static uint8_t disk_1_offset = random(TEST_DISK_COLUMNS);
-#else
-    static uint8_t disk_1_offset = random(TRIANGLE_DISK_COLUMNS);
-#endif
-    static uint8_t disk_2_offset = random(SQUARE_DISK_COLUMNS);
     static boolean first_array = true;
     static int time_of_last_frame = 0;
 
@@ -746,6 +757,68 @@ void mode_kaleidoscope_select_disks()
 {
 }
 
+void mode_kaleidoscope_select_reflection_style()
+{
+    static boolean drawStyleChanged = false;
+#ifdef ENCODER
+    // use the left knob to select kaleidoscope draw style
+    static int lastLeftKnob = 0;
+    int knob = knobLeft.getCount();
+    if (knob != lastLeftKnob)
+    {
+        if (knob < lastLeftKnob)
+        {
+            draw_style++;
+            draw_style = draw_style % N_DRAW_STYLES;
+        }
+        else
+        {
+            // offset is an unsigned 8 bits so can't go negative
+            if (draw_style == 0)
+                draw_style += N_DRAW_STYLES;
+            --draw_style;
+        }
+        lastLeftKnob = knob;
+        drawStyleChanged = true;
+    }
+#endif
+
+    // redraw the frame of the kaleidoscope with the new style
+    if (drawStyleChanged)
+    {
+        switch (draw_style)
+        {
+        case 0:
+            drawPixel = drawPixel6;
+            num_leds = DRAWPIXEL6_INDEX;
+            DB_PRINTLN("reflection_style is 6 way reflection");
+            break;
+
+        case 1:
+            drawPixel = drawPixel12;
+            num_leds = DRAWPIXEL12_INDEX;
+            DB_PRINTLN("reflection_style is 12 way reflection");
+            break;
+
+        case 2:
+            drawPixel = drawPixel24;
+            num_leds = DRAWPIXEL24_INDEX;
+            DB_PRINTLN("reflection_style is 24 way reflection");
+            break;
+        }
+        drawStyleChanged = false;
+    }
+
+    // draw this on a fixed schedule so that when you enter the mode, you aren't
+    // faced with a black screen until you rotate the left knob
+    EVERY_N_MILLISECONDS(100)
+    {
+        drawPaletteFrame(leds, JewelColors_p,
+                         TriangleDisk, TRIANGLE_DISK_COLUMNS, disk_1_offset,
+                         SquareDisk, SQUARE_DISK_COLUMNS, disk_2_offset);
+    }
+}
+
 #ifdef DEBUG
 // loop through all pixels in the source triange making sure they
 // get reflected and mirrored properly
@@ -759,7 +832,7 @@ void mode_kaleidoscope_test()
         drawPixel(leds, index, CRGB::Black); // off
 
         // move to the next pixel
-        if (++index >= DRAWPIXEL6_INDEX)
+        if (++index >= num_leds)
             index = 0;
         DB_PRINTLN(index);
 
