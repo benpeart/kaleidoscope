@@ -85,3 +85,26 @@ void ESP32Encoder::attachSingleEdge(uint8_t aPin, uint8_t bPin)
     attachInterruptArg(bPinNumber, read_encoder, this, CHANGE);
     attached = true;
 }
+
+int64_t ESP32Encoder::getCount()
+{
+    noInterrupts();
+    int64_t ret = count;
+    interrupts();
+    return ret;
+}
+
+int64_t ESP32Encoder::clearCount()
+{
+    noInterrupts();
+    count = 0;
+    interrupts();
+    return 0;
+}
+
+void ESP32Encoder::setCount(int64_t value)
+{
+    noInterrupts();
+    count = value;
+    interrupts();
+}
