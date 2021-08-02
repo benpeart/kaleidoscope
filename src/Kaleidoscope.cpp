@@ -316,14 +316,19 @@ void drawPixel24(CRGB *leds, int index, CRGB c)
 // Provide functions to draw the pixels mirrored and replicated to match
 // the given kaleidoscope style. Update the number of corresponding
 // leds in the 'viewport' so that the ported modes work as expected.
-uint8_t num_leds = DRAWPIXEL6_INDEX;
-void (*drawPixel)(CRGB *leds, int index, CRGB c) = drawPixel6;
 void (*drawPixelFunc[])(CRGB *leds, int index, CRGB c){
     drawPixel6,
     drawPixel12,
     drawPixel24};
 #define N_DRAW_STYLES (sizeof(drawPixelFunc) / sizeof(drawPixelFunc[0]))
 uint8_t draw_style = 0; // Index of current draw mode in table
+uint8_t num_leds = DRAWPIXEL6_INDEX;
+
+// simple wrapper function to abstract out the fact that we have different draw functions
+void drawPixel(CRGB *leds, int index, CRGB c)
+{
+    drawPixelFunc[draw_style](leds, index, c);
+}
 
 void fill_kaleidoscope_rainbow(CRGB *leds, uint8_t initialhue, uint8_t deltahue)
 {
@@ -649,19 +654,16 @@ void mode_kaleidoscope_select_reflection_style()
         switch (draw_style)
         {
         case 0:
-            drawPixel = drawPixel6;
             num_leds = DRAWPIXEL6_INDEX;
             DB_PRINTLN("reflection_style is 6 way reflection");
             break;
 
         case 1:
-            drawPixel = drawPixel12;
             num_leds = DRAWPIXEL12_INDEX;
             DB_PRINTLN("reflection_style is 12 way reflection");
             break;
 
         case 2:
-            drawPixel = drawPixel24;
             num_leds = DRAWPIXEL24_INDEX;
             DB_PRINTLN("reflection_style is 24 way reflection");
             break;
