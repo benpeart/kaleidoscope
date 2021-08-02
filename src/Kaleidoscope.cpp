@@ -1,5 +1,6 @@
 #include "main.h"
 #include "Kaleidoscope.h"
+#include "GlassDisk.h"
 
 #define VIEWPORT_HEIGHT 10  // the height of the 'viewport' triangle
 #define TRIANGLE_COLUMNS 19 // the width of the base of the 'viewport' triange
@@ -387,111 +388,12 @@ void fill_kaleidoscope_gradient_RGB(CRGB *leds, uint16_t startpos, CRGB startcol
     }
 }
 
-#define JEWEL_RED 0x800000
-#define JEWEL_PUR 0x800080
-#define JEWEL_BLU 0x000080
-#define JEWEL_GRE 0x008000
-#define JEWEL_YEL 0x808000
-#define JEWEL_ORA 0x804000
-#define JEWEL_LEA 0x27100a
-
-const TProgmemRGBPalette16 JewelColors_p FL_PROGMEM =
-    {
-        JEWEL_RED,
-        JEWEL_RED,
-        JEWEL_PUR,
-        JEWEL_PUR,
-
-        JEWEL_BLU,
-        JEWEL_BLU,
-        JEWEL_GRE,
-        JEWEL_GRE,
-
-        JEWEL_YEL,
-        JEWEL_YEL,
-        JEWEL_ORA,
-        JEWEL_ORA,
-
-        JEWEL_RED,
-        JEWEL_RED,
-        JEWEL_LEA,
-        JEWEL_LEA};
-
-// These disks define color as an index into a CRGBPalette16 rather than an absolute RGB value.
-// This takes less Flash to store and gives us flexability to change the palette separate from
-// the disk structure.
-#define TRIANGLE_DISK_COLUMNS 9
-static const PROGMEM uint8_t TriangleDisk[VIEWPORT_HEIGHT * TRIANGLE_DISK_COLUMNS] =
-    {
-        11,  1,  2,  3,  3,  3,  0,  4,  0,
-         1,  1,  1,  2,  3,  0,  4,  4,  4,
-         6,  1,  2,  2,  2,  3,  0,  4,  6,
-         6,  6,  7,  2,  3,  3,  3,  4,  0,
-         6,  7,  7,  7,  8,  3,  4,  4,  4,
-         0, 12,  7,  8,  8,  8,  9,  4,  5,
-        12, 12, 12, 13,  8,  9,  9,  9, 10,
-         1, 12, 13, 13, 13, 14,  9, 10, 10,
-         1,  1,  2, 13, 14, 14, 14, 15, 10,
-         1,  2,  2,  2,  3, 14, 15, 15, 15};
-
-#define SQUARE_DISK_COLUMNS 16
-static const PROGMEM uint8_t SquareDisk[VIEWPORT_HEIGHT * SQUARE_DISK_COLUMNS] =
-    {
-          0,  0,  0,  6,  6,  6,  8,  8,  8,  2,  2,  2,  4,  4,  4, 15,
-          0,  0,  0,  6,  6,  6,  8,  8,  8,  2,  2,  2,  4,  4,  4, 15,
-          0,  0,  0,  6,  6,  6,  8,  8,  8,  2,  2,  2,  4,  4,  4, 15,
-          6,  6,  6, 10, 10, 10,  4,  4,  4,  8,  8,  8,  0,  0,  0, 15,
-          6,  6,  6, 10, 10, 10,  4,  4,  4,  8,  8,  8,  0,  0,  0, 15,
-          6,  6,  6, 10, 10, 10,  4,  4,  4,  8,  8,  8,  0,  0,  0, 15,
-         10, 10, 10,  2,  2,  2,  6,  6,  6, 10, 10, 10,  0,  0,  0, 15,
-         10, 10, 10,  2,  2,  2,  6,  6,  6, 10, 10, 10,  0,  0,  0, 15,
-         10, 10, 10,  2,  2,  2,  6,  6,  6, 10, 10, 10,  0,  0,  0, 15,
-         10, 10, 10,  2,  2,  2,  6,  6,  6, 10, 10, 10,  0,  0,  0, 15};
-
-#ifdef DEBUG
-const TProgmemRGBPalette16 BlackAndWhiteColors_p FL_PROGMEM =
-    {
-        0x000000,
-        0xFFFFFF,
-        0x000000,
-        0xFFFFFF,
-        0x000000,
-        0xFFFFFF,
-        0x000000,
-        0xFFFFFF,
-        0x000000,
-        0xFFFFFF,
-        0x000000,
-        0xFFFFFF,
-        0x000000,
-        0xFFFFFF,
-        0x000000,
-        0xFFFFFF};
-
-#define TEST_DISK_COLUMNS 4
-static const PROGMEM uint8_t TestDisk[VIEWPORT_HEIGHT * TEST_DISK_COLUMNS] =
-    {
-         0,  1,  0,  1,
-         0,  1,  0,  1,
-         0,  1,  0,  1,
-         0,  1,  0,  1,
-         0,  1,  0,  1,
-         0,  1,  0,  1,
-         0,  1,  0,  1,
-         0,  1,  0,  1,
-         0,  1,  0,  1,
-         0,  1,  0,  1};
-
-#endif
-
 // Use qsuba for smooth pixel colouring and qsubd for non-smooth pixel colouring
 #define qsubd(x, b) ((x > b) ? b : 0)     // Digital unsigned subtraction macro. if result <0, then => 0. Otherwise, take on fixed value.
 #define qsuba(x, b) ((x > b) ? x - b : 0) // Analog Unsigned subtraction macro. if result <0, then => 0
 
 // draw the kaleidoscope using a color palette
-void drawPaletteFrame(CRGB *leds, const struct CRGBPalette16 &pal,
-                      const uint8_t *disk_1, uint8_t disk_1_cols, uint8_t offset_1,
-                      const uint8_t *disk_2, uint8_t disk_2_cols, uint8_t offset_2)
+void drawPaletteFrame(CRGB *leds, GlassDisk *disk_1, GlassDisk *disk_2)
 {
     int begin = 0, end = 0, viewport_index = 0;
     CRGB pixel_1 = CRGB::Gray, pixel_2 = CRGB::Gray;
@@ -506,18 +408,18 @@ void drawPaletteFrame(CRGB *leds, const struct CRGBPalette16 &pal,
             if (disk_1)
             {
                 // the row number must wrap around as needed to stay within the number of rows available in the disk
-                column = x + offset_1;
+                column = x + disk_1->offset;
                 if (column < 0)
-                    column = (column % disk_1_cols) + disk_1_cols - 1;
+                    column = (column % disk_1->columns) + disk_1->columns - 1;
                 else
-                    column = column % disk_1_cols;
+                    column = column % disk_1->columns;
 
                 // since the disks are stored in PROGMEM, we must read them into SRAM before using them
-                uint8_t colorIndex_1 = map(pgm_read_byte_near(&disk_1[row * disk_1_cols + column]), 0, 15, 0, 255);
+                uint8_t colorIndex_1 = map(pgm_read_byte_near(&disk_1->array[row * disk_1->columns + column]), 0, 15, 0, 255);
                 //int thisBright_1 = qsuba(colorIndex_1, beatsin8(7, 0, 64)); // qsub gives it a bit of 'black' dead space by setting sets a minimum value. If colorIndex < current value of beatsin8(), then bright = 0. Otherwise, bright = colorIndex..
-                pixel_1 = ColorFromPalette(pal, colorIndex_1 /*, thisBright_1*/);
+                pixel_1 = ColorFromPalette(*disk_1->pal, colorIndex_1 /*, thisBright_1*/);
 #ifdef DEBUG
-                if (column < 0 || column >= disk_1_cols || row < 0 || row >= VIEWPORT_HEIGHT)
+                if (column < 0 || column >= disk_1->columns || row < 0 || row >= VIEWPORT_HEIGHT)
                     DB_PRINTF("colorIndex_1 = %d; pixel_1[%d][%d] = %x\r\n", colorIndex_1, column, row, (uint32_t)pixel_1);
 #endif
             }
@@ -525,18 +427,18 @@ void drawPaletteFrame(CRGB *leds, const struct CRGBPalette16 &pal,
             if (disk_2)
             {
                 // the row number must wrap around as needed to stay within the number of rows available in the disk
-                column = x + offset_2;
+                column = x + disk_2->offset;
                 if (column < 0)
-                    column = (column % disk_2_cols) + disk_2_cols - 1;
+                    column = (column % disk_2->columns) + disk_2->columns - 1;
                 else
-                    column = column % disk_2_cols;
+                    column = column % disk_2->columns;
 
                 // since the disks are stored in PROGMEM, we must read them into SRAM before using them
-                uint8_t colorIndex_2 = map(pgm_read_byte_near(&disk_2[row * disk_2_cols + column]), 0, 15, 0, 255);
+                uint8_t colorIndex_2 = map(pgm_read_byte_near(&disk_2->array[row * disk_2->columns + column]), 0, 15, 0, 255);
                 //int thisBright_2 = qsuba(colorIndex_2, beatsin8(7, 0, 64)); // qsub gives it a bit of 'black' dead space by setting sets a minimum value. If colorIndex < current value of beatsin8(), then bright = 0. Otherwise, bright = colorIndex..
-                pixel_2 = ColorFromPalette(pal, colorIndex_2 /*, thisBright_2*/);
+                pixel_2 = ColorFromPalette(*disk_2->pal, colorIndex_2 /*, thisBright_2*/);
 #ifdef DEBUG
-                if (column < 0 || column >= disk_2_cols || row < 0 || row >= VIEWPORT_HEIGHT)
+                if (column < 0 || column >= disk_2->columns || row < 0 || row >= VIEWPORT_HEIGHT)
                     DB_PRINTF("colorIndex_2 = %d; pixel_2[%d][%d] = %x\r\n", colorIndex_2, column, row, (uint32_t)pixel_2);
 #endif
             }
@@ -564,6 +466,7 @@ void drawPaletteFrame(CRGB *leds, const struct CRGBPalette16 &pal,
 // by in/decreasing the number of milliseconds between frames
 //
 #define SPEED_INCREMENT 25
+#define MAX_SPEED_DELAY 2000
 int adjustSpeed()
 {
     static int ms_between_frames = 500;
@@ -578,7 +481,9 @@ int adjustSpeed()
         else
             ms_between_frames += SPEED_INCREMENT;
 
-        ms_between_frames = constrain(ms_between_frames, 0, 1000);
+        // don't allow this to go to zero as it causes issues when mapping the remaining 
+        // time for the blend function between frames
+        ms_between_frames = constrain(ms_between_frames, SPEED_INCREMENT, MAX_SPEED_DELAY);
         lastLeftKnob = knob;
 
         DB_PRINTF("Screensaver ms between frames = %d\r\n", ms_between_frames);
@@ -587,13 +492,6 @@ int adjustSpeed()
     return ms_between_frames;
 }
 
-// start with random offsets to provide more variety
-#ifdef NDEBUG
-static uint8_t disk_1_offset = random(TEST_DISK_COLUMNS);
-#else
-static uint8_t disk_1_offset = random(TRIANGLE_DISK_COLUMNS);
-#endif
-static uint8_t disk_2_offset = random(SQUARE_DISK_COLUMNS);
 void mode_kaleidoscope_screensaver()
 {
     static boolean first_array = true;
@@ -606,37 +504,18 @@ void mode_kaleidoscope_screensaver()
     if (time >= time_of_last_frame + ms_between_frames)
     {
 #ifdef NDEBUG
-
         // draw the next frame of the kaleidoscope
-        drawPaletteFrame(first_array ? leds2 : leds3, BlackAndWhiteColors_p,
-                         TestDisk, TEST_DISK_COLUMNS, disk_1_offset,
-                         NULL, 0, 0);
+        drawPaletteFrame(first_array ? leds2 : leds3, &TestDisk, NULL);
 #else
         // draw the next frame of the kaleidoscope
-        drawPaletteFrame(first_array ? leds2 : leds3, JewelColors_p,
-                         TriangleDisk, TRIANGLE_DISK_COLUMNS, disk_1_offset,
-                         SquareDisk, SQUARE_DISK_COLUMNS, disk_2_offset);
+        drawPaletteFrame(first_array ? leds2 : leds3, &TriangleDisk, &SquareDisk);
 #endif
         time_of_last_frame = time;
         first_array = !first_array;
 
         // update our offsets
-#if 0
-        --disk_1_offset;
-        if (disk_1_offset < 0)
-            disk_1_offset += TRIANGLE_DISK_COLUMNS;
-#else
-        ++disk_1_offset;
-        disk_1_offset = disk_1_offset % TRIANGLE_DISK_COLUMNS;
-#endif
-#if 0
-        --disk_2_offset;
-        if (disk_2_offset < 0)
-            disk_2_offset += SQUARE_DISK_COLUMNS;
-#else
-        ++disk_2_offset;
-        disk_2_offset = disk_2_offset % SQUARE_DISK_COLUMNS;
-#endif
+        ++TriangleDisk;
+        ++SquareDisk;
     }
 
     // smoothly blend from one frame to the next
@@ -660,9 +539,6 @@ void mode_kaleidoscope_screensaver()
 #define MS_BETWEEN_FRAMES 500
 void mode_kaleidoscope_interactive()
 {
-    // start with random offsets to provide more variety
-    static uint8_t triangle_offset = random(TRIANGLE_DISK_COLUMNS);
-    static uint8_t square_offset = random(SQUARE_DISK_COLUMNS);
     static boolean first_array = true;
     static int time_of_last_frame = 0;
     static boolean drawframe = true;
@@ -678,18 +554,10 @@ void mode_kaleidoscope_interactive()
     {
         DB_PRINTF("right knob = %d\r\n", knob);
         if (knob < lastRightKnob)
-        {
-            triangle_offset++;
-            triangle_offset = triangle_offset % TRIANGLE_DISK_COLUMNS;
-        }
+            ++TriangleDisk;
         else
-        {
-            // offset is an unsigned 8 bits so can't go negative
-            if (triangle_offset == 0)
-                triangle_offset += TRIANGLE_DISK_COLUMNS;
-            --triangle_offset;
-        }
-        DB_PRINTF("triangle offset = %d\r\n", triangle_offset);
+            --TriangleDisk;
+        DB_PRINTF("triangle offset = %d\r\n", TriangleDisk.offset);
         lastRightKnob = knob;
         drawframe = true;
     }
@@ -701,18 +569,10 @@ void mode_kaleidoscope_interactive()
     {
         DB_PRINTF("left knob = %d\r\n", knob);
         if (knob < lastLeftKnob)
-        {
-            square_offset++;
-            square_offset = square_offset % SQUARE_DISK_COLUMNS;
-        }
+            ++SquareDisk;
         else
-        {
-            // offset is an unsigned 8 bits so can't go negative
-            if (square_offset == 0)
-                square_offset += SQUARE_DISK_COLUMNS;
-            --square_offset;
-        }
-        DB_PRINTF("square offset = %d\r\n", square_offset);
+            --SquareDisk;
+        DB_PRINTF("square offset = %d\r\n", SquareDisk.offset);
         lastLeftKnob = knob;
         drawframe = true;
     }
@@ -722,9 +582,7 @@ void mode_kaleidoscope_interactive()
     if (drawframe)
     {
         // draw the next frame of the kaleidoscope
-        drawPaletteFrame(first_array ? leds2 : leds3, JewelColors_p,
-                         TriangleDisk, TRIANGLE_DISK_COLUMNS, triangle_offset,
-                         SquareDisk, SQUARE_DISK_COLUMNS, square_offset);
+        drawPaletteFrame(first_array ? leds2 : leds3, &TriangleDisk, &SquareDisk);
         time_of_last_frame = time;
         first_array = !first_array;
         blendframes = true;
@@ -755,6 +613,8 @@ void mode_kaleidoscope_interactive()
 
 void mode_kaleidoscope_select_disks()
 {
+    // select disk with left rotary encoder
+    // select color palette with right rotary encoder
 }
 
 void mode_kaleidoscope_select_reflection_style()
@@ -813,10 +673,10 @@ void mode_kaleidoscope_select_reflection_style()
     // faced with a black screen until you rotate the left knob
     EVERY_N_MILLISECONDS(100)
     {
-        drawPaletteFrame(leds, JewelColors_p,
-                         TriangleDisk, TRIANGLE_DISK_COLUMNS, disk_1_offset,
-                         SquareDisk, SQUARE_DISK_COLUMNS, disk_2_offset);
+        drawPaletteFrame(leds, &TriangleDisk, &SquareDisk);
     }
+
+    adjustBrightness();
 }
 
 #ifdef DEBUG
