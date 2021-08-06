@@ -26,6 +26,7 @@ void fill_kaleidoscope_solid(CRGB *leds, const struct CRGB &color);
 void fill_kaleidoscope_gradient_RGB(CRGB *leds, uint16_t startpos, CRGB startcolor,
                                     uint16_t endpos, CRGB endcolor);
 
+void mode_kaleidoscope();
 void mode_kaleidoscope_screensaver();
 void mode_kaleidoscope_interactive();
 void mode_kaleidoscope_select_disks();

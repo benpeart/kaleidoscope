@@ -472,9 +472,9 @@ void drawPaletteFrame(CRGB *leds, GlassDisk *disk_1, GlassDisk *disk_2)
 //
 #define SPEED_INCREMENT 25
 #define MAX_SPEED_DELAY 2000
+int ms_between_frames = 500;
 int adjustSpeed()
 {
-    static int ms_between_frames = 500;
 #ifdef ENCODER
     static int lastLeftKnob = 0;
 
@@ -486,7 +486,7 @@ int adjustSpeed()
         else
             ms_between_frames += SPEED_INCREMENT;
 
-        // don't allow this to go to zero as it causes issues when mapping the remaining 
+        // don't allow this to go to zero as it causes issues when mapping the remaining
         // time for the blend function between frames
         ms_between_frames = constrain(ms_between_frames, SPEED_INCREMENT, MAX_SPEED_DELAY);
         lastLeftKnob = knob;
@@ -503,7 +503,6 @@ void mode_kaleidoscope_screensaver()
     static int time_of_last_frame = 0;
 
     int time = millis();
-    int ms_between_frames = adjustSpeed();
 
     // draw the next frame into the correct led array
     if (time >= time_of_last_frame + ms_between_frames)
@@ -538,10 +537,10 @@ void mode_kaleidoscope_screensaver()
         leds_dirty = true;
     }
 
+    adjustSpeed();
     adjustBrightness();
 }
 
-#define MS_BETWEEN_FRAMES 500
 void mode_kaleidoscope_interactive()
 {
     static boolean first_array = true;
@@ -595,22 +594,111 @@ void mode_kaleidoscope_interactive()
     }
 
     // smoothly blend from one frame to the next
-    EVERY_N_MILLISECONDS(5)
+    if (blendframes)
     {
-        if (blendframes)
+        EVERY_N_MILLISECONDS(5)
         {
             // ratio is the percentage of time remaining for this frame mapped to 0-255
-            fract8 ratio = map(time, time_of_last_frame, time_of_last_frame + MS_BETWEEN_FRAMES, 0, 255);
+            fract8 ratio = map(time, time_of_last_frame, time_of_last_frame + ms_between_frames, 0, 255);
             if (ratio >= 250)
                 blendframes = false;
             if (!first_array)
                 ratio = 255 - ratio;
 
             // mix the 2 arrays together
-            for (int i = 0; i < NUM_STRIPS * NUM_LEDS_PER_STRIP; i++)
-            {
-                leds[i] = blend(leds2[i], leds3[i], ratio);
-            }
+            blend(leds2, leds3, leds, NUM_STRIPS * NUM_LEDS_PER_STRIP, ratio);
+            leds_dirty = true;
+        }
+    }
+}
+
+#define SCREENSAVER_DELAY 60000 // 1 minute = 60,000 milliseconds
+void mode_kaleidoscope()
+{
+    static int time_to_enter_screensaver_mode = 0; // start in screensaver mode
+    static boolean first_array = true;
+    static int time_of_last_frame = 0;
+    static boolean drawframe = true;
+    static boolean blendframes = false;
+
+    int time = millis();
+
+    // if it is time to enter screen saver mode
+    if (time >= time_to_enter_screensaver_mode)
+    {
+        // if it is time to draw the next frame
+        if (time >= time_of_last_frame + ms_between_frames)
+        {
+            // update our offsets
+            ++TriangleDisk;
+            ++SquareDisk;
+            drawframe = true;
+        }
+    }
+
+#ifdef ENCODER
+    // use the right knob to move triangle_offset
+    static int lastRightKnob = 0;
+    int knob = knobRight.getCount();
+    if (knob != lastRightKnob)
+    {
+        // reset the screensaver timeout
+        time_to_enter_screensaver_mode = time + SCREENSAVER_DELAY;
+
+        DB_PRINTF("right knob = %d\r\n", knob);
+        if (knob < lastRightKnob)
+            ++TriangleDisk;
+        else
+            --TriangleDisk;
+        DB_PRINTF("triangle offset = %d\r\n", TriangleDisk.offset);
+        lastRightKnob = knob;
+        drawframe = true;
+    }
+
+    // use the left knob to move square_offset
+    static int lastLeftKnob = 0;
+    knob = knobLeft.getCount();
+    if (knob != lastLeftKnob)
+    {
+        // reset the screensaver timeout
+        time_to_enter_screensaver_mode = time + SCREENSAVER_DELAY;
+
+        DB_PRINTF("left knob = %d\r\n", knob);
+        if (knob < lastLeftKnob)
+            ++SquareDisk;
+        else
+            --SquareDisk;
+        DB_PRINTF("square offset = %d\r\n", SquareDisk.offset);
+        lastLeftKnob = knob;
+        drawframe = true;
+    }
+#endif
+
+    // draw the next frame into the correct led array
+    if (drawframe)
+    {
+        // draw the next frame of the kaleidoscope
+        drawPaletteFrame(first_array ? leds2 : leds3, &TriangleDisk, &SquareDisk);
+        time_of_last_frame = time;
+        first_array = !first_array;
+        blendframes = true;
+        drawframe = false;
+    }
+
+    // smoothly blend from one frame to the next
+    if (blendframes)
+    {
+        EVERY_N_MILLISECONDS(5)
+        {
+            // ratio is the percentage of time remaining for this frame mapped to 0-255
+            fract8 ratio = map(time, time_of_last_frame, time_of_last_frame + ms_between_frames, 0, 255);
+            if (ratio >= 250)
+                blendframes = false;
+            if (!first_array)
+                ratio = 255 - ratio;
+
+            // mix the 2 arrays together
+            blend(leds2, leds3, leds, NUM_STRIPS * NUM_LEDS_PER_STRIP, ratio);
             leds_dirty = true;
         }
     }
