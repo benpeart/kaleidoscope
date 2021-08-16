@@ -29,6 +29,5 @@ extern ESP32Encoder knobRight;
 extern ESP32Encoder knobLeft;
 #endif
 
-// adjust the brightness of the LED strips to match the ambient lighting using a photo cell
-// and rotary encoders for manual adjustment.
-void adjustBrightness();
+// update the FastLED brightness based on our ambient and manual settings
+void adjustBrightness(bool useKnob = true);

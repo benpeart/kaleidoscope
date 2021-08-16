@@ -196,19 +196,16 @@ uint32_t readADC_Avg(int ADC_Raw)
 }
 #endif
 
-// automatically adjust the brightness of the LED strips to match the ambient lighting
-void adjustBrightness()
+// compute the brightness of the LED strips to match the ambient lighting
+int ambientBrightness()
 {
-  // store the current LED brightness so we can minimize minor differences
-  static int LEDbrightness = 0;
-  static int LEDBrightnessManualOffset = 0;
-
   // The ADC input channels have a 12 bit resolution. This means that you can get analog readings
   // ranging from 0 to 4095, in which 0 corresponds to 0V and 4095 to 3.3V
   // https://randomnerdtutorials.com/esp32-pinout-reference-gpios/
 
   // check the photocell and debounce it a bit as it moves around a lot
   static int lastPhotocell = 0;
+
 #ifdef PHOTOCELL
   int photocellReading = readADC_Avg(analogRead(PHOTOCELL_PIN));
   if ((photocellReading > lastPhotocell + 256) || (photocellReading < lastPhotocell - 256))
@@ -217,6 +214,17 @@ void adjustBrightness()
     DB_PRINTF("photocell reading = %d\r\n", photocellReading);
   }
 #endif
+
+  return lastPhotocell;
+}
+
+// manually adjust the brightness of the LED strips
+int manualBrightness(bool useKnob)
+{
+  static int LEDBrightnessManualOffset = 0;
+
+  if (!useKnob)
+    return LEDBrightnessManualOffset;
 
 #ifdef ENCODER
   // use the right knob as a brightness increment/decrement
@@ -245,8 +253,17 @@ void adjustBrightness()
   }
 #endif
 
+  return LEDBrightnessManualOffset;
+}
+
+// update the FastLED brightness based on our ambient and manual settings
+void adjustBrightness(bool useKnob)
+{
+  // store the current LED brightness so we can minimize minor differences
+  static int LEDbrightness = 0;
+
   // map our total brightness from 0-4095 to 0-255 since that is the range for setBrightness
-  int newBrightness = map(lastPhotocell + LEDBrightnessManualOffset, 0, 4095, 0, 255);
+  int newBrightness = map(ambientBrightness() + manualBrightness(useKnob), 0, 4095, 0, 255);
   newBrightness = constrain(newBrightness, 0, 255);
 
   // adjust our brightness if it has changed
