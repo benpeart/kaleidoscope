@@ -283,10 +283,9 @@ void adjustBrightness(bool useKnob)
 // we return to "mode_off" at several points in the sequence.
 void (*renderFunc[])(void){
     mode_kaleidoscope,
-    mode_kaleidoscope_screensaver,
-    mode_kaleidoscope_interactive,
     mode_off, // make it obvious we're entering 'setup' modes
-    mode_kaleidoscope_select_disks,
+    mode_kaleidoscope_select_speed_brightness,
+//    mode_kaleidoscope_select_disks,
     mode_kaleidoscope_select_reflection_style,
 #ifdef TIME
     mode_select_clock_face,
@@ -317,10 +316,9 @@ uint8_t mode = 0; // Index of current mode in table
 const PROGMEM char modeNames[N_MODES][64] =
     {
         "mode_kaleidoscope",
-        "mode_kaleidoscope_screensaver",
-        "mode_kaleidoscope_interactive",
         "mode_off",
-        "mode_kaleidoscope_select_disks",
+        "mode_kaleidoscope_select_speed_brightness",
+//        "mode_kaleidoscope_select_disks",
         "mode_kaleidoscope_select_reflection_style",
 #ifdef TIME
         "mode_select_clock_face",
@@ -356,7 +354,7 @@ int modeEncoderCounts[N_MODES][2] =
         {0, 0},
         {0, 0},
         {0, 0},
-        {0, 0},
+//        {0, 0},
         {0, 0},
         {0, 0},
 #ifdef TIME

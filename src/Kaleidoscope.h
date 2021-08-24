@@ -27,9 +27,8 @@ void fill_kaleidoscope_gradient_RGB(CRGB *leds, uint16_t startpos, CRGB startcol
                                     uint16_t endpos, CRGB endcolor);
 
 void mode_kaleidoscope();
-void mode_kaleidoscope_screensaver();
-void mode_kaleidoscope_interactive();
-void mode_kaleidoscope_select_disks();
+void mode_kaleidoscope_select_speed_brightness();
+//void mode_kaleidoscope_select_disks();
 void mode_kaleidoscope_select_reflection_style();
 
 #ifdef DEBUG
