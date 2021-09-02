@@ -285,7 +285,7 @@ void (*renderFunc[])(void){
     mode_kaleidoscope,
     mode_off, // make it obvious we're entering 'setup' modes
     mode_kaleidoscope_select_speed_brightness,
-//    mode_kaleidoscope_select_disks,
+    //    mode_kaleidoscope_select_disks,
     mode_kaleidoscope_select_reflection_style,
 #ifdef TIME
     mode_select_clock_face,
@@ -318,7 +318,7 @@ const PROGMEM char modeNames[N_MODES][64] =
         "mode_kaleidoscope",
         "mode_off",
         "mode_kaleidoscope_select_speed_brightness",
-//        "mode_kaleidoscope_select_disks",
+        //        "mode_kaleidoscope_select_disks",
         "mode_kaleidoscope_select_reflection_style",
 #ifdef TIME
         "mode_select_clock_face",
@@ -354,7 +354,7 @@ int modeEncoderCounts[N_MODES][2] =
         {0, 0},
         {0, 0},
         {0, 0},
-//        {0, 0},
+        //        {0, 0},
         {0, 0},
         {0, 0},
 #ifdef TIME
@@ -380,6 +380,7 @@ int modeEncoderCounts[N_MODES][2] =
         {0, 0}};
 #endif
 
+#ifdef WIFI
 #ifdef ALEXA
 //our Alexa callback function
 void hueChanged(EspalexaDevice *d)
@@ -413,6 +414,7 @@ void hueChanged(EspalexaDevice *d)
     break;
   }
 }
+#endif
 #endif
 
 //
@@ -639,17 +641,33 @@ void loop()
   // Also be sure to set leds_dirty = true so that the updated frame will be displayed.
   (*renderFunc[mode])();
 
+// Show an activity spinner and the current fps. After 500 ms of no LED updates show 0 fps.
+// This is to prevent the fps flickering between 0 fps and x fps when there are no updates
+// to display (i.e. not calling FastLED.Show every loop).
+#ifdef DEBUG
+  static CEveryNMilliseconds triggerTimer(500);
+  static const char *spinner = "|/-\\";
+  static int spinner_index = 0;
+
+  if (leds_dirty)
+  {
+    DB_PRINTF("\r%c %d fps\r", spinner[spinner_index], FastLED.getFPS());
+    spinner_index = (spinner_index + 1) % sizeof(spinner);
+    triggerTimer.reset();
+  }
+  else
+  {
+    if (triggerTimer)
+    {
+      DB_PRINTF("\r0 fps   \r");
+    }
+  }
+#endif
+
   // if we have changes in the LEDs, show the updated frame
   if (leds_dirty)
   {
     FastLED.show();
     leds_dirty = false;
   }
-
-#ifdef DEBUG
-  EVERY_N_MILLISECONDS(100)
-  {
-    DB_PRINTF("\r%d fps\r", FastLED.getFPS());
-  }
-#endif
 }
