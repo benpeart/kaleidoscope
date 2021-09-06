@@ -1,5 +1,6 @@
 #include "main.h"
 #include "Kaleidoscope.h"
+#include "RealTimeClock.h"
 #ifdef DEMO
 #include "beatwave.h"
 #include "blendwave.h"
@@ -242,7 +243,7 @@ int manualBrightness(bool useKnob)
 
     DB_PRINTF("LEDBrightnessManualOffset = %d\r\n", LEDBrightnessManualOffset);
   }
-
+#ifdef DEBUG
   // test code for the left knob
   static int lastLeftKnob = 0;
   knob = knobLeft.getCount();
@@ -251,6 +252,7 @@ int manualBrightness(bool useKnob)
     lastLeftKnob = knob;
     DB_PRINTF("Left knob count = %d\r\n", lastLeftKnob);
   }
+#endif
 #endif
 
   return LEDBrightnessManualOffset;
@@ -629,11 +631,6 @@ void loop()
 #ifdef ALEXA
   espalexa.loop();
 #endif
-
-#ifdef TIME
-  // update the clock
-  rtc_loop();
-#endif
 #endif // WIFI
 
   // Render one frame in current mode. To control the speed of updates, use the
@@ -663,6 +660,13 @@ void loop()
     }
   }
 #endif
+
+  // draw the clock face (can be a null clock face - see mode_select_clock_face())
+#ifdef WIFI
+#ifdef TIME
+  draw_clock();
+#endif
+#endif // WIFI
 
   // if we have changes in the LEDs, show the updated frame
   if (leds_dirty)

@@ -1,8 +1,9 @@
 #include <Arduino.h>
+#include "Kaleidoscope.h"
 #include <Time.h>
-#include <FastLED.h>
 #include <Preferences.h>
 #include "RealTimeClock.h"
+#include "displaynumbers.h"
 
 // enable debugging macros
 #define DEBUG
@@ -38,7 +39,7 @@ void rtc_setup()
 
     // read the timezone from persistant memory
     Preferences preferences;
-    preferences.begin("kaleidoscope", true); 
+    preferences.begin("kaleidoscope", true);
     String tz = preferences.getString("tz", "");
     preferences.end();
     if (tz.length())
@@ -55,18 +56,63 @@ void rtc_setup()
     printLocalTime();
 }
 
-void rtc_loop()
-{
-#ifdef DEBUG
-    // only display the time every minute
-    EVERY_N_MILLISECONDS(60000)
-    {
-        printLocalTime();
-    }
-#endif
-}
-
 void mode_select_clock_face()
 {
 }
 
+CRGB FadeColors(CRGB rgb)
+{
+    return CRGB::Black;
+    //    return rgb.fadeToBlackBy(64);
+}
+
+void draw_clock()
+{
+    struct tm timeinfo;
+    static int digit1 = 0, digit2 = 0, digit3 = 0, digit4 = 0;
+
+    if (getLocalTime(&timeinfo))
+    {
+        int tmp;
+
+        // compute first digit of hours
+        tmp = timeinfo.tm_hour;
+        while (tmp >= 10)
+            tmp /= 10;
+        if (digit1 != tmp)
+        {
+            digit1 = tmp;
+            leds_dirty = true;
+        }
+
+        // compute second digit of hours
+        tmp = timeinfo.tm_hour % 10;
+        if (digit2 != tmp)
+        {
+            digit2 = tmp;
+            leds_dirty = true;
+        }
+
+        // compute first digit of minutes
+        tmp = timeinfo.tm_min;
+        while (tmp >= 10)
+            tmp /= 10;
+        if (digit3 != tmp)
+        {
+            digit3 = tmp;
+            leds_dirty = true;
+        }
+
+        // compute second digit of minutes
+        tmp = timeinfo.tm_min % 10;
+        if (digit4 != tmp)
+        {
+            digit4 = tmp;
+            leds_dirty = true;
+            DB_PRINTLN(&timeinfo, "%A, %B %d %Y %I:%M:%S %p");
+        }
+
+        if (leds_dirty)
+            displayNumbers(digit1, digit2, digit3, digit4, FadeColors);
+    }
+}

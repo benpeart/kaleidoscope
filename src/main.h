@@ -1,14 +1,14 @@
 #include <Arduino.h>
 
 // flags to enable turning of various parts of the app for debugging purposes
-#define DEBUG
+//#define DEBUG
 #define BOUNCE
 #define DEMO
 #define ENCODER
 #define PHOTOCELL
 
 // don't include components that require WiFi unless it is included
-//#define WIFI
+#define WIFI
 #ifdef WIFI
 #define DRD
 #define OTA

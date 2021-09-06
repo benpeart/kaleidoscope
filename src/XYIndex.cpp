@@ -24,6 +24,8 @@ uint16_t XYToIndex(uint8_t x, uint8_t y)
       //
       // Strip 0 - columns  0 - 5
       // Strip 1 - columns 6 - 9
+      // Strip 2 - columns  10 - 12
+      // Strip 3 - columns 13 - 18
       //
       255, 255, 255, 255, 255, 255, 255, 255, 255,  19,
       255, 255, 255, 255, 255, 255, 255, 255,  57,  20,
