@@ -66,17 +66,27 @@ CRGB FadeColors(CRGB rgb)
     //    return rgb.fadeToBlackBy(64);
 }
 
+int ConvertMilitaryTime(int hours)
+{
+    if (hours == 0)
+        return 12;
+    if (hours > 12)
+        return hours - 12;
+
+    return hours;
+}
+
 void draw_clock()
 {
     struct tm timeinfo;
-    static int digit1 = 0, digit2 = 0, digit3 = 0, digit4 = 0;
+    static int digit1 = -1, digit2 = -1, digit3 = -1, digit4 = -1;
 
     if (getLocalTime(&timeinfo))
     {
         int tmp;
 
         // compute first digit of hours
-        tmp = timeinfo.tm_hour;
+        tmp = ConvertMilitaryTime(timeinfo.tm_hour);
         while (tmp >= 10)
             tmp /= 10;
         if (digit1 != tmp)
@@ -86,7 +96,7 @@ void draw_clock()
         }
 
         // compute second digit of hours
-        tmp = timeinfo.tm_hour % 10;
+        tmp = ConvertMilitaryTime(timeinfo.tm_hour) % 10;
         if (digit2 != tmp)
         {
             digit2 = tmp;

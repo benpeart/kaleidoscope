@@ -534,5 +534,3 @@ void displayNumbers(int n1, int n2, int n3, int n4, getColor color)
     drawN3(n3, color);
     drawN4(n4, color);
 }
-
-//n2 not working
