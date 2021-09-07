@@ -1,7 +1,7 @@
 fudge=0.004;
 
 // honeycomb dimensions
-stroke = 2;
+stroke = 2.4;
 notch_width = 21;
 notch_depth = 1;
 distance_apart = 33 + 1/3;

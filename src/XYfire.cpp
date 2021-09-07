@@ -60,19 +60,22 @@ void mode_xy_fire()
         initialized = true;
     }
 
-    doFire();
-    for (int y = 0; y < NUM_ROWS; y++)
+    EVERY_N_MILLISECONDS(50)
     {
-        for (int x = 0; x < NUM_COLS; x++)
+        doFire();
+        for (int y = 0; y < NUM_ROWS; y++)
         {
-            int index = firePixels[NUM_COLS * y + x];
-            // Index goes from 0 -> NUM_ROWS, palette goes from 0 -> 255 so need to scale it
-            uint8_t indexScale = 255 / NUM_ROWS;
-            leds[XYToIndex(x, y)] = ColorFromPalette(_currentPalette, constrain(index * indexScale, 0, 255), 255, LINEARBLEND);
+            for (int x = 0; x < NUM_COLS; x++)
+            {
+                int index = firePixels[NUM_COLS * y + x];
+                // Index goes from 0 -> NUM_ROWS, palette goes from 0 -> 255 so need to scale it
+                uint8_t indexScale = 255 / NUM_ROWS;
+                leds[XYToIndex(x, y)] = ColorFromPalette(_currentPalette, constrain(index * indexScale, 0, 255), 255, LINEARBLEND);
+            }
         }
-    }
 
-    leds_dirty = true;
+        leds_dirty = true;
+    }
 
     adjustBrightness();
 }

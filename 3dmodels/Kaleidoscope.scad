@@ -1,7 +1,7 @@
 fudge=0.004;
 
 // honeycomb dimensions
-stroke = 2;
+stroke = 4.8;   // this needs to be double the wall width you actually want when printing, not sure why...
 notch_width = 21;
 notch_depth = 1;
 distance_apart = 33 + 1/3;
@@ -32,7 +32,7 @@ knob_radius = 35;
 
 color("yellow") backboard();
 color("black") translate([0, 0, backboard_thickness]) honeycomb();
-color("black", 0.25) translate([0, 0, backboard_thickness + wall_height]) diffuser();
+color("gray", 0.25) translate([0, 0, backboard_thickness + wall_height]) diffuser();
 /*color("blue") */translate([0, 0, backboard_thickness]) honeycomb_sidewall();
 color("silver") translate([chin_width / 4 + 50, radius - chin_depth - 20, chin_wall_height + 2 * backboard_thickness]) rotate(15) cylinder(h=knob_height, r=knob_radius, $fn=6);
 color("silver") translate([-(chin_width / 4 + 50), radius - chin_depth - 20, chin_wall_height + 2 * backboard_thickness]) rotate(45) cylinder(h=knob_height, r=knob_radius, $fn=6);
