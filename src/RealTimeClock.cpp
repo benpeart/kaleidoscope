@@ -91,8 +91,7 @@ void drawDigitalClock()
 
         // compute first digit of hours
         tmp = ConvertMilitaryTime(timeinfo.tm_hour);
-        while (tmp >= 10)
-            tmp /= 10;
+        tmp /= 10;
         if (digit1 != tmp)
         {
             digit1 = tmp;
@@ -109,8 +108,7 @@ void drawDigitalClock()
 
         // compute first digit of minutes
         tmp = timeinfo.tm_min;
-        while (tmp >= 10)
-            tmp /= 10;
+        tmp /= 10;
         if (digit3 != tmp)
         {
             digit3 = tmp;
