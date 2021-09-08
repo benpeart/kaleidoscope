@@ -153,6 +153,8 @@ void drawN1(int num, getColor color)
         draw_top_seg_5(color, 0);
         draw_top_seg_6(color, 0);
         draw_top_seg_7(color, 0);
+        draw_top_right_triangle(color, 0);
+        draw_top_left_triangle(color, 0);
         break;
     case 1:
         draw_top_seg_3(color, 0);
@@ -177,12 +179,12 @@ void drawN1(int num, getColor color)
         draw_top_right_triangle(color, 0);
         break;
     case 4:
-        draw_top_seg_1(color, 0);
         draw_top_seg_2(color, 0);
         draw_top_seg_3(color, 0);
         draw_top_seg_4(color, 0);
         draw_top_seg_6(color, 0);
         draw_top_right_triangle(color, 0);
+        draw_top_left_triangle(color, 0);
         break;
     case 5:
         draw_top_seg_1(color, 0);
@@ -228,8 +230,6 @@ void drawN1(int num, getColor color)
         draw_top_seg_6(color, 0);
         draw_top_left_triangle(color, 0);
         draw_top_right_triangle(color, 0);
-        break;
-    default:
         break;
     }
 }
@@ -240,10 +240,10 @@ void drawN2(int num, getColor color)
     {
     case 0:
         draw_top_seg_1(color, 1);
-        draw_top_seg_3(color, 1);
         draw_top_seg_2(color, 3);
-        draw_top_seg_6(color, 1);
+        draw_top_seg_3(color, 1);
         draw_top_seg_5(color, 3);
+        draw_top_seg_6(color, 1);
         draw_top_seg_7(color, 1);
         draw_top_right_triangle(color, 1);
         draw_top_left_triangle(color, 3);
@@ -264,25 +264,25 @@ void drawN2(int num, getColor color)
         break;
     case 3:
         draw_top_seg_1(color, 1);
-        draw_top_seg_3(color, 1);
+        draw_top_seg_2(color, 3);
         draw_top_seg_4(color, 1);
         draw_top_seg_5(color, 3);
         draw_top_seg_7(color, 1);
         draw_top_left_triangle(color, 3);
         break;
     case 4:
-        draw_top_seg_1(color, 1);
-        draw_top_seg_3(color, 1);
         draw_top_seg_2(color, 3);
+        draw_top_seg_3(color, 1);
         draw_top_seg_4(color, 1);
         draw_top_seg_5(color, 3);
+        draw_top_right_triangle(color, 1);
         draw_top_left_triangle(color, 3);
         break;
     case 5:
         draw_top_seg_1(color, 1);
-        draw_top_seg_2(color, 1);
+        draw_top_seg_3(color, 1);
         draw_top_seg_4(color, 1);
-        draw_top_seg_5(color, 2);
+        draw_top_seg_5(color, 3);
         draw_top_seg_7(color, 1);
         draw_top_right_triangle(color, 1);
         draw_top_left_triangle(color, 3);
@@ -290,10 +290,10 @@ void drawN2(int num, getColor color)
     case 6:
         draw_top_seg_1(color, 1);
         draw_top_seg_4(color, 1);
-        draw_top_seg_7(color, 1);
         draw_top_seg_3(color, 1);
-        draw_top_seg_6(color, 1);
         draw_top_seg_5(color, 3);
+        draw_top_seg_6(color, 1);
+        draw_top_seg_7(color, 1);
         draw_top_right_triangle(color, 1);
         draw_top_left_triangle(color, 3);
         break;
@@ -305,25 +305,23 @@ void drawN2(int num, getColor color)
         break;
     case 8:
         draw_top_seg_1(color, 1);
-        draw_top_seg_3(color, 1);
         draw_top_seg_2(color, 3);
-        draw_top_seg_6(color, 1);
-        draw_top_seg_5(color, 3);
-        draw_top_seg_7(color, 1);
+        draw_top_seg_3(color, 1);
         draw_top_seg_4(color, 1);
+        draw_top_seg_5(color, 3);
+        draw_top_seg_6(color, 1);
+        draw_top_seg_7(color, 1);
         draw_top_right_triangle(color, 1);
         draw_top_left_triangle(color, 3);
         break;
     case 9:
         draw_top_seg_1(color, 1);
-        draw_top_seg_3(color, 1);
         draw_top_seg_2(color, 3);
+        draw_top_seg_3(color, 1);
         draw_top_seg_4(color, 1);
         draw_top_seg_5(color, 3);
         draw_top_left_triangle(color, 3);
         draw_top_right_triangle(color, 1);
-        break;
-    default:
         break;
     }
 }
@@ -339,6 +337,8 @@ void drawN3(int num, getColor color)
         draw_bot_seg_5(color, 0);
         draw_bot_seg_6(color, 0);
         draw_bot_seg_7(color, 0);
+        draw_bot_right_triangle(color, 0);
+        draw_bot_left_triangle(color, 0);
         break;
     case 1:
         draw_bot_seg_3(color, 0);
@@ -363,12 +363,12 @@ void drawN3(int num, getColor color)
         draw_bot_right_triangle(color, 0);
         break;
     case 4:
-        draw_bot_seg_1(color, 0);
         draw_bot_seg_2(color, 0);
         draw_bot_seg_3(color, 0);
         draw_bot_seg_4(color, 0);
         draw_bot_seg_6(color, 0);
         draw_bot_right_triangle(color, 0);
+        draw_bot_left_triangle(color, 0);
         break;
     case 5:
         draw_bot_seg_1(color, 0);
@@ -424,10 +424,10 @@ void drawN4(int num, getColor color)
     {
     case 0:
         draw_bot_seg_1(color, 1);
-        draw_bot_seg_3(color, 1);
         draw_bot_seg_2(color, 3);
-        draw_bot_seg_6(color, 1);
+        draw_bot_seg_3(color, 1);
         draw_bot_seg_5(color, 3);
+        draw_bot_seg_6(color, 1);
         draw_bot_seg_7(color, 1);
         draw_bot_right_triangle(color, 1);
         draw_bot_left_triangle(color, 3);
@@ -455,11 +455,11 @@ void drawN4(int num, getColor color)
         draw_bot_left_triangle(color, 3);
         break;
     case 4:
-        draw_bot_seg_1(color, 1);
-        draw_bot_seg_3(color, 1);
         draw_bot_seg_2(color, 3);
+        draw_bot_seg_3(color, 1);
         draw_bot_seg_4(color, 1);
         draw_bot_seg_5(color, 3);
+        draw_bot_right_triangle(color, 1);
         draw_bot_left_triangle(color, 3);
         break;
     case 5:
@@ -475,8 +475,8 @@ void drawN4(int num, getColor color)
         draw_bot_seg_1(color, 1);
         draw_bot_seg_3(color, 1);
         draw_bot_seg_4(color, 1);
-        draw_bot_seg_6(color, 1);
         draw_bot_seg_5(color, 3);
+        draw_bot_seg_6(color, 1);
         draw_bot_seg_7(color, 1);
         draw_bot_right_triangle(color, 1);
         draw_bot_left_triangle(color, 3);
@@ -489,25 +489,23 @@ void drawN4(int num, getColor color)
         break;
     case 8:
         draw_bot_seg_1(color, 1);
-        draw_bot_seg_3(color, 1);
         draw_bot_seg_2(color, 3);
-        draw_bot_seg_6(color, 1);
-        draw_bot_seg_5(color, 3);
-        draw_bot_seg_7(color, 1);
+        draw_bot_seg_3(color, 1);
         draw_bot_seg_4(color, 1);
+        draw_bot_seg_5(color, 3);
+        draw_bot_seg_6(color, 1);
+        draw_bot_seg_7(color, 1);
         draw_bot_right_triangle(color, 1);
         draw_bot_left_triangle(color, 3);
         break;
     case 9:
         draw_bot_seg_1(color, 1);
-        draw_bot_seg_3(color, 1);
         draw_bot_seg_2(color, 3);
+        draw_bot_seg_3(color, 1);
         draw_bot_seg_4(color, 1);
         draw_bot_seg_5(color, 3);
         draw_bot_left_triangle(color, 3);
         draw_bot_right_triangle(color, 1);
-        break;
-    default:
         break;
     }
 }

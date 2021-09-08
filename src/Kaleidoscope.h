@@ -19,7 +19,7 @@ extern CRGB leds[NUM_STRIPS * NUM_LEDS_PER_STRIP];
 //
 #define NUM_LEDS num_leds
 extern uint8_t num_leds;
-void drawPixel(CRGB *leds, int index, CRGB c);
+void drawPixel(CRGB *leds, int index, CRGB color);
 
 void fill_kaleidoscope_rainbow(CRGB *leds, uint8_t initialhue, uint8_t deltahue);
 void fill_kaleidoscope_solid(CRGB *leds, const struct CRGB &color);

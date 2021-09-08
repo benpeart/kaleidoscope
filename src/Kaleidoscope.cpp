@@ -267,7 +267,7 @@ void MirroredSetPixelColor(CRGB *leds, int strip, int index, CRGB rgb)
 }
 
 // draw a pixel mirrored and rotated 6 times to emulate a kaleidoscope
-void drawPixel6(CRGB *leds, int index, CRGB c)
+void drawPixel6(CRGB *leds, int index, CRGB color)
 {
     if (index < 0 || index >= DRAWPIXEL6_INDEX)
     {
@@ -278,11 +278,11 @@ void drawPixel6(CRGB *leds, int index, CRGB c)
 
     for (uint8_t x = 0; x < 3; x++)
         MirroredSetPixelColor(leds, pgm_read_byte_near(&drawPixel6LookupTable[index].strips[x].strip),
-                              pgm_read_byte_near(&drawPixel6LookupTable[index].strips[x].index), c);
+                              pgm_read_byte_near(&drawPixel6LookupTable[index].strips[x].index), color);
 }
 
 // draw a pixel mirrored and rotated 12 times to emulate a kaleidoscope
-void drawPixel12(CRGB *leds, int index, CRGB c)
+void drawPixel12(CRGB *leds, int index, CRGB color)
 {
     if (index < 0 || index >= DRAWPIXEL12_INDEX)
     {
@@ -293,12 +293,12 @@ void drawPixel12(CRGB *leds, int index, CRGB c)
 
     for (int column = 0; column < DRAWPIXEL12_COLUMNS; column++)
     {
-        drawPixel6(leds, pgm_read_byte_near(&drawPixel12LookupTable[index][column]), c);
+        drawPixel6(leds, pgm_read_byte_near(&drawPixel12LookupTable[index][column]), color);
     }
 }
 
 // draw a pixel mirrored and rotated 24 times to emulate a kaleidoscope
-void drawPixel24(CRGB *leds, int index, CRGB c)
+void drawPixel24(CRGB *leds, int index, CRGB color)
 {
     if (index < 0 || index >= DRAWPIXEL24_INDEX)
     {
@@ -309,14 +309,14 @@ void drawPixel24(CRGB *leds, int index, CRGB c)
 
     for (int column = 0; column < DRAWPIXEL24_COLUMNS; column++)
     {
-        drawPixel6(leds, pgm_read_byte_near(&drawPixel24LookupTable[index][column]), c);
+        drawPixel6(leds, pgm_read_byte_near(&drawPixel24LookupTable[index][column]), color);
     }
 }
 
 // Provide functions to draw the pixels mirrored and replicated to match
 // the given kaleidoscope style. Update the number of corresponding
 // leds in the 'viewport' so that the ported modes work as expected.
-void (*drawPixelFunc[])(CRGB *leds, int index, CRGB c){
+void (*drawPixelFunc[])(CRGB *leds, int index, CRGB color){
     drawPixel6,
     drawPixel12,
     drawPixel24};
@@ -325,9 +325,9 @@ uint8_t draw_style = 0; // Index of current draw mode in table
 uint8_t num_leds = DRAWPIXEL6_INDEX;
 
 // simple wrapper function to abstract out the fact that we have different draw functions
-void drawPixel(CRGB *leds, int index, CRGB c)
+void drawPixel(CRGB *leds, int index, CRGB color)
 {
-    drawPixelFunc[draw_style](leds, index, c);
+    drawPixelFunc[draw_style](leds, index, color);
 }
 
 void fill_kaleidoscope_rainbow(CRGB *leds, uint8_t initialhue, uint8_t deltahue)
@@ -422,8 +422,8 @@ void drawPaletteFrame(CRGB *leds, GlassDisk *disk_1, GlassDisk *disk_2)
 
                 // since the disks are stored in PROGMEM, we must read them into SRAM before using them
                 uint8_t colorIndex_1 = map(pgm_read_byte_near(&disk_1->array[row * disk_1->columns + column]), 0, 15, 0, 255);
-                int thisBright_1 = qsuba(colorIndex_1, beatsin8(7, 0, 64)); // qsub gives it a bit of 'black' dead space by setting a minimum value. If colorIndex < current value of beatsin8(), then bright = 0. Otherwise, bright = colorIndex..
-                pixel_1 = ColorFromPalette(*disk_1->pal, colorIndex_1, thisBright_1);
+                //int thisBright_1 = qsuba(colorIndex_1, beatsin8(7, 0, 64)); // qsub gives it a bit of 'black' dead space by setting a minimum value. If colorIndex < current value of beatsin8(), then bright = 0. Otherwise, bright = colorIndex..
+                pixel_1 = ColorFromPalette(*disk_1->pal, colorIndex_1/*, thisBright_1*/);
 #ifdef DEBUG
                 if (column < 0 || column >= disk_1->columns || row < 0 || row >= VIEWPORT_HEIGHT)
                     DB_PRINTF("colorIndex_1 = %d; pixel_1[%d][%d] = %x\r\n", colorIndex_1, column, row, (uint32_t)pixel_1);
@@ -441,8 +441,8 @@ void drawPaletteFrame(CRGB *leds, GlassDisk *disk_1, GlassDisk *disk_2)
 
                 // since the disks are stored in PROGMEM, we must read them into SRAM before using them
                 uint8_t colorIndex_2 = map(pgm_read_byte_near(&disk_2->array[row * disk_2->columns + column]), 0, 15, 0, 255);
-                int thisBright_2 = qsuba(colorIndex_2, beatsin8(7, 0, 64)); // qsub gives it a bit of 'black' dead space by setting sets a minimum value. If colorIndex < current value of beatsin8(), then bright = 0. Otherwise, bright = colorIndex..
-                pixel_2 = ColorFromPalette(*disk_2->pal, colorIndex_2, thisBright_2);
+                //int thisBright_2 = qsuba(colorIndex_2, beatsin8(7, 0, 64)); // qsub gives it a bit of 'black' dead space by setting sets a minimum value. If colorIndex < current value of beatsin8(), then bright = 0. Otherwise, bright = colorIndex..
+                pixel_2 = ColorFromPalette(*disk_2->pal, colorIndex_2/*, thisBright_2*/);
 #ifdef DEBUG
                 if (column < 0 || column >= disk_2->columns || row < 0 || row >= VIEWPORT_HEIGHT)
                     DB_PRINTF("colorIndex_2 = %d; pixel_2[%d][%d] = %x\r\n", colorIndex_2, column, row, (uint32_t)pixel_2);
