@@ -1,4 +1,4 @@
-#include <Arduino.h>
+#include "main.h"
 #include "Kaleidoscope.h"
 #include <Time.h>
 #include <Preferences.h>
@@ -22,6 +22,7 @@
 // RealTimeClock ----------------------------
 //
 
+#ifdef DEBUG
 void printLocalTime()
 {
     struct tm timeinfo;
@@ -32,6 +33,7 @@ void printLocalTime()
     }
     DB_PRINTLN(&timeinfo, "%A, %B %d %Y %I:%M:%S %p");
 }
+#endif
 
 void rtc_setup()
 {
@@ -53,17 +55,9 @@ void rtc_setup()
         configTime(-5 * SECS_PER_HOUR, SECS_PER_HOUR, "us.pool.ntp.org", "time.nist.gov");
         DB_PRINTLN(F("Current Timezone is not set. Enter Config Portal to set."));
     }
+#ifdef DEBUG
     printLocalTime();
-}
-
-void mode_select_clock_face()
-{
-}
-
-CRGB FadeColors(CRGB rgb)
-{
-    return CRGB::Black;
-    //    return rgb.fadeToBlackBy(64);
+#endif
 }
 
 int ConvertMilitaryTime(int hours)
@@ -76,7 +70,17 @@ int ConvertMilitaryTime(int hours)
     return hours;
 }
 
-void draw_clock()
+CRGB FadeColors(CRGB rgb)
+{
+    return CRGB::Black;
+    //    return rgb.fadeToBlackBy(128);
+}
+
+void drawNullClock()
+{
+}
+
+void drawDigitalClock()
 {
     struct tm timeinfo;
     static int digit1 = -1, digit2 = -1, digit3 = -1, digit4 = -1;
@@ -125,4 +129,59 @@ void draw_clock()
         if (leds_dirty)
             displayNumbers(digit1, digit2, digit3, digit4, FadeColors);
     }
+}
+
+// Provide functions to draw different clock faces.
+void (*drawClockFunc[])(void){
+    drawNullClock,
+    drawDigitalClock};
+#define N_CLOCK_STYLES (sizeof(drawClockFunc) / sizeof(drawClockFunc[0]))
+uint8_t clock_style = 0; // Index of current clock face in table
+
+void draw_clock()
+{
+    drawClockFunc[clock_style]();
+}
+
+void mode_select_clock_face()
+{
+    static boolean drawClockChanged = false;
+#ifdef ENCODER
+    // use the left knob to select kaleidoscope draw style
+    static int lastLeftKnob = 0;
+    int knob = knobLeft.getCount();
+    if (knob != lastLeftKnob)
+    {
+        if (knob < lastLeftKnob)
+        {
+            clock_style++;
+            clock_style = clock_style % N_CLOCK_STYLES;
+        }
+        else
+        {
+            // offset is an unsigned 8 bits so can't go negative
+            if (clock_style == 0)
+                clock_style += N_CLOCK_STYLES;
+            --clock_style;
+        }
+        lastLeftKnob = knob;
+        drawClockChanged = true;
+    }
+#endif
+
+    // redraw the frame of the kaleidoscope with the new style
+    if (drawClockChanged)
+    {
+        leds_dirty = true;
+        drawClockChanged = false;
+    }
+
+    // draw this on a fixed schedule so that when you enter the mode, you aren't
+    // faced with a black screen until you rotate the left knob
+    EVERY_N_MILLISECONDS(100)
+    {
+        fill_kaleidoscope_solid(leds, CRGB::CornflowerBlue);
+    }
+
+    adjustBrightness();
 }

@@ -119,4 +119,6 @@ void mode_xy_distortion_waves()
 
     GammaCorrection();
     leds_dirty = true;
+
+    adjustBrightness();
 }

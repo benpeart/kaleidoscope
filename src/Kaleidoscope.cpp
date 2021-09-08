@@ -345,7 +345,8 @@ void fill_kaleidoscope_rainbow(CRGB *leds, uint8_t initialhue, uint8_t deltahue)
 
 void fill_kaleidoscope_solid(CRGB *leds, const struct CRGB &color)
 {
-    ::fill_solid(leds, NUM_LEDS_PER_STRIP, color);
+    leds_dirty = true;
+    ::fill_solid(leds, NUM_STRIPS * NUM_LEDS_PER_STRIP, color);
 }
 
 void fill_kaleidoscope_gradient_RGB(CRGB *leds, uint16_t startpos, CRGB startcolor,
@@ -422,7 +423,7 @@ void drawPaletteFrame(CRGB *leds, GlassDisk *disk_1, GlassDisk *disk_2)
                 // since the disks are stored in PROGMEM, we must read them into SRAM before using them
                 uint8_t colorIndex_1 = map(pgm_read_byte_near(&disk_1->array[row * disk_1->columns + column]), 0, 15, 0, 255);
                 int thisBright_1 = qsuba(colorIndex_1, beatsin8(7, 0, 64)); // qsub gives it a bit of 'black' dead space by setting a minimum value. If colorIndex < current value of beatsin8(), then bright = 0. Otherwise, bright = colorIndex..
-                pixel_1 = ColorFromPalette(*disk_1->pal, colorIndex_1 , thisBright_1);
+                pixel_1 = ColorFromPalette(*disk_1->pal, colorIndex_1, thisBright_1);
 #ifdef DEBUG
                 if (column < 0 || column >= disk_1->columns || row < 0 || row >= VIEWPORT_HEIGHT)
                     DB_PRINTF("colorIndex_1 = %d; pixel_1[%d][%d] = %x\r\n", colorIndex_1, column, row, (uint32_t)pixel_1);
@@ -441,7 +442,7 @@ void drawPaletteFrame(CRGB *leds, GlassDisk *disk_1, GlassDisk *disk_2)
                 // since the disks are stored in PROGMEM, we must read them into SRAM before using them
                 uint8_t colorIndex_2 = map(pgm_read_byte_near(&disk_2->array[row * disk_2->columns + column]), 0, 15, 0, 255);
                 int thisBright_2 = qsuba(colorIndex_2, beatsin8(7, 0, 64)); // qsub gives it a bit of 'black' dead space by setting sets a minimum value. If colorIndex < current value of beatsin8(), then bright = 0. Otherwise, bright = colorIndex..
-                pixel_2 = ColorFromPalette(*disk_2->pal, colorIndex_2 , thisBright_2);
+                pixel_2 = ColorFromPalette(*disk_2->pal, colorIndex_2, thisBright_2);
 #ifdef DEBUG
                 if (column < 0 || column >= disk_2->columns || row < 0 || row >= VIEWPORT_HEIGHT)
                     DB_PRINTF("colorIndex_2 = %d; pixel_2[%d][%d] = %x\r\n", colorIndex_2, column, row, (uint32_t)pixel_2);
@@ -544,10 +545,10 @@ void mode_kaleidoscope_select_speed_brightness()
 #define SCREENSAVER_DELAY 60000 // 1 minute = 60,000 milliseconds
 void mode_kaleidoscope()
 {
-    static int time_to_enter_screensaver_mode = 0;  // start in screensaver mode
+    static int time_to_enter_screensaver_mode = 0; // start in screensaver mode
     static boolean first_array = true;
     static int time_of_last_frame = 0;
-    static boolean drawframe = true;                // start by drawing the first frame
+    static boolean drawframe = true; // start by drawing the first frame
     static boolean blendframes = false;
 
     int time = millis();
@@ -632,7 +633,7 @@ void mode_kaleidoscope()
         }
     }
 
-    // adjust the brightness but don't use the knob to change the manual brightness 
+    // adjust the brightness but don't use the knob to change the manual brightness
     // as we're using it above.
     adjustBrightness(false);
 }

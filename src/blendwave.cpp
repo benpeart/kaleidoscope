@@ -23,7 +23,6 @@ void mode_kaleidoscope_blendWave()
 
         fill_kaleidoscope_gradient_RGB(leds, 0, clr2, loc1, clr1);
         fill_kaleidoscope_gradient_RGB(leds, loc1, clr2, NUM_LEDS - 1, clr1);
-        leds_dirty = true;
     }
 
     adjustBrightness();

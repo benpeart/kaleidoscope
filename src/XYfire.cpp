@@ -30,6 +30,7 @@ void mode_xy_fire()
 
         leds_dirty = true;
     }
+
     adjustBrightness();
 }
 
