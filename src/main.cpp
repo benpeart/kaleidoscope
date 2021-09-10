@@ -289,23 +289,23 @@ int ms_between_frames = DEFAULT_SPEED_DELAY;
 int adjustSpeed()
 {
 #ifdef ENCODER
-    static int lastLeftKnob = 0;
+  static int lastLeftKnob = 0;
 
-    int knob = knobLeft.getCount();
-    if (knob != lastLeftKnob)
-    {
-        if (knob > lastLeftKnob)
-            ms_between_frames += SPEED_INCREMENT;
-        else
-            ms_between_frames -= SPEED_INCREMENT;
+  int knob = knobLeft.getCount();
+  if (knob != lastLeftKnob)
+  {
+    if (knob > lastLeftKnob)
+      ms_between_frames += SPEED_INCREMENT;
+    else
+      ms_between_frames -= SPEED_INCREMENT;
 
-        ms_between_frames = constrain(ms_between_frames, 0, MAX_SPEED_DELAY);
-        lastLeftKnob = knob;
+    ms_between_frames = constrain(ms_between_frames, 0, MAX_SPEED_DELAY);
+    lastLeftKnob = knob;
 
-        DB_PRINTF("ms between frames = %d\r\n", ms_between_frames);
-    }
+    DB_PRINTF("ms between frames = %d\r\n", ms_between_frames);
+  }
 #endif
-    return ms_between_frames;
+  return ms_between_frames;
 }
 
 // This array lists each of the display/animation drawing functions
@@ -696,7 +696,9 @@ void loop()
   // draw the clock face (can be a null clock face - see mode_select_clock_face())
 #ifdef WIFI
 #ifdef TIME
-  draw_clock();
+  // don't draw the clock if we're in 'off' mode
+  if (renderFunc[mode] != mode_off)
+    draw_clock();
 #endif
 #endif // WIFI
 
