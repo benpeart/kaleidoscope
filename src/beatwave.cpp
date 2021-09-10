@@ -27,8 +27,9 @@ void mode_kaleidoscope_beatWave()
 {
     beatwave();
 
-    EVERY_N_MILLISECONDS(100)
+    EVERY_N_MILLIS_I(timer, 100)
     {
+        timer.setPeriod(constrain(ms_between_frames - DEFAULT_SPEED_DELAY + 100, 0, MAX_SPEED_DELAY));
         uint8_t maxChanges = 24;
         nblendPaletteTowardPalette(currentPalette, targetPalette, maxChanges); // AWESOME palette blending capability.
         leds_dirty = true;
@@ -45,6 +46,7 @@ void mode_kaleidoscope_beatWave()
     }
 
     adjustBrightness();
+    adjustSpeed();
 }
 
 #endif

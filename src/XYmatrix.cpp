@@ -14,8 +14,9 @@ static uint8_t col_to_top_row [] = {
 // https://gist.github.com/Jerware/b82ad4768f9935c8acfccc98c9211111#file-matrixeffect-ino
 void mode_xy_matrix()
 {
-    EVERY_N_MILLIS(75) // falling speed
+    EVERY_N_MILLIS_I(timer, 75) // falling speed
     {
+        timer.setPeriod(constrain(ms_between_frames - DEFAULT_SPEED_DELAY + 75, 0, MAX_SPEED_DELAY));
         // move code downward
         // start with lowest row to allow proper overlapping on each column
         for (int8_t row = NUM_ROWS - 1; row >= 0; row--)
@@ -60,6 +61,7 @@ void mode_xy_matrix()
     }
 
     adjustBrightness();
+    adjustSpeed();
 }
 
 #endif

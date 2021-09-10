@@ -280,6 +280,34 @@ void adjustBrightness(bool useKnob)
   }
 }
 
+//
+// use the left rotary knob to adjust the speed of the kaleidoscope
+// by in/decreasing the number of milliseconds between frames
+//
+#define SPEED_INCREMENT 10
+int ms_between_frames = DEFAULT_SPEED_DELAY;
+int adjustSpeed()
+{
+#ifdef ENCODER
+    static int lastLeftKnob = 0;
+
+    int knob = knobLeft.getCount();
+    if (knob != lastLeftKnob)
+    {
+        if (knob > lastLeftKnob)
+            ms_between_frames += SPEED_INCREMENT;
+        else
+            ms_between_frames -= SPEED_INCREMENT;
+
+        ms_between_frames = constrain(ms_between_frames, 0, MAX_SPEED_DELAY);
+        lastLeftKnob = knob;
+
+        DB_PRINTF("ms between frames = %d\r\n", ms_between_frames);
+    }
+#endif
+    return ms_between_frames;
+}
+
 // This array lists each of the display/animation drawing functions
 // (which appear later in this code) in the order they're selected with
 // the right button.  Some functions appear repeatedly...for example,

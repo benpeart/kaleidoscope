@@ -5,6 +5,9 @@
 #include "RealTimeClock.h"
 #include "displaynumbers.h"
 
+// example of using GFX library with custom remap function (ie XY())
+// https://github.com/marcmerlin/FastLED_NeoMatrix/issues/6
+
 // enable debugging macros
 #define DEBUG
 #include "debug.h"

@@ -467,37 +467,6 @@ void drawPaletteFrame(CRGB *leds, GlassDisk *disk_1, GlassDisk *disk_2)
     }
 }
 
-//
-// use the left rotary knob to adjust the speed of the screensaver
-// by in/decreasing the number of milliseconds between frames
-//
-#define SPEED_INCREMENT 25
-#define MAX_SPEED_DELAY 2000
-int ms_between_frames = 500;
-int adjustSpeed()
-{
-#ifdef ENCODER
-    static int lastLeftKnob = 0;
-
-    int knob = knobLeft.getCount();
-    if (knob != lastLeftKnob)
-    {
-        if (knob > lastLeftKnob)
-            ms_between_frames -= SPEED_INCREMENT;
-        else
-            ms_between_frames += SPEED_INCREMENT;
-
-        // don't allow this to go to zero as it causes issues when mapping the remaining
-        // time for the blend function between frames
-        ms_between_frames = constrain(ms_between_frames, SPEED_INCREMENT, MAX_SPEED_DELAY);
-        lastLeftKnob = knob;
-
-        DB_PRINTF("Screensaver ms between frames = %d\r\n", ms_between_frames);
-    }
-#endif
-    return ms_between_frames;
-}
-
 void mode_kaleidoscope_select_speed_brightness()
 {
     static boolean first_array = true;

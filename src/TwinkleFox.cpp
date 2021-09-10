@@ -375,14 +375,16 @@ void mode_kaleidoscope_twinkle_fox()
         chooseNextColorPalette(gTargetPalette);
     }
 
-    EVERY_N_MILLISECONDS(10)
+    EVERY_N_MILLIS_I(timer, 10)
     {
+        timer.setPeriod(constrain(ms_between_frames - DEFAULT_SPEED_DELAY + 10, 0, MAX_SPEED_DELAY));
         nblendPaletteTowardPalette(gCurrentPalette, gTargetPalette, 12);
     }
 
     drawTwinkles();
 
     adjustBrightness();
+    adjustSpeed();
 }
 
 #endif

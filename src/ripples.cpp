@@ -125,11 +125,13 @@ void mode_kaleidoscope_ripples()
         leds_dirty = true;
     }
 
-    EVERY_N_MILLIS(50)
+    EVERY_N_MILLIS_I(timer, 50)
     {               // Sets the original delay time.
+        timer.setPeriod(constrain(ms_between_frames - DEFAULT_SPEED_DELAY + 50, 0, MAX_SPEED_DELAY));
         rippless(); // Run the ripple routine.
         leds_dirty = true;
     }
 
     adjustBrightness();
+    adjustSpeed();
 } // mode_kaleidoscope_ripples()

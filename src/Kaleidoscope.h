@@ -2,7 +2,8 @@
 #define KALEIDOSCOPE_H
 
 // https://github.com/FastLED/FastLED
-#define FASTLED_RMT_MAX_CHANNELS 4 // ESP32 support is provided using the RMT peripheral device, use 4 channels (one per strip)
+//#define FASTLED_ESP32_I2S true    // causes white flashes across several strips at the same time
+//#define FASTLED_RMT_MAX_CHANNELS 4 // ESP32 support is provided using the RMT peripheral device, use 4 channels (one per strip)
 //#define FASTLED_ESP32_FLASH_LOCK 1 // TODO: hack to enable OTA that doesn't work
 #include <FastLED.h>
 

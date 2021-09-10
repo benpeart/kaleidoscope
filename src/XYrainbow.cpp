@@ -23,8 +23,9 @@ static void drawOneFrame(byte startHue8, int8_t yHueDelta8, int8_t xHueDelta8)
 
 void mode_xy_rainbow()
 {
-    EVERY_N_MILLIS(500)
+    EVERY_N_MILLIS_I(timer, 500)
     {
+        timer.setPeriod(constrain(ms_between_frames - DEFAULT_SPEED_DELAY + 500, 0, MAX_SPEED_DELAY));
         uint32_t ms = millis();
         int32_t yHueDelta32 = ((int32_t)cos16(ms * (27 / 1)) * (350 / NUM_COLS));
         int32_t xHueDelta32 = ((int32_t)cos16(ms * (39 / 1)) * (310 / NUM_ROWS));
@@ -32,6 +33,7 @@ void mode_xy_rainbow()
     }
 
     adjustBrightness();
+    adjustSpeed();
 }
 
 #endif

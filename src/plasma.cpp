@@ -15,8 +15,9 @@ void mode_kaleidoscope_plasma()
     static CRGBPalette16 targetPalette;
     static TBlendType currentBlending = LINEARBLEND;
 
-    EVERY_N_MILLISECONDS(50)
+    EVERY_N_MILLIS_I(timer1, 50)
     {
+        timer1.setPeriod(constrain(ms_between_frames - DEFAULT_SPEED_DELAY + 50, 0, MAX_SPEED_DELAY));
         int thisPhase = beatsin8(6, -64, 64); // Setting phase change for a couple of waves.
         int thatPhase = beatsin8(7, -64, 64);
 
@@ -30,8 +31,9 @@ void mode_kaleidoscope_plasma()
         }
     }
 
-    EVERY_N_MILLISECONDS(100)
+    EVERY_N_MILLIS_I(timer2, 100)
     {
+        timer2.setPeriod(constrain(ms_between_frames - DEFAULT_SPEED_DELAY + 100, 0, MAX_SPEED_DELAY));
         uint8_t maxChanges = 24;
         nblendPaletteTowardPalette(currentPalette, targetPalette, maxChanges); // AWESOME palette blending capability.
     }
@@ -43,6 +45,7 @@ void mode_kaleidoscope_plasma()
     }
 
     adjustBrightness();
+    adjustSpeed();
 }
 
 #endif

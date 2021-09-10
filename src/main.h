@@ -29,5 +29,11 @@ extern ESP32Encoder knobRight;
 extern ESP32Encoder knobLeft;
 #endif
 
-// update the FastLED brightness based on our ambient and manual settings
+// update the FastLED brightness based on our ambient and manual settings only if requested (using the right knob)
 void adjustBrightness(bool useKnob = true);
+
+// update the speed of the animations using the left knob
+#define DEFAULT_SPEED_DELAY 500
+#define MAX_SPEED_DELAY 1000
+extern int ms_between_frames;
+int adjustSpeed();

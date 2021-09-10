@@ -10,8 +10,9 @@ byte speed = 92;
 static uint32_t t;
 void mode_xy_fire()
 {
-    EVERY_N_MILLISECONDS(100)
+    EVERY_N_MILLIS_I(timer, 100)
     {
+        timer.setPeriod(constrain(ms_between_frames - DEFAULT_SPEED_DELAY + 100, 0, MAX_SPEED_DELAY));
         t += speed;
         for (byte x = 0; x < NUM_COLS; x++)
         {
@@ -32,6 +33,7 @@ void mode_xy_fire()
     }
 
     adjustBrightness();
+    adjustSpeed();
 }
 
 #endif

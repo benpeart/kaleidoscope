@@ -12,8 +12,9 @@ void mode_kaleidoscope_blendWave()
     static uint8_t speed;
     static uint8_t loc1;
 
-    EVERY_N_MILLISECONDS(50)
+    EVERY_N_MILLIS_I(timer, 50)
     {
+        timer.setPeriod(constrain(ms_between_frames - DEFAULT_SPEED_DELAY + 50, 0, MAX_SPEED_DELAY));
         speed = beatsin8(6, 0, 255);
 
         clr1 = blend(CHSV(beatsin8(3, 0, 255), 255, 255), CHSV(beatsin8(4, 0, 255), 255, 255), speed);
@@ -26,6 +27,7 @@ void mode_kaleidoscope_blendWave()
     }
 
     adjustBrightness();
+    adjustSpeed();
 }
 
 #endif
