@@ -1,7 +1,9 @@
 fudge=0.004;
 
 // honeycomb dimensions
-stroke = 4.8;   // this needs to be double the wall width you actually want when printing, not sure why...
+stroke = 3.2;   // this needs to be double the wall width you actually want when printing, not sure why...
+                // the printer can print in increments of 0.4 mm so we make the outside walls 0.8mm and the inside
+                // walls 1.6mm.
 notch_width = 21;
 notch_depth = 1;
 distance_apart = 33 + 1/3;
@@ -30,14 +32,14 @@ chin_wall_height = 25.4; // 1 inch
 knob_height = 15;
 knob_radius = 35;
 
-color("yellow") backboard();
+//color("yellow") backboard();
 color("black") translate([0, 0, backboard_thickness]) honeycomb();
-color("gray", 0.25) translate([0, 0, backboard_thickness + wall_height]) diffuser();
-/*color("blue") */translate([0, 0, backboard_thickness]) honeycomb_sidewall();
-color("silver") translate([chin_width / 4 + 50, radius - chin_depth - 20, chin_wall_height + 2 * backboard_thickness]) rotate(15) cylinder(h=knob_height, r=knob_radius, $fn=6);
-color("silver") translate([-(chin_width / 4 + 50), radius - chin_depth - 20, chin_wall_height + 2 * backboard_thickness]) rotate(45) cylinder(h=knob_height, r=knob_radius, $fn=6);
+//color("gray", 0.25) translate([0, 0, backboard_thickness + wall_height]) diffuser();
+///*color("blue") */translate([0, 0, backboard_thickness]) honeycomb_sidewall();
+//color("silver") translate([chin_width / 4 + 50, radius - chin_depth - 20, chin_wall_height + 2 * backboard_thickness]) rotate(15) cylinder(h=knob_height, r=knob_radius, $fn=6);
+//color("silver") translate([-(chin_width / 4 + 50), radius - chin_depth - 20, chin_wall_height + 2 * backboard_thickness]) rotate(45) cylinder(h=knob_height, r=knob_radius, $fn=6);
 
-/*color("brown", 0.5) */translate([0, 0, backboard_thickness]) chin_sidewall();
+///*color("brown", 0.5) */translate([0, 0, backboard_thickness]) chin_sidewall();
 //color("green") translate([-566.3 - side_wall_thickness, -770, backboard_thickness]) rotate(90) resize([72.8, 80.4, 25]) import("OBJ_PCB_ESP32 Kaleidoscope.stl");
 
 module backboard()
@@ -111,18 +113,16 @@ module honeycomb()
                     cylinder(h=wall_height+fudge, r=(triangle_height* 2/3) - stroke/2, $fn=3);        
             }
         }
-
-        /*
         // shrink the size for testing purposes
         translate([0,0,-1]) rotate(60) cube([1000,1000,100]);
         translate([0,0,-1]) rotate(120) cube([1000,1000,100]);
         translate([0,0,-1]) rotate(180) cube([1000,1000,100]);
         translate([0,0,-1]) rotate(-0) cube([1000,1000,100]);
         translate([0,0,-1]) rotate(-30) cube([1000,1000,100]);
-        translate([0,-8 * distance_apart,-1]) rotate(30) cube([1000,1000,100]);
-        translate([0,-6 * distance_apart,-1]) rotate(-30) cube([1000,1000,100]);
-        */
-
+/*
+        translate([0,-4 * distance_apart,-1]) rotate(30) cube([1000,1000,100]);
+        translate([0,-4 * distance_apart,-1]) rotate(-30) cube([1000,1000,100]);
+*/
     }
 }
 
