@@ -4,9 +4,15 @@
 #include <Preferences.h>
 #include "RealTimeClock.h"
 #include "displaynumbers.h"
+#include <Adafruit_GFX.h>
+#include <FastLED_NeoMatrix.h>
+#include "XYIndex.h"
 
 // example of using GFX library with custom remap function (ie XY())
 // https://github.com/marcmerlin/FastLED_NeoMatrix/issues/6
+
+// Define matrix width and height.
+FastLED_NeoMatrix *matrix = new FastLED_NeoMatrix(leds, NUM_COLS, NUM_ROWS, NEO_MATRIX_TOP + NEO_MATRIX_LEFT + NEO_MATRIX_ROWS + NEO_MATRIX_PROGRESSIVE);
 
 // enable debugging macros
 #define DEBUG
@@ -61,6 +67,11 @@ void rtc_setup()
 #ifdef DEBUG
     printLocalTime();
 #endif
+
+    matrix->begin();
+    matrix->setTextWrap(false);
+    //    matrix->setBrightness(BRIGHTNESS);
+    matrix->setRemapFunction(XYToIndex);
 }
 
 int ConvertMilitaryTime(int hours)
@@ -75,13 +86,23 @@ int ConvertMilitaryTime(int hours)
 
 CRGB FadeColors(CRGB rgb)
 {
-    return CRGB::Black;
-    //    return rgb.fadeToBlackBy(128);
+    //return CRGB::Black;
+    return rgb.fadeToBlackBy(222);
 }
 
 void drawNullClock()
 {
 }
+
+// Color definitions
+#define BLACK 0x0000
+#define BLUE 0x001F
+#define RED 0xF800
+#define GREEN 0x07E0
+#define CYAN 0x07FF
+#define MAGENTA 0xF81F
+#define YELLOW 0xFFE0
+#define WHITE 0xFFFF
 
 void drawDigitalClock()
 {
@@ -128,16 +149,184 @@ void drawDigitalClock()
         }
 
         if (leds_dirty)
+        {
+#if 0
+            matrix->setTextColor(BLACK);
+            matrix->setTextSize(1);
+            matrix->setCursor(4, NUM_ROWS / 2 - 9);
+            matrix->printf("%02d", ConvertMilitaryTime(timeinfo.tm_hour));
+            matrix->setCursor(4, NUM_ROWS / 2 + 2);
+            matrix->printf("%02d", timeinfo.tm_min);
+#else
             displayNumbers(digit1, digit2, digit3, digit4, FadeColors);
+#endif
+        }
+    }
+}
+
+void displayHands(int hours, int minutes, int seconds, getColor color)
+{
+#ifdef DEBUG
+    // do some sanity checking
+    if (NULL == color)
+    {
+        DB_PRINTLN("displayHands called with NULL color function pointer");
+        return;
+    }
+
+    if (hours < 0 || hours > 23 || minutes < 0 || minutes > 59 || seconds < 0 || seconds > 59)
+    {
+        DB_PRINTF("\rdisplayHands called with time that is out of range: %d:%d:%d\r\n", hours, minutes, seconds);
+        return;
+    }
+#endif
+
+    //
+    // https://opencv-tutorials-hub.blogspot.com/2015/07/code-to-draw-analog-wall-clock-using-opencv-c-synchronised-with-system-time.html
+    //
+    float sec_angle, min_angle, hour_angle;
+    int perimeter_x, perimeter_y;
+    int radius = NUM_COLS / 2;
+    int center_x = NUM_COLS / 2;
+    int center_y = NUM_ROWS / 2;
+
+    // Convert seconds to angle
+    sec_angle = (seconds * 6) + 270;
+    if (sec_angle > 360)
+        sec_angle = sec_angle - 360;
+
+    // Convert minutes to angle
+    min_angle = minutes * 6 + 270;
+    if (min_angle > 360)
+        min_angle = min_angle - 360;
+
+    // Convert hours to angle
+    if (hours > 12)
+        hours = hours - 12;
+    hour_angle = (hours * 30) + (minutes * 0.5) + 270;
+    if (hour_angle > 360)
+        hour_angle = hour_angle - 360;
+
+    // Find out the coordinates in the circle perimeter for second and draw the line from center
+    perimeter_x = (int)(center_x + (radius - 0) * cos(sec_angle * 3.14159 / 180.0));
+    perimeter_y = (int)(center_y + (radius - 0) * sin(sec_angle * 3.14159 / 180.0));
+    matrix->drawLine(center_x, center_y, perimeter_x, perimeter_y, BLACK);
+
+    // Find out the coordinates on the circle perimeter for minute and draw the line from center
+    perimeter_x = (int)(center_x + (radius - 1) * cos(min_angle * 3.14159 / 180.0));
+    perimeter_y = (int)(center_y + (radius - 1) * sin(min_angle * 3.14159 / 180.0));
+    matrix->drawLine(center_x, center_y, perimeter_x, perimeter_y, BLACK);
+
+    // Find out the coordinates on the circle perimeter for hour and draw the line from center
+    perimeter_x = (int)(center_x + (radius - 2) * cos(hour_angle * 3.14159 / 180.0));
+    perimeter_y = (int)(center_y + (radius - 2) * sin(hour_angle * 3.14159 / 180.0));
+    matrix->drawLine(center_x, center_y, perimeter_x, perimeter_y, BLACK);
+
+#if 0
+    switch (hours)
+    {
+    case 0:
+    case 12:
+        matrix->drawLine(NUM_COLS / 2, 0, NUM_COLS / 2, NUM_ROWS / 2, BLACK);
+        break;
+    case 3:
+        matrix->drawLine(NUM_COLS / 2, NUM_ROWS / 2, NUM_COLS, NUM_ROWS / 2, BLACK);
+        break;
+    case 6:
+        matrix->drawLine(NUM_COLS / 2, NUM_ROWS / 2, NUM_COLS / 2, NUM_ROWS, BLACK);
+        break;
+    case 9:
+        matrix->drawLine(NUM_COLS / 2, NUM_ROWS / 2, 0, NUM_ROWS / 2, BLACK);
+        break;
+    }
+
+    switch (minutes)
+    {
+    case 0:
+        matrix->drawLine(NUM_COLS / 2, 0, NUM_COLS / 2, NUM_ROWS / 2, BLUE);
+        break;
+    case 15:
+        matrix->drawLine(NUM_COLS / 2, NUM_ROWS / 2, NUM_COLS, NUM_ROWS / 2, BLUE);
+        break;
+    case 30:
+        matrix->drawLine(NUM_COLS / 2, NUM_ROWS / 2, NUM_COLS / 2, NUM_ROWS, BLUE);
+        break;
+    case 45:
+        matrix->drawLine(NUM_COLS / 2, NUM_ROWS / 2, 0, NUM_ROWS / 2, BLUE);
+        break;
+    }
+
+    switch (seconds)
+    {
+    case 0:
+        matrix->drawLine(NUM_COLS / 2, 0, NUM_COLS / 2, NUM_ROWS / 2, RED);
+        break;
+    case 15:
+        matrix->drawLine(NUM_COLS / 2, NUM_ROWS / 2, NUM_COLS, NUM_ROWS / 2, RED);
+        break;
+    case 30:
+        matrix->drawLine(NUM_COLS / 2, NUM_ROWS / 2, NUM_COLS / 2, NUM_ROWS, RED);
+        break;
+    case 45:
+        matrix->drawLine(NUM_COLS / 2, NUM_ROWS / 2, 0, NUM_ROWS / 2, RED);
+        break;
+    }
+#endif
+    matrix->show();
+}
+
+void drawAnalogClock()
+{
+    struct tm timeinfo;
+    static int hours = -1, minutes = -1, seconds = -1;
+
+    if (getLocalTime(&timeinfo))
+    {
+        int tmp;
+
+        // compute hours
+        tmp = ConvertMilitaryTime(timeinfo.tm_hour);
+        if (hours != tmp)
+        {
+            hours = tmp;
+            leds_dirty = true;
+        }
+
+        // compute minutes
+        tmp = timeinfo.tm_min;
+        if (minutes != tmp)
+        {
+            minutes = tmp;
+            leds_dirty = true;
+        }
+
+        // compute seconds
+        tmp = timeinfo.tm_sec;
+        if (seconds != tmp)
+        {
+            seconds = tmp;
+            leds_dirty = true;
+            DB_PRINTLN(&timeinfo, "%A, %B %d %Y %I:%M:%S %p");
+        }
+
+        if (leds_dirty)
+            displayHands(hours, minutes, seconds, FadeColors);
     }
 }
 
 // Provide functions to draw different clock faces.
-void (*drawClockFunc[])(void){
+void (*drawClockFunc[N_CLOCK_STYLES])(void){
     drawNullClock,
-    drawDigitalClock};
-#define N_CLOCK_STYLES (sizeof(drawClockFunc) / sizeof(drawClockFunc[0]))
+    drawDigitalClock,
+    drawAnalogClock};
+//#define N_CLOCK_STYLES (sizeof(drawClockFunc) / sizeof(drawClockFunc[0]))
 uint8_t clock_style = 0; // Index of current clock face in table
+
+const PROGMEM char clockFaces[N_CLOCK_STYLES][16] =
+    {
+        "None",
+        "Digital",
+        "Analog"};
 
 void draw_clock()
 {
