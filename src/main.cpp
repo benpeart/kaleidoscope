@@ -1,6 +1,9 @@
 #include "main.h"
 #include "Kaleidoscope.h"
 #include "RealTimeClock.h"
+#ifdef REST
+#include <ArduinoJson.h>
+#endif
 #ifdef DEMO
 #include "beatwave.h"
 #include "blendwave.h"
@@ -221,10 +224,9 @@ int ambientBrightness()
 }
 
 // manually adjust the brightness of the LED strips
+static int LEDBrightnessManualOffset = 0;
 int manualBrightness(bool useKnob)
 {
-  static int LEDBrightnessManualOffset = 0;
-
   if (!useKnob)
     return LEDBrightnessManualOffset;
 
@@ -343,38 +345,38 @@ void (*renderFunc[])(void){
     mode_off // make it obvious we're entering 'regular' modes
 };
 #define N_MODES (sizeof(renderFunc) / sizeof(renderFunc[0]))
-uint8_t mode = 0; // Index of current mode in table
+uint8_t kaleidoscope_mode = 0; // Index of current mode in table
 
 const PROGMEM char modeNames[N_MODES][64] =
     {
-        "mode_kaleidoscope",
-        "mode_off",
-        "mode_kaleidoscope_select_speed_brightness",
-        //        "mode_kaleidoscope_select_disks",
-        "mode_kaleidoscope_select_reflection_style",
+        "kaleidoscope",
+        "off",
+        "kaleidoscope_select_speed_brightness",
+        //        "kaleidoscope_select_disks",
+        "kaleidoscope_select_reflection_style",
 #ifdef TIME
-        "mode_select_clock_face",
+        "select_clock_face",
 #endif
 #ifdef DEMO
-        "mode_off",
-        "mode_kaleidoscope_beatWave",
-        "mode_kaleidoscope_blendWave",
-        "mode_kaleidoscope_plasma",
-        "mode_kaleidoscope_rainbowMarch",
-        "mode_kaleidoscope_ripples",
-        "mode_kaleidoscope_twinkle_fox",
-        "mode_xy_distortion_waves",
-        "mode_xy_matrix",
-        "mode_xy_pacifica",
-        "mode_xy_rainbow",
-        "mode_xy_fire"
+        "off",
+        "kaleidoscope_beatWave",
+        "kaleidoscope_blendWave",
+        "kaleidoscope_plasma",
+        "kaleidoscope_rainbowMarch",
+        "kaleidoscope_ripples",
+        "kaleidoscope_twinkle_fox",
+        "xy_distortion_waves",
+        "xy_matrix",
+        "xy_pacifica",
+        "xy_rainbow",
+        "xy_fire",
 #endif
 #ifdef DEBUG
-        "mode_kaleidoscope_test",
-        "mode_xy_test",
-        "mode_test",
+        "kaleidoscope_test",
+        "xy_test",
+        "test",
 #endif
-        "mode_off"};
+        "off"};
 
 #ifdef ENCODER
 // We need to save/restore the count for the rotary encoders
@@ -415,6 +417,146 @@ int modeEncoderCounts[N_MODES][2] =
 #endif
 
 #ifdef WIFI
+#ifdef REST
+void getSettings(AsyncWebServerRequest *request)
+{
+  StaticJsonDocument<128> doc;
+  String response;
+
+  doc["brightness"] = LEDBrightnessManualOffset;
+  doc["speed"] = ms_between_frames;
+  doc["mode"] = modeNames[kaleidoscope_mode];
+  doc["clockFace"] = clockFaces[clock_style];
+
+  serializeJson(doc, response);
+  request->send(200, "text/json", response);
+}
+
+void getModes(AsyncWebServerRequest *request)
+{
+  String response;
+
+  // compute the required size
+  const size_t CAPACITY = JSON_ARRAY_SIZE(N_MODES);
+
+  // allocate the memory for the document
+  StaticJsonDocument<CAPACITY> doc;
+
+  // create an empty array
+  JsonArray array = doc.to<JsonArray>();
+
+  // add the names
+  for (int x = 0; x < N_MODES; x++)
+  {
+    array.add(modeNames[x]);
+  }
+
+  // serialize the array and send the result
+  serializeJson(doc, response);
+  request->send(200, "text/json", response);
+}
+
+void getFaces(AsyncWebServerRequest *request)
+{
+  String response;
+
+  // compute the required size
+  const size_t CAPACITY = JSON_ARRAY_SIZE(N_CLOCK_STYLES);
+
+  // allocate the memory for the document
+  StaticJsonDocument<CAPACITY> doc;
+
+  // create an empty array
+  JsonArray array = doc.to<JsonArray>();
+
+  // add the names
+  for (int x = 0; x < N_CLOCK_STYLES; x++)
+  {
+    array.add(clockFaces[x]);
+  }
+
+  // serialize the array and send the result
+  serializeJson(doc, response);
+  request->send(200, "text/json", response);
+}
+
+void putSettings(AsyncWebServerRequest *request)
+{
+  String postBody = request->arg("plain");
+  StaticJsonDocument<128> doc;
+
+  DeserializationError error = deserializeJson(doc, postBody);
+  if (error)
+  {
+    DB_PRINT(F("deserializeJson() failed: "));
+    DB_PRINTLN(error.f_str());
+    return;
+  }
+
+  // update the brightness (if it was passed)
+  JsonVariant brightness = doc["brightness"];
+  if (!brightness.isNull())
+  {
+    LEDBrightnessManualOffset = constrain(brightness, -4095, 4095);
+  }
+
+  JsonVariant speed = doc["speed"];
+  if (!speed.isNull())
+  {
+    ms_between_frames = constrain(speed, 0, MAX_SPEED_DELAY);
+  }
+
+  // TODO: remove the duplicate code here and make functions that can be called from both locations
+  const char *modeName = doc["mode"];
+  if (modeName)
+  {
+    for (int x = 0; x < N_MODES; x++)
+    {
+      if (String(modeNames[x]).equalsIgnoreCase(String(modeName)))
+      {
+        // if the mode changed
+        if (kaleidoscope_mode != x)
+        {
+          int old_mode = kaleidoscope_mode;
+          kaleidoscope_mode = x;
+#ifdef ENCODER
+          // save the encoder count for the old mode and restore the new mode count
+          modeEncoderCounts[old_mode][LEFT_ENCODER] = knobLeft.getCount();
+          knobLeft.setCount(modeEncoderCounts[kaleidoscope_mode][LEFT_ENCODER]);
+          modeEncoderCounts[old_mode][RIGHT_ENCODER] = knobRight.getCount();
+          knobRight.setCount(modeEncoderCounts[kaleidoscope_mode][RIGHT_ENCODER]);
+#endif
+
+          // output the new mode name and clear the led strips for the new mode
+          DB_PRINTLN(modeNames[kaleidoscope_mode]);
+          FastLED.clear();
+          leds_dirty = true;
+        }
+        break;
+      }
+    }
+  }
+
+  // TODO: remove the duplicate code here and make functions that can be called from both locations
+  const char *clockFace = doc["clockFace"];
+  if (clockFace)
+  {
+    for (int x = 0; x < N_CLOCK_STYLES; x++)
+    {
+      if (String(clockFaces[x]).equalsIgnoreCase(String(clockFace)))
+      {
+        if (clock_style != x)
+        {
+          clock_style = x;
+          leds_dirty = true;
+        }
+        break;
+      }
+    }
+  }
+}
+#endif
+
 #ifdef ALEXA
 //our Alexa callback function
 void hueChanged(EspalexaDevice *d)
@@ -512,11 +654,18 @@ void setup()
 #ifdef OTA
   // add a simple home page (OTA update UI is on /update)
   webServer.on("/", HTTP_GET, [](AsyncWebServerRequest *request)
-               { request->send(200, "text/plain", "Hi! I an a digital Kaleidoscope."); });
+               { request->send(200, "text/plain", "Hi! I an a digital Kaleidoscope. You can do an over the air update by visiting http://kaleidoscope/update"); });
 
   // Start ElegantOTA and require a username/password
   AsyncElegantOTA.begin(&webServer, "admin", "admin");
   DB_PRINTLN(F("OTA web server started."));
+#endif
+
+#ifdef REST
+  webServer.on("/api/settings", HTTP_GET, getSettings);
+  webServer.on("/api/settings", HTTP_PUT, putSettings);
+  webServer.on("/api/modes", HTTP_GET, getModes);
+  webServer.on("/api/faces", HTTP_GET, getFaces);
 #endif
 
 #ifdef ALEXA
@@ -566,8 +715,8 @@ void setup()
   // unusable. Probably why every example does their own external pullup/down resistors.
   pinMode(PHOTOCELL_PIN, INPUT /*_PULLUP*/);
 
-  // D:\src\kaleidoscope\.pio\libdeps\node32s\ESP32Encoder\src\ESP32Encoder.cpp
-  //gpio_pullup_en((gpio_num_t)PHOTOCELL_PIN);
+// D:\src\kaleidoscope\.pio\libdeps\node32s\ESP32Encoder\src\ESP32Encoder.cpp
+//gpio_pullup_en((gpio_num_t)PHOTOCELL_PIN);
 #endif
 
   // initialize the random number generator using noise from an analog pin
@@ -600,7 +749,7 @@ void setup()
   FastLED.addLeds<LED_TYPE, LED_STRIP_PIN_3, COLOR_ORDER>(leds + 2 * NUM_LEDS_PER_STRIP, NUM_LEDS_PER_STRIP).setCorrection(TypicalLEDStrip);
   FastLED.addLeds<LED_TYPE, LED_STRIP_PIN_4, COLOR_ORDER>(leds + 3 * NUM_LEDS_PER_STRIP, NUM_LEDS_PER_STRIP).setCorrection(TypicalLEDStrip);
   leds_dirty = true;
-  DB_PRINTLN(modeNames[mode]);
+  DB_PRINTLN(modeNames[kaleidoscope_mode]);
 }
 
 //
@@ -611,51 +760,47 @@ void loop()
 
 #ifdef BOUNCE
   // save the current mode
-  uint8_t old_mode = mode;
+  uint8_t old_mode = kaleidoscope_mode;
 
   // Left button pressed?
   leftButton.update();
   if (leftButton.pressed())
   {
-    if (mode)
-      mode--; // Go to prior mode
+    if (kaleidoscope_mode)
+      kaleidoscope_mode--; // Go to prior mode
     else
-      mode = N_MODES - 1; // or "wrap around" to last mode
+      kaleidoscope_mode = N_MODES - 1; // or "wrap around" to last mode
   }
 
   // Right button pressed?
   rightButton.update();
   if (rightButton.pressed())
   {
-    if (mode < (N_MODES - 1))
-      mode++; // Advance to next mode
+    if (kaleidoscope_mode < (N_MODES - 1))
+      kaleidoscope_mode++; // Advance to next mode
     else
-      mode = 0; // or "wrap around" to start
+      kaleidoscope_mode = 0; // or "wrap around" to start
   }
 
   // if the mode changed
-  if (old_mode != mode)
+  if (old_mode != kaleidoscope_mode)
   {
 #ifdef ENCODER
     // save the encoder count for the old mode and restore the new mode count
     modeEncoderCounts[old_mode][LEFT_ENCODER] = knobLeft.getCount();
-    knobLeft.setCount(modeEncoderCounts[mode][LEFT_ENCODER]);
+    knobLeft.setCount(modeEncoderCounts[kaleidoscope_mode][LEFT_ENCODER]);
     modeEncoderCounts[old_mode][RIGHT_ENCODER] = knobRight.getCount();
-    knobRight.setCount(modeEncoderCounts[mode][RIGHT_ENCODER]);
+    knobRight.setCount(modeEncoderCounts[kaleidoscope_mode][RIGHT_ENCODER]);
 #endif
 
     // output the new mode name and clear the led strips for the new mode
-    DB_PRINTLN(modeNames[mode]);
+    DB_PRINTLN(modeNames[kaleidoscope_mode]);
     FastLED.clear();
     leds_dirty = true;
   }
 #endif
 
 #ifdef WIFI
-#ifdef OTA
-  AsyncElegantOTA.loop();
-#endif
-
 #ifdef DRD
   drd->loop();
 #endif
@@ -668,7 +813,16 @@ void loop()
   // Render one frame in current mode. To control the speed of updates, use the
   // EVERY_N_MILLISECONDS(N) macro to only update the frame when it is needed.
   // Also be sure to set leds_dirty = true so that the updated frame will be displayed.
-  (*renderFunc[mode])();
+  (*renderFunc[kaleidoscope_mode])();
+
+  // draw the clock face (can be a null clock face - see mode_select_clock_face())
+#ifdef WIFI
+#ifdef TIME
+  // don't draw the clock if we're in 'off' mode
+  if (renderFunc[kaleidoscope_mode] != mode_off)
+    draw_clock();
+#endif
+#endif // WIFI
 
 // Show an activity spinner and the current fps. After 500 ms of no LED updates show 0 fps.
 // This is to prevent the fps flickering between 0 fps and x fps when there are no updates
@@ -692,15 +846,6 @@ void loop()
     }
   }
 #endif
-
-  // draw the clock face (can be a null clock face - see mode_select_clock_face())
-#ifdef WIFI
-#ifdef TIME
-  // don't draw the clock if we're in 'off' mode
-  if (renderFunc[mode] != mode_off)
-    draw_clock();
-#endif
-#endif // WIFI
 
   // if we have changes in the LEDs, show the updated frame
   if (leds_dirty)
