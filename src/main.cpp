@@ -416,6 +416,28 @@ int modeEncoderCounts[N_MODES][2] =
         {0, 0}};
 #endif
 
+void setKaleidoscopeMode(int new_mode)
+{
+  // if the mode changed
+  if (kaleidoscope_mode != new_mode)
+  {
+    int old_mode = kaleidoscope_mode;
+    kaleidoscope_mode = new_mode;
+#ifdef ENCODER
+    // save the encoder count for the old mode and restore the new mode count
+    modeEncoderCounts[old_mode][LEFT_ENCODER] = knobLeft.getCount();
+    knobLeft.setCount(modeEncoderCounts[new_mode][LEFT_ENCODER]);
+    modeEncoderCounts[old_mode][RIGHT_ENCODER] = knobRight.getCount();
+    knobRight.setCount(modeEncoderCounts[new_mode][RIGHT_ENCODER]);
+#endif
+
+    // output the new mode name and clear the led strips for the new mode
+    DB_PRINTLN(modeNames[kaleidoscope_mode]);
+    FastLED.clear();
+    leds_dirty = true;
+  }
+}
+
 #ifdef WIFI
 #ifdef REST
 void getSettings(AsyncWebServerRequest *request)
@@ -426,7 +448,7 @@ void getSettings(AsyncWebServerRequest *request)
   doc["brightness"] = LEDBrightnessManualOffset;
   doc["speed"] = ms_between_frames;
   doc["mode"] = modeNames[kaleidoscope_mode];
-  doc["clockFace"] = clockFaces[clock_style];
+  doc["clockFace"] = clockFaces[clock_face];
 
   serializeJson(doc, response);
   request->send(200, "text/json", response);
@@ -461,7 +483,7 @@ void getFaces(AsyncWebServerRequest *request)
   String response;
 
   // compute the required size
-  const size_t CAPACITY = JSON_ARRAY_SIZE(N_CLOCK_STYLES);
+  const size_t CAPACITY = JSON_ARRAY_SIZE(N_CLOCK_FACES);
 
   // allocate the memory for the document
   StaticJsonDocument<CAPACITY> doc;
@@ -470,7 +492,7 @@ void getFaces(AsyncWebServerRequest *request)
   JsonArray array = doc.to<JsonArray>();
 
   // add the names
-  for (int x = 0; x < N_CLOCK_STYLES; x++)
+  for (int x = 0; x < N_CLOCK_FACES; x++)
   {
     array.add(clockFaces[x]);
   }
@@ -506,7 +528,6 @@ void putSettings(AsyncWebServerRequest *request)
     ms_between_frames = constrain(speed, 0, MAX_SPEED_DELAY);
   }
 
-  // TODO: remove the duplicate code here and make functions that can be called from both locations
   const char *modeName = doc["mode"];
   if (modeName)
   {
@@ -514,42 +535,20 @@ void putSettings(AsyncWebServerRequest *request)
     {
       if (String(modeNames[x]).equalsIgnoreCase(String(modeName)))
       {
-        // if the mode changed
-        if (kaleidoscope_mode != x)
-        {
-          int old_mode = kaleidoscope_mode;
-          kaleidoscope_mode = x;
-#ifdef ENCODER
-          // save the encoder count for the old mode and restore the new mode count
-          modeEncoderCounts[old_mode][LEFT_ENCODER] = knobLeft.getCount();
-          knobLeft.setCount(modeEncoderCounts[kaleidoscope_mode][LEFT_ENCODER]);
-          modeEncoderCounts[old_mode][RIGHT_ENCODER] = knobRight.getCount();
-          knobRight.setCount(modeEncoderCounts[kaleidoscope_mode][RIGHT_ENCODER]);
-#endif
-
-          // output the new mode name and clear the led strips for the new mode
-          DB_PRINTLN(modeNames[kaleidoscope_mode]);
-          FastLED.clear();
-          leds_dirty = true;
-        }
+        setKaleidoscopeMode(x);
         break;
       }
     }
   }
 
-  // TODO: remove the duplicate code here and make functions that can be called from both locations
   const char *clockFace = doc["clockFace"];
   if (clockFace)
   {
-    for (int x = 0; x < N_CLOCK_STYLES; x++)
+    for (int x = 0; x < N_CLOCK_FACES; x++)
     {
       if (String(clockFaces[x]).equalsIgnoreCase(String(clockFace)))
       {
-        if (clock_style != x)
-        {
-          clock_style = x;
-          leds_dirty = true;
-        }
+        set_clock_face(x);
         break;
       }
     }
@@ -757,47 +756,31 @@ void setup()
 //
 void loop()
 {
-
 #ifdef BOUNCE
-  // save the current mode
-  uint8_t old_mode = kaleidoscope_mode;
+  // check for a mode change
+  uint8_t new_mode = kaleidoscope_mode;
 
   // Left button pressed?
   leftButton.update();
   if (leftButton.pressed())
   {
-    if (kaleidoscope_mode)
-      kaleidoscope_mode--; // Go to prior mode
+    if (new_mode)
+      new_mode--; // Go to prior mode
     else
-      kaleidoscope_mode = N_MODES - 1; // or "wrap around" to last mode
+      new_mode = N_MODES - 1; // or "wrap around" to last mode
   }
 
   // Right button pressed?
   rightButton.update();
   if (rightButton.pressed())
   {
-    if (kaleidoscope_mode < (N_MODES - 1))
-      kaleidoscope_mode++; // Advance to next mode
+    if (new_mode < (N_MODES - 1))
+      new_mode++; // Advance to next mode
     else
-      kaleidoscope_mode = 0; // or "wrap around" to start
+      new_mode = 0; // or "wrap around" to start
   }
 
-  // if the mode changed
-  if (old_mode != kaleidoscope_mode)
-  {
-#ifdef ENCODER
-    // save the encoder count for the old mode and restore the new mode count
-    modeEncoderCounts[old_mode][LEFT_ENCODER] = knobLeft.getCount();
-    knobLeft.setCount(modeEncoderCounts[kaleidoscope_mode][LEFT_ENCODER]);
-    modeEncoderCounts[old_mode][RIGHT_ENCODER] = knobRight.getCount();
-    knobRight.setCount(modeEncoderCounts[kaleidoscope_mode][RIGHT_ENCODER]);
-#endif
-
-    // output the new mode name and clear the led strips for the new mode
-    DB_PRINTLN(modeNames[kaleidoscope_mode]);
-    FastLED.clear();
-    leds_dirty = true;
-  }
+  setKaleidoscopeMode(new_mode);
 #endif
 
 #ifdef WIFI

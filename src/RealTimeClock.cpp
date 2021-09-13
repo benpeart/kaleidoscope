@@ -315,14 +315,14 @@ void drawAnalogClock()
 }
 
 // Provide functions to draw different clock faces.
-void (*drawClockFunc[N_CLOCK_STYLES])(void){
+void (*drawClockFunc[N_CLOCK_FACES])(void){
     drawNullClock,
     drawDigitalClock,
     drawAnalogClock};
-//#define N_CLOCK_STYLES (sizeof(drawClockFunc) / sizeof(drawClockFunc[0]))
-uint8_t clock_style = 0; // Index of current clock face in table
+//#define N_CLOCK_FACES (sizeof(drawClockFunc) / sizeof(drawClockFunc[0]))
+uint8_t clock_face = 0; // Index of current clock face in table
 
-const PROGMEM char clockFaces[N_CLOCK_STYLES][16] =
+const PROGMEM char clockFaces[N_CLOCK_FACES][16] =
     {
         "None",
         "Digital",
@@ -330,7 +330,7 @@ const PROGMEM char clockFaces[N_CLOCK_STYLES][16] =
 
 void draw_clock()
 {
-    drawClockFunc[clock_style]();
+    drawClockFunc[clock_face]();
 }
 
 void mode_select_clock_face()
@@ -344,15 +344,15 @@ void mode_select_clock_face()
     {
         if (knob < lastLeftKnob)
         {
-            clock_style++;
-            clock_style = clock_style % N_CLOCK_STYLES;
+            clock_face++;
+            clock_face = clock_face % N_CLOCK_FACES;
         }
         else
         {
             // offset is an unsigned 8 bits so can't go negative
-            if (clock_style == 0)
-                clock_style += N_CLOCK_STYLES;
-            --clock_style;
+            if (clock_face == 0)
+                clock_face += N_CLOCK_FACES;
+            --clock_face;
         }
         lastLeftKnob = knob;
         drawClockChanged = true;
@@ -374,4 +374,15 @@ void mode_select_clock_face()
     }
 
     adjustBrightness();
+}
+
+int set_clock_face(int new_face)
+{
+    if (clock_face != new_face)
+    {
+        clock_face = new_face;
+        leds_dirty = true;
+    }
+
+    return clock_face;
 }
