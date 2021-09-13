@@ -310,6 +310,7 @@ int adjustSpeed()
   return ms_between_frames;
 }
 
+// TODO: refactor the kaleidoscope mode logic into kaleidoscope.h/.cpp
 // This array lists each of the display/animation drawing functions
 // (which appear later in this code) in the order they're selected with
 // the right button.  Some functions appear repeatedly...for example,
@@ -456,8 +457,6 @@ void getSettings(AsyncWebServerRequest *request)
 
 void getModes(AsyncWebServerRequest *request)
 {
-  String response;
-
   // compute the required size
   const size_t CAPACITY = JSON_ARRAY_SIZE(N_MODES);
 
@@ -474,14 +473,13 @@ void getModes(AsyncWebServerRequest *request)
   }
 
   // serialize the array and send the result
+  String response;
   serializeJson(doc, response);
   request->send(200, "text/json", response);
 }
 
 void getFaces(AsyncWebServerRequest *request)
 {
-  String response;
-
   // compute the required size
   const size_t CAPACITY = JSON_ARRAY_SIZE(N_CLOCK_FACES);
 
@@ -498,6 +496,7 @@ void getFaces(AsyncWebServerRequest *request)
   }
 
   // serialize the array and send the result
+  String response;
   serializeJson(doc, response);
   request->send(200, "text/json", response);
 }

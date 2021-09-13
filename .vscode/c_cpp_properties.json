@@ -99,10 +99,6 @@
                 "C:/Users/Ben/.platformio/packages/framework-arduinoespressif32/libraries/Wire/src",
                 "D:/src/kaleidoscope/lib/Encoder",
                 "D:/src/kaleidoscope/lib/Encoder/utility",
-                "D:/src/kaleidoscope/.pio/libdeps/node32s/Adafruit BusIO",
-                "D:/src/kaleidoscope/.pio/libdeps/node32s/Adafruit GFX Library",
-                "D:/src/kaleidoscope/.pio/libdeps/node32s/FastLED NeoMatrix",
-                "D:/src/kaleidoscope/.pio/libdeps/node32s/Framebuffer GFX",
                 "C:/Users/Ben/.platformio/packages/framework-arduinoespressif32/libraries/ArduinoOTA/src",
                 "C:/Users/Ben/.platformio/packages/framework-arduinoespressif32/libraries/AsyncUDP/src",
                 "C:/Users/Ben/.platformio/packages/framework-arduinoespressif32/libraries/AzureIoT/src",
@@ -121,7 +117,7 @@
                 "C:/Users/Ben/.platformio/packages/framework-arduinoespressif32/libraries/Ticker/src",
                 "C:/Users/Ben/.platformio/packages/framework-arduinoespressif32/libraries/WiFiClientSecure/src",
                 "C:/Users/Ben/.platformio/packages/framework-arduinoespressif32/libraries/WiFiProv/src",
-                "${workspaceFolder}/.pio/libdeps/node32s/ArduinoJson/src"
+                ""
             ],
             "browse": {
                 "limitSymbolsToIncludedHeaders": true,
@@ -217,10 +213,6 @@
                     "C:/Users/Ben/.platformio/packages/framework-arduinoespressif32/libraries/Wire/src",
                     "D:/src/kaleidoscope/lib/Encoder",
                     "D:/src/kaleidoscope/lib/Encoder/utility",
-                    "D:/src/kaleidoscope/.pio/libdeps/node32s/Adafruit BusIO",
-                    "D:/src/kaleidoscope/.pio/libdeps/node32s/Adafruit GFX Library",
-                    "D:/src/kaleidoscope/.pio/libdeps/node32s/FastLED NeoMatrix",
-                    "D:/src/kaleidoscope/.pio/libdeps/node32s/Framebuffer GFX",
                     "C:/Users/Ben/.platformio/packages/framework-arduinoespressif32/libraries/ArduinoOTA/src",
                     "C:/Users/Ben/.platformio/packages/framework-arduinoespressif32/libraries/AsyncUDP/src",
                     "C:/Users/Ben/.platformio/packages/framework-arduinoespressif32/libraries/AzureIoT/src",

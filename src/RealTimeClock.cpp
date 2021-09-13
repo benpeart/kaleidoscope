@@ -68,9 +68,9 @@ void rtc_setup()
     printLocalTime();
 #endif
 
+    // init the FastLED_NeoMatrix used by the Adafruit GFX library
     matrix->begin();
     matrix->setTextWrap(false);
-    //    matrix->setBrightness(BRIGHTNESS);
     matrix->setRemapFunction(XYToIndex);
 }
 
@@ -84,9 +84,13 @@ int ConvertMilitaryTime(int hours)
     return hours;
 }
 
+CRGB SetColorToBlack(CRGB rgb)
+{
+    return CRGB::Black;
+}
+
 CRGB FadeColors(CRGB rgb)
 {
-    //return CRGB::Black;
     return rgb.fadeToBlackBy(222);
 }
 
