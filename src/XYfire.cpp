@@ -1,6 +1,6 @@
 #include "main.h"
 #include "Kaleidoscope.h"
-#include "XYIndex.h"
+#include "XY.h"
 #include "XYfire.h"
 
 #ifdef DEMO
@@ -25,7 +25,7 @@ void mode_xy_fire()
                     Bri = 0;
                 if (Bri != 0)
                     Bri = 256 - (Bri * 0.2);
-                nblend(leds[XYToIndex(x, NUM_ROWS - y)], ColorFromPalette(HeatColors_p, Col, Bri), speed);
+                nblend(leds[XY(x, NUM_ROWS - y)], ColorFromPalette(HeatColors_p, Col, Bri), speed);
             }
         }
 

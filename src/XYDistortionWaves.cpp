@@ -7,7 +7,7 @@
 
 #include "main.h"
 #include "Kaleidoscope.h"
-#include "XYIndex.h"
+#include "XY.h"
 #include "XYDistortionWaves.h"
 
 const uint8_t exp_gamma[256] PROGMEM = {
@@ -91,7 +91,7 @@ void mode_xy_distortion_waves()
 
         for (int y = 0; y < NUM_ROWS; y++)
         {
-            uint16_t index = XYToIndex(x, y);
+            uint16_t index = XY(x, y);
             if (index == 241)
                 continue; //for skip unused cells in lookup table. add some fps )). may be delete
 

@@ -1,6 +1,6 @@
 #include "main.h"
 #include "Kaleidoscope.h"
-#include "XYIndex.h"
+#include "XY.h"
 #include "XYpacifica.h"
 
 #ifdef DEMO
@@ -138,7 +138,7 @@ void mode_xy_pacifica()
         {
             for (uint8_t x = 0; x < NUM_COLS; x++)
             {
-                leds[XYToIndex(x, y)] = gOneRowOfLEDs[y];
+                leds[XY(x, y)] = gOneRowOfLEDs[y];
             }
         }
         leds_dirty = true;

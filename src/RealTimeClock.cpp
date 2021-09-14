@@ -4,15 +4,10 @@
 #include <Preferences.h>
 #include "RealTimeClock.h"
 #include "displaynumbers.h"
-#include <Adafruit_GFX.h>
-#include <FastLED_NeoMatrix.h>
-#include "XYIndex.h"
+#include "XY.h"
 
 // example of using GFX library with custom remap function (ie XY())
 // https://github.com/marcmerlin/FastLED_NeoMatrix/issues/6
-
-// Define matrix width and height.
-FastLED_NeoMatrix *matrix = new FastLED_NeoMatrix(leds, NUM_COLS, NUM_ROWS, NEO_MATRIX_TOP + NEO_MATRIX_LEFT + NEO_MATRIX_ROWS + NEO_MATRIX_PROGRESSIVE);
 
 // enable debugging macros
 #define DEBUG
@@ -67,11 +62,6 @@ void rtc_setup()
 #ifdef DEBUG
     printLocalTime();
 #endif
-
-    // init the FastLED_NeoMatrix used by the Adafruit GFX library
-    matrix->begin();
-    matrix->setTextWrap(false);
-    matrix->setRemapFunction(XYToIndex);
 }
 
 int ConvertMilitaryTime(int hours)
@@ -153,23 +143,22 @@ void drawDigitalClock()
         }
 
         if (leds_dirty)
-        {
-#if 0
-            matrix->setTextColor(BLACK);
-            matrix->setTextSize(1);
-            matrix->setCursor(4, NUM_ROWS / 2 - 9);
-            matrix->printf("%02d", ConvertMilitaryTime(timeinfo.tm_hour));
-            matrix->setCursor(4, NUM_ROWS / 2 + 2);
-            matrix->printf("%02d", timeinfo.tm_min);
-#else
             displayNumbers(digit1, digit2, digit3, digit4, FadeColors);
-#endif
-        }
     }
+}
+
+#include "wuLineAA.h"
+
+void wuVectorAA(const uint16_t x, const uint16_t y, const uint16_t length, const uint16_t theta, CRGB *col) {
+  int16_t dx, dy;
+  dx = ((int32_t)cos16(theta) * length) / 32768;
+  dy = ((int32_t)sin16(theta) * length) / 32768;
+  wuLineAA(x, y, x + dx, y + dy, col);
 }
 
 void displayHands(int hours, int minutes, int seconds, getColor color)
 {
+    CRGB c = 0x0;
 #ifdef DEBUG
     // do some sanity checking
     if (NULL == color)
@@ -185,98 +174,30 @@ void displayHands(int hours, int minutes, int seconds, getColor color)
     }
 #endif
 
-    //
-    // https://opencv-tutorials-hub.blogspot.com/2015/07/code-to-draw-analog-wall-clock-using-opencv-c-synchronised-with-system-time.html
-    //
-    float sec_angle, min_angle, hour_angle;
-    int perimeter_x, perimeter_y;
-    int radius = NUM_COLS / 2;
-    int center_x = NUM_COLS / 2;
-    int center_y = NUM_ROWS / 2;
+    // everything is fixed-point, with 8-bits of fraction
+    uint16_t centrex = WIDTH * 128 - 128;
+    uint16_t centrey = HEIGHT * 128 - 128;
+    uint16_t length = WIDTH * 128;
+    uint16_t base_theta = 65536 * 3 / 4;
 
-    // Convert seconds to angle
-    sec_angle = (seconds * 6) + 270;
-    if (sec_angle > 360)
-        sec_angle = sec_angle - 360;
+    // second hand with sweep action
+    uint16_t theta = seconds * 65536 / 60;
+    static uint16_t sweep_theta = theta;
+    int32_t diff = theta - sweep_theta;
+    if (diff < 0)
+        diff += 65536;
+    sweep_theta += (diff + 8) / 16;
+    wuVectorAA(centrex, centrey, length, base_theta + sweep_theta, &c);
 
-    // Convert minutes to angle
-    min_angle = minutes * 6 + 270;
-    if (min_angle > 360)
-        min_angle = min_angle - 360;
+    // minute hand
+    length = length * 7 / 8;
+    theta = (theta + minutes * 65536) / 60;
+    wuVectorAA(centrex, centrey, length, base_theta + theta, &c);
 
-    // Convert hours to angle
-    if (hours > 12)
-        hours = hours - 12;
-    hour_angle = (hours * 30) + (minutes * 0.5) + 270;
-    if (hour_angle > 360)
-        hour_angle = hour_angle - 360;
-
-    // Find out the coordinates in the circle perimeter for second and draw the line from center
-    perimeter_x = (int)(center_x + (radius - 0) * cos(sec_angle * 3.14159 / 180.0));
-    perimeter_y = (int)(center_y + (radius - 0) * sin(sec_angle * 3.14159 / 180.0));
-    matrix->drawLine(center_x, center_y, perimeter_x, perimeter_y, BLACK);
-
-    // Find out the coordinates on the circle perimeter for minute and draw the line from center
-    perimeter_x = (int)(center_x + (radius - 1) * cos(min_angle * 3.14159 / 180.0));
-    perimeter_y = (int)(center_y + (radius - 1) * sin(min_angle * 3.14159 / 180.0));
-    matrix->drawLine(center_x, center_y, perimeter_x, perimeter_y, BLACK);
-
-    // Find out the coordinates on the circle perimeter for hour and draw the line from center
-    perimeter_x = (int)(center_x + (radius - 2) * cos(hour_angle * 3.14159 / 180.0));
-    perimeter_y = (int)(center_y + (radius - 2) * sin(hour_angle * 3.14159 / 180.0));
-    matrix->drawLine(center_x, center_y, perimeter_x, perimeter_y, BLACK);
-
-#if 0
-    switch (hours)
-    {
-    case 0:
-    case 12:
-        matrix->drawLine(NUM_COLS / 2, 0, NUM_COLS / 2, NUM_ROWS / 2, BLACK);
-        break;
-    case 3:
-        matrix->drawLine(NUM_COLS / 2, NUM_ROWS / 2, NUM_COLS, NUM_ROWS / 2, BLACK);
-        break;
-    case 6:
-        matrix->drawLine(NUM_COLS / 2, NUM_ROWS / 2, NUM_COLS / 2, NUM_ROWS, BLACK);
-        break;
-    case 9:
-        matrix->drawLine(NUM_COLS / 2, NUM_ROWS / 2, 0, NUM_ROWS / 2, BLACK);
-        break;
-    }
-
-    switch (minutes)
-    {
-    case 0:
-        matrix->drawLine(NUM_COLS / 2, 0, NUM_COLS / 2, NUM_ROWS / 2, BLUE);
-        break;
-    case 15:
-        matrix->drawLine(NUM_COLS / 2, NUM_ROWS / 2, NUM_COLS, NUM_ROWS / 2, BLUE);
-        break;
-    case 30:
-        matrix->drawLine(NUM_COLS / 2, NUM_ROWS / 2, NUM_COLS / 2, NUM_ROWS, BLUE);
-        break;
-    case 45:
-        matrix->drawLine(NUM_COLS / 2, NUM_ROWS / 2, 0, NUM_ROWS / 2, BLUE);
-        break;
-    }
-
-    switch (seconds)
-    {
-    case 0:
-        matrix->drawLine(NUM_COLS / 2, 0, NUM_COLS / 2, NUM_ROWS / 2, RED);
-        break;
-    case 15:
-        matrix->drawLine(NUM_COLS / 2, NUM_ROWS / 2, NUM_COLS, NUM_ROWS / 2, RED);
-        break;
-    case 30:
-        matrix->drawLine(NUM_COLS / 2, NUM_ROWS / 2, NUM_COLS / 2, NUM_ROWS, RED);
-        break;
-    case 45:
-        matrix->drawLine(NUM_COLS / 2, NUM_ROWS / 2, 0, NUM_ROWS / 2, RED);
-        break;
-    }
-#endif
-    matrix->show();
+    // hour hand
+    length = length * 3 / 4;
+    theta = (theta + (hours % 12) * 65536) / 12;
+    wuVectorAA(centrex, centrey, length, base_theta + theta, &c);
 }
 
 void drawAnalogClock()

@@ -1,5 +1,5 @@
 #include "main.h"
-#include "XYIndex.h"
+#include "XY.h"
 #include "Kaleidoscope.h"
 
 #define STRIP_0_NUM_COLS 6
@@ -7,7 +7,7 @@
 #define STRIP_2_NUM_COLS 4
 #define STRIP_3_NUM_COLS 6
 
-uint16_t XYToIndex(uint16_t x, uint16_t y)
+uint16_t XY(uint16_t x, uint16_t y)
 {
   // any out of bounds address maps to the first hidden pixel
   if ((x < 0) || (x >= NUM_COLS) || (y < 0) || (y >= NUM_ROWS))

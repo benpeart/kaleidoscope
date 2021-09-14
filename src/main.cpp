@@ -9,7 +9,7 @@
 #include "ripples.h"
 #include "TwinkleFox.h"
 #include "XYDistortionWaves.h"
-#include "XYIndex.h"
+#include "XY.h"
 #include "XYmatrix.h"
 #include "XYpacifica.h"
 #include "XYrainbow.h"

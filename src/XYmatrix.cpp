@@ -1,6 +1,6 @@
 #include "main.h"
 #include "Kaleidoscope.h"
-#include "XYIndex.h"
+#include "XY.h"
 #include "XYmatrix.h"
 
 #ifdef DEMO
@@ -23,11 +23,11 @@ void mode_xy_matrix()
         {
             for (int8_t col = 0; col < NUM_COLS; col++)
             {
-                if (leds[XYToIndex(col, row)] == CRGB(175, 255, 175))
+                if (leds[XY(col, row)] == CRGB(175, 255, 175))
                 {
-                    leds[XYToIndex(col, row)] = CRGB(27, 130, 39); // create trail
+                    leds[XY(col, row)] = CRGB(27, 130, 39); // create trail
                     if (row < NUM_ROWS - col_to_top_row[col] - 1)
-                        leds[XYToIndex(col, row + 1)] = CRGB(175, 255, 175);
+                        leds[XY(col, row + 1)] = CRGB(175, 255, 175);
                 }
             }
         }
@@ -54,7 +54,7 @@ void mode_xy_matrix()
         if (random8(3) == 0 || emptyScreen) // lower number == more frequent spawns
         {
             int8_t spawnX = random8(NUM_COLS);
-            leds[XYToIndex(spawnX, col_to_top_row[spawnX])] = CRGB(175, 255, 175);
+            leds[XY(spawnX, col_to_top_row[spawnX])] = CRGB(175, 255, 175);
         }
 
         leds_dirty = true;

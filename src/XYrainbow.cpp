@@ -1,6 +1,6 @@
 #include "main.h"
 #include "Kaleidoscope.h"
-#include "XYIndex.h"
+#include "XY.h"
 #include "XYrainbow.h"
 
 #ifdef DEMO
@@ -15,7 +15,7 @@ static void drawOneFrame(byte startHue8, int8_t yHueDelta8, int8_t xHueDelta8)
         for (byte x = 0; x < NUM_COLS; x++)
         {
             pixelHue += xHueDelta8;
-            leds[XYToIndex(x, y)] = CHSV(pixelHue, 255, 255);
+            leds[XY(x, y)] = CHSV(pixelHue, 255, 255);
         }
     }
     leds_dirty = true;
