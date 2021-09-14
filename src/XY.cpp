@@ -11,7 +11,7 @@ uint16_t XY(uint16_t x, uint16_t y)
 {
   // any out of bounds address maps to the first hidden pixel
   if ((x < 0) || (x >= NUM_COLS) || (y < 0) || (y >= NUM_ROWS))
-    return NUM_LEDS_PER_STRIP * 2 - 1;
+    return OUTOFBOUNDS;
 
   const uint8_t XYTable[NUM_ROWS * NUM_COLS / 2] = {
       //
@@ -85,7 +85,7 @@ uint16_t XY(uint16_t x, uint16_t y)
   // if we are returning an out of bounds value for an individual strip, return the first hidden LED instead
   // to make error handling easier.
   if (stripOffset > NUM_LEDS_PER_STRIP)
-    return NUM_LEDS_PER_STRIP * 2 - 1;
+    return OUTOFBOUNDS;
 
   if (x < STRIP_0_NUM_COLS)
   {

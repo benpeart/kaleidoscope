@@ -13,6 +13,7 @@
 #include "XYmatrix.h"
 #include "XYpacifica.h"
 #include "XYrainbow.h"
+#include "XYsnake.h"
 #include "XYfire.h"
 #endif
 
@@ -337,6 +338,7 @@ void (*renderFunc[])(void){
     mode_xy_matrix,
     mode_xy_pacifica,
     mode_xy_rainbow,
+    mode_xy_snake,
     mode_xy_fire,
 #endif
 #ifdef DEBUG
@@ -371,6 +373,7 @@ const PROGMEM char modeNames[N_MODES][64] =
         "xy_matrix",
         "xy_pacifica",
         "xy_rainbow",
+        "xy_snake",
         "xy_fire",
 #endif
 #ifdef DEBUG
@@ -398,6 +401,7 @@ int modeEncoderCounts[N_MODES][2] =
         {0, 0},
 #endif
 #ifdef DEMO
+        {0, 0},
         {0, 0},
         {0, 0},
         {0, 0},
