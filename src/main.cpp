@@ -1,9 +1,6 @@
 #include "main.h"
 #include "Kaleidoscope.h"
 #include "RealTimeClock.h"
-#ifdef REST
-#include <ArduinoJson.h>
-#endif
 #ifdef DEMO
 #include "beatwave.h"
 #include "blendwave.h"
@@ -33,6 +30,10 @@
 #endif
 #define USE_ESP_WIFIMANAGER_NTP true
 #include <ESPAsync_WiFiManager.h>
+#ifdef REST
+#include <AsyncJson.h>
+#include <ArduinoJson.h>
+#endif
 
 #ifdef DRD
 // https://github.com/khoih-prog/ESP_DoubleResetDetector
@@ -501,33 +502,24 @@ void getFaces(AsyncWebServerRequest *request)
   request->send(200, "text/json", response);
 }
 
-void putSettings(AsyncWebServerRequest *request)
+void putSettings(AsyncWebServerRequest *request, JsonVariant &json)
 {
-  String postBody = request->arg("plain");
-  StaticJsonDocument<128> doc;
-
-  DeserializationError error = deserializeJson(doc, postBody);
-  if (error)
-  {
-    DB_PRINT(F("deserializeJson() failed: "));
-    DB_PRINTLN(error.f_str());
-    return;
-  }
+  const JsonObject &jsonObj = json.as<JsonObject>();
 
   // update the brightness (if it was passed)
-  JsonVariant brightness = doc["brightness"];
+  JsonVariant brightness = jsonObj["brightness"];
   if (!brightness.isNull())
   {
     LEDBrightnessManualOffset = constrain(brightness, -4095, 4095);
   }
 
-  JsonVariant speed = doc["speed"];
+  JsonVariant speed = jsonObj["speed"];
   if (!speed.isNull())
   {
     ms_between_frames = constrain(speed, 0, MAX_SPEED_DELAY);
   }
 
-  const char *modeName = doc["mode"];
+  const char *modeName = jsonObj["mode"];
   if (modeName)
   {
     for (int x = 0; x < N_MODES; x++)
@@ -540,7 +532,7 @@ void putSettings(AsyncWebServerRequest *request)
     }
   }
 
-  const char *clockFace = doc["clockFace"];
+  const char *clockFace = jsonObj["clockFace"];
   if (clockFace)
   {
     for (int x = 0; x < N_CLOCK_FACES; x++)
@@ -552,6 +544,8 @@ void putSettings(AsyncWebServerRequest *request)
       }
     }
   }
+
+  request->send(200, "text/plain", "OK");
 }
 #endif
 
@@ -661,21 +655,22 @@ void setup()
 
 #ifdef REST
   webServer.on("/api/settings", HTTP_GET, getSettings);
-  webServer.on("/api/settings", HTTP_PUT, putSettings);
   webServer.on("/api/modes", HTTP_GET, getModes);
   webServer.on("/api/faces", HTTP_GET, getFaces);
+  AsyncCallbackJsonWebHandler *handler = new AsyncCallbackJsonWebHandler("/api/settings", putSettings);
+  webServer.addHandler(handler);
 #endif
 
 #ifdef ALEXA
-  webServer.onNotFound([](AsyncWebServerRequest *request)
-                       {
-                         // if you don't know the URI, ask espalexa whether it is an Alexa control request
-                         if (!espalexa.handleAlexaApiCall(request))
-                         {
-                           // handle the 404 error
-                           request->send(404, "text/plain", "Not found");
-                         }
-                       });
+      webServer.onNotFound([](AsyncWebServerRequest *request)
+                           {
+                             // if you don't know the URI, ask espalexa whether it is an Alexa control request
+                             if (!espalexa.handleAlexaApiCall(request))
+                             {
+                               // handle the 404 error
+                               request->send(404, "text/plain", "Not found");
+                             }
+                           });
 
   // Define your devices here.
   espalexa.addDevice("Hue", hueChanged, EspalexaDeviceType::extendedcolor); //color + color temperature
