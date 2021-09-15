@@ -444,6 +444,47 @@ void setKaleidoscopeMode(int new_mode)
   }
 }
 
+// This is needed to solve some threading issues with the REST APIs coming in via
+// asyncronous messages. When we get a change, just store them in the temporary
+// settings object then apply them on the primary thread so we aren't racing
+// with the current display loop.
+typedef struct
+{
+  int LEDBrightnessManualOffset;
+  int ms_between_frames;
+  int kaleidoscope_mode;
+  int clock_face;
+} kaleidoscope_settings;
+kaleidoscope_settings settings = {
+  LEDBrightnessManualOffset, 
+  ms_between_frames,
+  kaleidoscope_mode,
+  clock_face
+};
+
+void applySettings(kaleidoscope_settings &settings)
+{
+  if (LEDBrightnessManualOffset != settings.LEDBrightnessManualOffset)
+  {
+    LEDBrightnessManualOffset = settings.LEDBrightnessManualOffset;
+  }
+
+  if (ms_between_frames != settings.ms_between_frames)
+  {
+    ms_between_frames = settings.ms_between_frames;
+  }
+
+  if (kaleidoscope_mode != settings.kaleidoscope_mode)
+  {
+    setKaleidoscopeMode(settings.kaleidoscope_mode);
+  }
+
+  if (clock_face != settings.clock_face)
+  {
+    set_clock_face(settings.clock_face);
+  }
+}
+
 #ifdef WIFI
 #ifdef REST
 void getSettings(AsyncWebServerRequest *request)
@@ -506,7 +547,7 @@ void getFaces(AsyncWebServerRequest *request)
   request->send(200, "text/json", response);
 }
 
-void putSettings(AsyncWebServerRequest *request, JsonVariant &json)
+void saveSettings(AsyncWebServerRequest *request, JsonVariant &json)
 {
   const JsonObject &jsonObj = json.as<JsonObject>();
 
@@ -514,13 +555,13 @@ void putSettings(AsyncWebServerRequest *request, JsonVariant &json)
   JsonVariant brightness = jsonObj["brightness"];
   if (!brightness.isNull())
   {
-    LEDBrightnessManualOffset = constrain(brightness, -4095, 4095);
+    settings.LEDBrightnessManualOffset = constrain(brightness, -4095, 4095);
   }
 
   JsonVariant speed = jsonObj["speed"];
   if (!speed.isNull())
   {
-    ms_between_frames = constrain(speed, 0, MAX_SPEED_DELAY);
+    settings.ms_between_frames = constrain(speed, 0, MAX_SPEED_DELAY);
   }
 
   const char *modeName = jsonObj["mode"];
@@ -530,7 +571,7 @@ void putSettings(AsyncWebServerRequest *request, JsonVariant &json)
     {
       if (String(modeNames[x]).equalsIgnoreCase(String(modeName)))
       {
-        setKaleidoscopeMode(x);
+        settings.kaleidoscope_mode = x;
         break;
       }
     }
@@ -543,7 +584,7 @@ void putSettings(AsyncWebServerRequest *request, JsonVariant &json)
     {
       if (String(clockFaces[x]).equalsIgnoreCase(String(clockFace)))
       {
-        set_clock_face(x);
+        settings.clock_face = x;
         break;
       }
     }
@@ -661,20 +702,20 @@ void setup()
   webServer.on("/api/settings", HTTP_GET, getSettings);
   webServer.on("/api/modes", HTTP_GET, getModes);
   webServer.on("/api/faces", HTTP_GET, getFaces);
-  AsyncCallbackJsonWebHandler *handler = new AsyncCallbackJsonWebHandler("/api/settings", putSettings);
+  AsyncCallbackJsonWebHandler *handler = new AsyncCallbackJsonWebHandler("/api/settings", saveSettings);
   webServer.addHandler(handler);
 #endif
 
 #ifdef ALEXA
-      webServer.onNotFound([](AsyncWebServerRequest *request)
-                           {
-                             // if you don't know the URI, ask espalexa whether it is an Alexa control request
-                             if (!espalexa.handleAlexaApiCall(request))
-                             {
-                               // handle the 404 error
-                               request->send(404, "text/plain", "Not found");
-                             }
-                           });
+  webServer.onNotFound([](AsyncWebServerRequest *request)
+                       {
+                         // if you don't know the URI, ask espalexa whether it is an Alexa control request
+                         if (!espalexa.handleAlexaApiCall(request))
+                         {
+                           // handle the 404 error
+                           request->send(404, "text/plain", "Not found");
+                         }
+                       });
 
   // Define your devices here.
   espalexa.addDevice("Hue", hueChanged, EspalexaDeviceType::extendedcolor); //color + color temperature
@@ -754,6 +795,9 @@ void setup()
 //
 void loop()
 {
+  // apply any settings changes received via the REST APIs
+  applySettings(settings);
+
 #ifdef BOUNCE
   // check for a mode change
   uint8_t new_mode = kaleidoscope_mode;
