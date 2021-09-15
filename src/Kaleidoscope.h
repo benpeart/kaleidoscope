@@ -11,6 +11,11 @@
 // FastLED.Show every loop. Maintain a 'dirty' bit so we know when to call Show.
 extern boolean leds_dirty;
 
+#define N_DRAW_STYLES 3
+extern uint8_t draw_style; // Index of current draw mode in table
+extern const PROGMEM char drawStyles[N_DRAW_STYLES][16];
+int set_draw_style(int new_draw_style);
+
 #define NUM_STRIPS 4
 #define NUM_LEDS_PER_STRIP 156
 extern CRGB leds[NUM_STRIPS * NUM_LEDS_PER_STRIP];

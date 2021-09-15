@@ -320,9 +320,43 @@ void (*drawPixelFunc[])(CRGB *leds, int index, CRGB color){
     drawPixel6,
     drawPixel12,
     drawPixel24};
-#define N_DRAW_STYLES (sizeof(drawPixelFunc) / sizeof(drawPixelFunc[0]))
+//#define N_DRAW_STYLES (sizeof(drawPixelFunc) / sizeof(drawPixelFunc[0]))
 uint8_t draw_style = 0; // Index of current draw mode in table
 uint8_t num_leds = DRAWPIXEL6_INDEX;
+
+const PROGMEM char drawStyles[N_DRAW_STYLES][16] =
+    {
+        "Six way",
+        "Twelve way",
+        "Twenty four way"};
+
+int set_draw_style(int new_draw_style)
+{
+    if (draw_style != new_draw_style)
+    {
+        draw_style = new_draw_style;
+        switch (draw_style)
+        {
+        case 0:
+            num_leds = DRAWPIXEL6_INDEX;
+            DB_PRINTLN("reflection_style is 6 way reflection");
+            break;
+
+        case 1:
+            num_leds = DRAWPIXEL12_INDEX;
+            DB_PRINTLN("reflection_style is 12 way reflection");
+            break;
+
+        case 2:
+            num_leds = DRAWPIXEL24_INDEX;
+            DB_PRINTLN("reflection_style is 24 way reflection");
+            break;
+        }
+        leds_dirty = true;
+    }
+
+    return draw_style;
+}
 
 // simple wrapper function to abstract out the fact that we have different draw functions
 void drawPixel(CRGB *leds, int index, CRGB color)
@@ -423,7 +457,7 @@ void drawPaletteFrame(CRGB *leds, GlassDisk *disk_1, GlassDisk *disk_2)
                 // since the disks are stored in PROGMEM, we must read them into SRAM before using them
                 uint8_t colorIndex_1 = map(pgm_read_byte_near(&disk_1->array[row * disk_1->columns + column]), 0, 15, 0, 255);
                 //int thisBright_1 = qsuba(colorIndex_1, beatsin8(7, 0, 64)); // qsub gives it a bit of 'black' dead space by setting a minimum value. If colorIndex < current value of beatsin8(), then bright = 0. Otherwise, bright = colorIndex..
-                pixel_1 = ColorFromPalette(*disk_1->pal, colorIndex_1/*, thisBright_1*/);
+                pixel_1 = ColorFromPalette(*disk_1->pal, colorIndex_1 /*, thisBright_1*/);
 #ifdef DEBUG
                 if (column < 0 || column >= disk_1->columns || row < 0 || row >= VIEWPORT_HEIGHT)
                     DB_PRINTF("colorIndex_1 = %d; pixel_1[%d][%d] = %x\r\n", colorIndex_1, column, row, (uint32_t)pixel_1);
@@ -442,7 +476,7 @@ void drawPaletteFrame(CRGB *leds, GlassDisk *disk_1, GlassDisk *disk_2)
                 // since the disks are stored in PROGMEM, we must read them into SRAM before using them
                 uint8_t colorIndex_2 = map(pgm_read_byte_near(&disk_2->array[row * disk_2->columns + column]), 0, 15, 0, 255);
                 //int thisBright_2 = qsuba(colorIndex_2, beatsin8(7, 0, 64)); // qsub gives it a bit of 'black' dead space by setting sets a minimum value. If colorIndex < current value of beatsin8(), then bright = 0. Otherwise, bright = colorIndex..
-                pixel_2 = ColorFromPalette(*disk_2->pal, colorIndex_2/*, thisBright_2*/);
+                pixel_2 = ColorFromPalette(*disk_2->pal, colorIndex_2 /*, thisBright_2*/);
 #ifdef DEBUG
                 if (column < 0 || column >= disk_2->columns || row < 0 || row >= VIEWPORT_HEIGHT)
                     DB_PRINTF("colorIndex_2 = %d; pixel_2[%d][%d] = %x\r\n", colorIndex_2, column, row, (uint32_t)pixel_2);
@@ -642,23 +676,7 @@ void mode_kaleidoscope_select_reflection_style()
     // redraw the frame of the kaleidoscope with the new style
     if (drawStyleChanged)
     {
-        switch (draw_style)
-        {
-        case 0:
-            num_leds = DRAWPIXEL6_INDEX;
-            DB_PRINTLN("reflection_style is 6 way reflection");
-            break;
-
-        case 1:
-            num_leds = DRAWPIXEL12_INDEX;
-            DB_PRINTLN("reflection_style is 12 way reflection");
-            break;
-
-        case 2:
-            num_leds = DRAWPIXEL24_INDEX;
-            DB_PRINTLN("reflection_style is 24 way reflection");
-            break;
-        }
+        set_draw_style(draw_style);
         drawStyleChanged = false;
     }
 

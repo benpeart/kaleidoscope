@@ -454,16 +454,21 @@ typedef struct
   int ms_between_frames;
   int kaleidoscope_mode;
   int clock_face;
+  int draw_style;
 } kaleidoscope_settings;
 kaleidoscope_settings settings = {
-  LEDBrightnessManualOffset, 
-  ms_between_frames,
-  kaleidoscope_mode,
-  clock_face
-};
+    LEDBrightnessManualOffset,
+    ms_between_frames,
+    kaleidoscope_mode,
+    clock_face,
+    draw_style};
+volatile bool newSettings = false;
 
 void applySettings(kaleidoscope_settings &settings)
 {
+  if (!newSettings)
+    return;
+
   if (LEDBrightnessManualOffset != settings.LEDBrightnessManualOffset)
   {
     LEDBrightnessManualOffset = settings.LEDBrightnessManualOffset;
@@ -483,6 +488,13 @@ void applySettings(kaleidoscope_settings &settings)
   {
     set_clock_face(settings.clock_face);
   }
+
+  if (draw_style != settings.draw_style)
+  {
+    set_draw_style(settings.draw_style);
+  }
+
+  newSettings = false;
 }
 
 #ifdef WIFI
@@ -496,6 +508,7 @@ void getSettings(AsyncWebServerRequest *request)
   doc["speed"] = ms_between_frames;
   doc["mode"] = modeNames[kaleidoscope_mode];
   doc["clockFace"] = clockFaces[clock_face];
+  doc["drawStyle"] = drawStyles[draw_style];
 
   serializeJson(doc, response);
   request->send(200, "text/json", response);
@@ -547,6 +560,29 @@ void getFaces(AsyncWebServerRequest *request)
   request->send(200, "text/json", response);
 }
 
+void getDrawStyles(AsyncWebServerRequest *request)
+{
+  // compute the required size
+  const size_t CAPACITY = JSON_ARRAY_SIZE(N_DRAW_STYLES);
+
+  // allocate the memory for the document
+  StaticJsonDocument<CAPACITY> doc;
+
+  // create an empty array
+  JsonArray array = doc.to<JsonArray>();
+
+  // add the draw style names
+  for (int x = 0; x < N_DRAW_STYLES; x++)
+  {
+    array.add(drawStyles[x]);
+  }
+
+  // serialize the array and send the result
+  String response;
+  serializeJson(doc, response);
+  request->send(200, "text/json", response);
+}
+
 void saveSettings(AsyncWebServerRequest *request, JsonVariant &json)
 {
   const JsonObject &jsonObj = json.as<JsonObject>();
@@ -556,12 +592,14 @@ void saveSettings(AsyncWebServerRequest *request, JsonVariant &json)
   if (!brightness.isNull())
   {
     settings.LEDBrightnessManualOffset = constrain(brightness, -4095, 4095);
+    newSettings = true;
   }
 
   JsonVariant speed = jsonObj["speed"];
   if (!speed.isNull())
   {
     settings.ms_between_frames = constrain(speed, 0, MAX_SPEED_DELAY);
+    newSettings = true;
   }
 
   const char *modeName = jsonObj["mode"];
@@ -572,6 +610,7 @@ void saveSettings(AsyncWebServerRequest *request, JsonVariant &json)
       if (String(modeNames[x]).equalsIgnoreCase(String(modeName)))
       {
         settings.kaleidoscope_mode = x;
+        newSettings = true;
         break;
       }
     }
@@ -585,6 +624,21 @@ void saveSettings(AsyncWebServerRequest *request, JsonVariant &json)
       if (String(clockFaces[x]).equalsIgnoreCase(String(clockFace)))
       {
         settings.clock_face = x;
+        newSettings = true;
+        break;
+      }
+    }
+  }
+
+  const char *drawStyle = jsonObj["drawStyle"];
+  if (drawStyle)
+  {
+    for (int x = 0; x < N_DRAW_STYLES; x++)
+    {
+      if (String(drawStyles[x]).equalsIgnoreCase(String(drawStyle)))
+      {
+        settings.draw_style = x;
+        newSettings = true;
         break;
       }
     }
@@ -702,6 +756,7 @@ void setup()
   webServer.on("/api/settings", HTTP_GET, getSettings);
   webServer.on("/api/modes", HTTP_GET, getModes);
   webServer.on("/api/faces", HTTP_GET, getFaces);
+  webServer.on("/api/drawstyles", HTTP_GET, getDrawStyles);
   AsyncCallbackJsonWebHandler *handler = new AsyncCallbackJsonWebHandler("/api/settings", saveSettings);
   webServer.addHandler(handler);
 #endif
