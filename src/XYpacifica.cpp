@@ -130,9 +130,8 @@ void pacifica_loop()
 // https://github.com/dprice2000/FastLEDMusings/blob/master/pacifica_4_matrix.ino
 void mode_xy_pacifica()
 {
-    EVERY_N_MILLIS_I(timer, 20)
+    EVERY_N_MILLIS(20)
     {
-        timer.setPeriod(constrain(ms_between_frames - DEFAULT_SPEED_DELAY + 20, 0, MAX_SPEED_DELAY));
         pacifica_loop();
         for (uint8_t y = 0; y < NUM_ROWS; y++)
         {
@@ -145,7 +144,7 @@ void mode_xy_pacifica()
     }
 
     adjustBrightness();
-    adjustSpeed();
+    // the speed of the waves is hard coded in pacifica_loop, adding delays at this level just makes the animation less smoth
 }
 
 #endif
