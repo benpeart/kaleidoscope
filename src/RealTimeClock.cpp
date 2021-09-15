@@ -156,17 +156,10 @@ void wuVectorAA(const uint16_t x, const uint16_t y, const uint16_t length, const
   wuLineAA(x, y, x + dx, y + dy, col);
 }
 
-void displayHands(int hours, int minutes, int seconds, getColor color)
+void displayHands(int hours, int minutes, int seconds, CRGB color)
 {
-    CRGB c = 0x0;
 #ifdef DEBUG
     // do some sanity checking
-    if (NULL == color)
-    {
-        DB_PRINTLN("displayHands called with NULL color function pointer");
-        return;
-    }
-
     if (hours < 0 || hours > 23 || minutes < 0 || minutes > 59 || seconds < 0 || seconds > 59)
     {
         DB_PRINTF("\rdisplayHands called with time that is out of range: %d:%d:%d\r\n", hours, minutes, seconds);
@@ -187,17 +180,17 @@ void displayHands(int hours, int minutes, int seconds, getColor color)
     if (diff < 0)
         diff += 65536;
     sweep_theta += (diff + 8) / 16;
-    wuVectorAA(centrex, centrey, length, base_theta + sweep_theta, &c);
+    wuVectorAA(centrex, centrey, length, base_theta + sweep_theta, &color);
 
     // minute hand
     length = length * 7 / 8;
     theta = (theta + minutes * 65536) / 60;
-    wuVectorAA(centrex, centrey, length, base_theta + theta, &c);
+    wuVectorAA(centrex, centrey, length, base_theta + theta, &color);
 
     // hour hand
     length = length * 3 / 4;
     theta = (theta + (hours % 12) * 65536) / 12;
-    wuVectorAA(centrex, centrey, length, base_theta + theta, &c);
+    wuVectorAA(centrex, centrey, length, base_theta + theta, &color);
 }
 
 void drawAnalogClock()
@@ -235,7 +228,7 @@ void drawAnalogClock()
         }
 
         if (leds_dirty)
-            displayHands(hours, minutes, seconds, FadeColors);
+            displayHands(hours, minutes, seconds, CRGB::Black);
     }
 }
 
