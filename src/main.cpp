@@ -353,7 +353,7 @@ uint8_t kaleidoscope_mode = 0; // Index of current mode in table
 
 const PROGMEM char modeNames[N_MODES][64] =
     {
-        "kaleidoscope",
+        "Kaleidoscope",
         "off",
         "kaleidoscope_select_speed_brightness",
         //        "kaleidoscope_select_disks",
@@ -363,18 +363,18 @@ const PROGMEM char modeNames[N_MODES][64] =
 #endif
 #ifdef DEMO
         "off",
-        "kaleidoscope_beatWave",
-        "kaleidoscope_blendWave",
-        "kaleidoscope_plasma",
-        "kaleidoscope_rainbowMarch",
-        "kaleidoscope_ripples",
-        "kaleidoscope_twinkle_fox",
-        "xy_distortion_waves",
-        "xy_matrix",
-        "xy_pacifica",
-        "xy_rainbow",
-        "xy_snake",
-        "xy_fire",
+        "Beat Wave",
+        "Blend Wave",
+        "Plasma",
+        "Rainbow March",
+        "Ripples",
+        "Twinkle Fox",
+        "Distortion Waves",
+        "Matrix",
+        "Pacifica",
+        "Rainbow",
+        "Snake",
+        "Fire",
 #endif
 #ifdef DEBUG
         "kaleidoscope_test",
@@ -382,6 +382,38 @@ const PROGMEM char modeNames[N_MODES][64] =
         "test",
 #endif
         "off"};
+
+const PROGMEM char showInRESTAPI[N_MODES]
+{
+        1,
+        0,
+        0,
+        //        "kaleidoscope_select_disks",
+        0,
+#ifdef TIME
+        0,
+#endif
+#ifdef DEMO
+        0,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+#endif
+#ifdef DEBUG
+        "kaleidoscope_test",
+        "xy_test",
+        "test",
+#endif
+        0};
 
 #ifdef ENCODER
 // We need to save/restore the count for the rotary encoders
@@ -528,7 +560,8 @@ void getModes(AsyncWebServerRequest *request)
   // add the names
   for (int x = 0; x < N_MODES; x++)
   {
-    array.add(modeNames[x]);
+    if (showInRESTAPI[x])
+      array.add(modeNames[x]);
   }
 
   // serialize the array and send the result
