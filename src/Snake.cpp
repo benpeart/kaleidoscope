@@ -193,8 +193,8 @@ void Snake::relocateFood()
 {
     do
     {
-        food[0].posX = random(0, _fieldSizeX);
-        food[0].posY = random(0, _fieldSizeY);
+        food[0].posX = random(0, _fieldSizeX - 10) + 5;
+        food[0].posY = random(0, _fieldSizeY - 10) + 5;
     } while (isPointOnSnake(food[0]) || isPointOutOfBounds(food[0]));
 }
 
