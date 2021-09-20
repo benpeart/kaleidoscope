@@ -246,7 +246,9 @@ void chooseNextColorPalette(CRGBPalette16 &pal)
 //  should light at all during this cycle, based on the TWINKLE_DENSITY.
 CRGB computeOneTwinkle(uint32_t ms, uint8_t salt)
 {
-    uint16_t ticks = ms >> (8 - TWINKLE_SPEED);
+    // enable us to change the twinkle speed dynamically
+    uint16_t twinkle_speed = map (MAX_SPEED_DELAY - ms_between_frames, 0 , MAX_SPEED_DELAY , 0 , 8 );
+    uint16_t ticks = ms >> (8 - twinkle_speed);
     uint8_t fastcycle8 = ticks;
     uint16_t slowcycle16 = (ticks >> 8) + salt;
     slowcycle16 += sin8(slowcycle16);
@@ -375,9 +377,8 @@ void mode_kaleidoscope_twinkle_fox()
         chooseNextColorPalette(gTargetPalette);
     }
 
-    EVERY_N_MILLIS_I(timer, 10)
+    EVERY_N_MILLIS(10)
     {
-        timer.setPeriod(constrain(ms_between_frames - DEFAULT_SPEED_DELAY + 10, 0, MAX_SPEED_DELAY));
         nblendPaletteTowardPalette(gCurrentPalette, gTargetPalette, 12);
     }
 
