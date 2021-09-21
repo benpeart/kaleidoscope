@@ -13,6 +13,8 @@
 #define DEBUG
 #include "debug.h"
 
+CRGB handsColor = CRGB::Black;
+
 /* Useful Constants */
 #define SECS_PER_MIN ((time_t)(60UL))
 #define SECS_PER_HOUR ((time_t)(3600UL))
@@ -84,19 +86,14 @@ CRGB FadeColors(CRGB rgb)
     return rgb.fadeToBlackBy(222);
 }
 
+CRGB BlendColors(CRGB rgb)
+{
+    return blend(rgb, handsColor, 200);
+}
+
 void drawNullClock()
 {
 }
-
-// Color definitions
-#define BLACK 0x0000
-#define BLUE 0x001F
-#define RED 0xF800
-#define GREEN 0x07E0
-#define CYAN 0x07FF
-#define MAGENTA 0xF81F
-#define YELLOW 0xFFE0
-#define WHITE 0xFFFF
 
 void drawDigitalClock()
 {
@@ -143,18 +140,19 @@ void drawDigitalClock()
         }
 
         if (leds_dirty)
-            displayNumbers(digit1, digit2, digit3, digit4, FadeColors);
+            displayNumbers(digit1, digit2, digit3, digit4, BlendColors);
     }
 }
 
 // https://wokwi.com/arduino/projects/286985034843292172
 #include "wuLineAA.h"
 
-void wuVectorAA(const uint16_t x, const uint16_t y, const uint16_t length, const uint16_t theta, CRGB *col) {
-  int16_t dx, dy;
-  dx = ((int32_t)cos16(theta) * length) / 32768;
-  dy = ((int32_t)sin16(theta) * length) / 32768;
-  wuLineAA(x, y, x + dx, y + dy, col);
+void wuVectorAA(const uint16_t x, const uint16_t y, const uint16_t length, const uint16_t theta, CRGB *col)
+{
+    int16_t dx, dy;
+    dx = ((int32_t)cos16(theta) * length) / 32768;
+    dy = ((int32_t)sin16(theta) * length) / 32768;
+    wuLineAA(x, y, x + dx, y + dy, col);
 }
 
 void displayHands(int hours, int minutes, int seconds, CRGB color)
@@ -229,7 +227,7 @@ void drawAnalogClock()
         }
 
         if (leds_dirty)
-            displayHands(hours, minutes, seconds, CRGB::Black);
+            displayHands(hours, minutes, seconds, handsColor);
     }
 }
 

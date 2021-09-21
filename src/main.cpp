@@ -383,37 +383,36 @@ const PROGMEM char modeNames[N_MODES][64] =
 #endif
         "off"};
 
-const PROGMEM char showInRESTAPI[N_MODES]
-{
-        1,
-        0,
-        0,
-        //        "kaleidoscope_select_disks",
-        0,
+const PROGMEM char showInRESTAPI[N_MODES]{
+    1,
+    0,
+    0,
+    //        "kaleidoscope_select_disks",
+    0,
 #ifdef TIME
-        0,
+    0,
 #endif
 #ifdef DEMO
-        0,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
 #endif
 #ifdef DEBUG
-        "kaleidoscope_test",
-        "xy_test",
-        "test",
+    "kaleidoscope_test",
+    "xy_test",
+    "test",
 #endif
-        0};
+    0};
 
 #ifdef ENCODER
 // We need to save/restore the count for the rotary encoders
@@ -487,13 +486,15 @@ typedef struct
   int kaleidoscope_mode;
   int clock_face;
   int draw_style;
+  CRGB handsColor;
 } kaleidoscope_settings;
 kaleidoscope_settings settings = {
     LEDBrightnessManualOffset,
     ms_between_frames,
     kaleidoscope_mode,
     clock_face,
-    draw_style};
+    draw_style,
+    handsColor};
 volatile bool newSettings = false;
 
 void applySettings(kaleidoscope_settings &settings)
@@ -526,6 +527,11 @@ void applySettings(kaleidoscope_settings &settings)
     set_draw_style(settings.draw_style);
   }
 
+  if (handsColor != settings.handsColor)
+  {
+    handsColor = settings.handsColor;
+  }
+
   newSettings = false;
 }
 
@@ -541,6 +547,7 @@ void getSettings(AsyncWebServerRequest *request)
   doc["mode"] = modeNames[kaleidoscope_mode];
   doc["clockFace"] = clockFaces[clock_face];
   doc["drawStyle"] = drawStyles[draw_style];
+  doc["handsColor"] = handsColor.r << 16 | handsColor.g << 8 | handsColor.b;
 
   serializeJson(doc, response);
   request->send(200, "text/json", response);
@@ -675,6 +682,13 @@ void saveSettings(AsyncWebServerRequest *request, JsonVariant &json)
         break;
       }
     }
+  }
+
+  JsonVariant handsColor = jsonObj["handsColor"];
+  if (!handsColor.isNull())
+  {
+    settings.handsColor = CRGB((uint32_t)handsColor);
+    newSettings = true;
   }
 
   request->send(200, "text/plain", "OK");
