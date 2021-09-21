@@ -608,7 +608,11 @@ void mode_kaleidoscope()
 #endif
 
     // draw the next frame into the correct led array
-    if (drawframe)
+    // When changing modes (esp through 'off') the leds are flagged dirty so that they 
+    // get redrawn, without checking for leds_dirty here, we wouldn't redraw the 
+    // kaleidoscope unless there was movement (via the knobs) or if we were already in
+    // screen saver mode.
+    if (drawframe || leds_dirty)
     {
         // draw the next frame of the kaleidoscope
         drawPaletteFrame(first_array ? leds2 : leds3, &TriangleDisk, &SquareDisk);
