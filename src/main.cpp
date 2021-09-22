@@ -4,6 +4,7 @@
 #ifdef DEMO
 #include "beatwave.h"
 #include "blendwave.h"
+#include "doom.h"
 #include "plasma.h"
 #include "rainbowmarch.h"
 #include "ripples.h"
@@ -334,6 +335,7 @@ void (*renderFunc[])(void){
     mode_kaleidoscope_rainbowMarch,
     mode_kaleidoscope_ripples,
     mode_kaleidoscope_twinkle_fox,
+    mode_doom,
     mode_xy_distortion_waves,
     mode_xy_matrix,
     mode_xy_pacifica,
@@ -369,6 +371,7 @@ const PROGMEM char modeNames[N_MODES][64] =
         "Rainbow March",
         "Ripples",
         "Twinkle Fox",
+        "Doom",
         "Distortion Waves",
         "Matrix",
         "Pacifica",
@@ -394,6 +397,7 @@ const PROGMEM char showInRESTAPI[N_MODES]{
 #endif
 #ifdef DEMO
     0,
+    1,
     1,
     1,
     1,
@@ -432,6 +436,7 @@ int modeEncoderCounts[N_MODES][2] =
         {0, 0},
 #endif
 #ifdef DEMO
+        {0, 0},
         {0, 0},
         {0, 0},
         {0, 0},
