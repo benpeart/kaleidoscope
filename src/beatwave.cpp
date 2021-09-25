@@ -4,6 +4,10 @@
 
 #ifdef DEMO
 
+#define DEFAULT_MILLIS 100
+#define MIN_MILLIS 0
+#define MAX_MILLIS (4 * DEFAULT_MILLIS)
+
 // Palette definitions
 static CRGBPalette16 currentPalette;
 static CRGBPalette16 targetPalette;
@@ -27,9 +31,9 @@ void mode_kaleidoscope_beatWave()
 {
     beatwave();
 
-    EVERY_N_MILLIS_I(timer, 100)
+    EVERY_N_MILLIS_I(timer, DEFAULT_MILLIS)
     {
-        timer.setPeriod(constrain(ms_between_frames - DEFAULT_SPEED_DELAY + 100, 0, MAX_SPEED_DELAY));
+        timer.setPeriod(MAX_MILLIS - map(kaleidoscope_speed, KALEIDOSCOPE_MIN_SPEED, KALEIDOSCOPE_MAX_SPEED, MIN_MILLIS, MAX_MILLIS));
         uint8_t maxChanges = 24;
         nblendPaletteTowardPalette(currentPalette, targetPalette, maxChanges); // AWESOME palette blending capability.
         leds_dirty = true;

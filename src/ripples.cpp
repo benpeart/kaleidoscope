@@ -2,6 +2,12 @@
 #include "Kaleidoscope.h"
 #include "ripples.h"
 
+#ifdef DEMO
+
+#define DEFAULT_MILLIS 50
+#define MIN_MILLIS 0
+#define MAX_MILLIS (4 * DEFAULT_MILLIS)
+
 static CRGBPalette16 currentPalette = OceanColors_p; // Use palettes instead of direct CHSV or CRGB assignments
 static CRGBPalette16 targetPalette = OceanColors_p;  // Also support smooth palette transitioning
 
@@ -125,9 +131,9 @@ void mode_kaleidoscope_ripples()
         leds_dirty = true;
     }
 
-    EVERY_N_MILLIS_I(timer, 50)
+    EVERY_N_MILLIS_I(timer, DEFAULT_MILLIS)
     {               // Sets the original delay time.
-        timer.setPeriod(constrain(ms_between_frames - DEFAULT_SPEED_DELAY + 50, 0, MAX_SPEED_DELAY));
+        timer.setPeriod(MAX_MILLIS - map(kaleidoscope_speed, KALEIDOSCOPE_MIN_SPEED, KALEIDOSCOPE_MAX_SPEED, MIN_MILLIS, MAX_MILLIS));
         rippless(); // Run the ripple routine.
         leds_dirty = true;
     }
@@ -135,3 +141,5 @@ void mode_kaleidoscope_ripples()
     adjustBrightness();
     adjustSpeed();
 } // mode_kaleidoscope_ripples()
+
+#endif

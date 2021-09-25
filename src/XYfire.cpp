@@ -5,14 +5,19 @@
 
 #ifdef DEMO
 
-byte scale = 64;
-byte speed = 92;
-static uint32_t t;
+#define DEFAULT_MILLIS 100
+#define MIN_MILLIS 0
+#define MAX_MILLIS (4 * DEFAULT_MILLIS)
+
 void mode_xy_fire()
 {
-    EVERY_N_MILLIS_I(timer, 100)
+    static byte scale = 64;
+    static byte speed = 92;
+    static uint32_t t;
+
+    EVERY_N_MILLIS_I(timer, DEFAULT_MILLIS)
     {
-        timer.setPeriod(constrain(ms_between_frames - DEFAULT_SPEED_DELAY + 100, 0, MAX_SPEED_DELAY));
+        timer.setPeriod(MAX_MILLIS - map(kaleidoscope_speed, KALEIDOSCOPE_MIN_SPEED, KALEIDOSCOPE_MAX_SPEED, MIN_MILLIS, MAX_MILLIS));
         t += speed;
         for (byte x = 0; x < NUM_COLS; x++)
         {

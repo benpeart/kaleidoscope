@@ -68,6 +68,8 @@
 // 0 (VERY slow) to 8 (VERY fast).
 // 4, 5, and 6 are recommended, default is 4.
 #define TWINKLE_SPEED 4
+#define TWINKLE_MIN_SPEED 0
+#define TWINKLE_MAX_SPEED 8
 
 // Overall twinkle density.
 // 0 (NONE lit) to 8 (ALL lit at once).
@@ -247,7 +249,7 @@ void chooseNextColorPalette(CRGBPalette16 &pal)
 CRGB computeOneTwinkle(uint32_t ms, uint8_t salt)
 {
     // enable us to change the twinkle speed dynamically
-    uint16_t twinkle_speed = map (MAX_SPEED_DELAY - ms_between_frames, 0 , MAX_SPEED_DELAY , 0 , 8 );
+    uint16_t twinkle_speed = map(kaleidoscope_speed, KALEIDOSCOPE_MIN_SPEED, KALEIDOSCOPE_MAX_SPEED, TWINKLE_MIN_SPEED, TWINKLE_MAX_SPEED);
     uint16_t ticks = ms >> (8 - twinkle_speed);
     uint8_t fastcycle8 = ticks;
     uint16_t slowcycle16 = (ticks >> 8) + salt;

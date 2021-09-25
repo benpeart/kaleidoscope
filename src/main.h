@@ -33,8 +33,11 @@ extern ESP32Encoder knobLeft;
 // update the FastLED brightness based on our ambient and manual settings only if requested (using the right knob)
 void adjustBrightness(bool useKnob = true);
 
-// update the speed of the animations using the left knob
-#define DEFAULT_SPEED_DELAY 500
-#define MAX_SPEED_DELAY 1000
-extern int ms_between_frames;
+// 'speed' ranges from 0-255 with the default speed being 128 and two rotations of the knob being required to move
+// from min to max. Each mode can map() that to the correct min/max speed range and value required to make smaller
+// numbers (rotate left) being slower and larger numbers (rotate right) being faster
+#define KALEIDOSCOPE_MIN_SPEED 0
+#define KALEIDOSCOPE_MAX_SPEED 255
+#define KALEIDOSCOPE_DEFAULT_SPEED ((KALEIDOSCOPE_MAX_SPEED - KALEIDOSCOPE_MIN_SPEED) / 2)
+extern uint8_t kaleidoscope_speed;
 int adjustSpeed();

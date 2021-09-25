@@ -10,6 +10,8 @@
 #include "XY.h"
 #include "XYDistortionWaves.h"
 
+#ifdef DEMO
+
 const uint8_t exp_gamma[256] PROGMEM = {
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1,
     1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
@@ -70,7 +72,7 @@ void mode_xy_distortion_waves()
     uint8_t w = 2;
     uint8_t scale = 4;
 
-    uint16_t a = (/*TODO speed_slider()*/64 * millis()) >> 9;
+    uint16_t a = (map(kaleidoscope_speed, KALEIDOSCOPE_MIN_SPEED, KALEIDOSCOPE_MAX_SPEED, 0, 64) * millis()) >> 9;
     uint16_t a2 = a / 2;
     uint16_t a3 = a / 3;
 
@@ -93,7 +95,7 @@ void mode_xy_distortion_waves()
         {
             uint16_t index = XY(x, y);
             if (index == OUTOFBOUNDS)
-                continue; //for skip unused cells in lookup table. add some fps )). may be delete
+                continue; //for skip unused cells in lookup table. add some fps )). may be deleted
 
             yoffs += scale;
 
@@ -121,4 +123,7 @@ void mode_xy_distortion_waves()
     leds_dirty = true;
 
     adjustBrightness();
+    adjustSpeed();
 }
+
+#endif

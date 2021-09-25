@@ -2,6 +2,10 @@
 #include "Kaleidoscope.h"
 #include "GlassDisk.h"
 
+#define DEFAULT_MILLIS 500
+#define MIN_MILLIS 0
+#define MAX_MILLIS (4 * DEFAULT_MILLIS)
+
 #define VIEWPORT_HEIGHT 10  // the height of the 'viewport' triangle
 #define TRIANGLE_COLUMNS 19 // the width of the base of the 'viewport' triange
 
@@ -507,6 +511,7 @@ void mode_kaleidoscope_select_speed_brightness()
     static int time_of_last_frame = 0;
 
     int time = millis();
+    int ms_between_frames = MAX_MILLIS - map(kaleidoscope_speed, KALEIDOSCOPE_MIN_SPEED, KALEIDOSCOPE_MAX_SPEED, MIN_MILLIS, MAX_MILLIS);
 
     // draw the next frame into the correct led array
     if (time >= time_of_last_frame + ms_between_frames)
@@ -555,6 +560,7 @@ void mode_kaleidoscope()
     static boolean blendframes = false;
 
     int time = millis();
+    int ms_between_frames = MAX_MILLIS - map(kaleidoscope_speed, KALEIDOSCOPE_MIN_SPEED, KALEIDOSCOPE_MAX_SPEED, MIN_MILLIS, MAX_MILLIS);
 
     // if it is time to enter screen saver mode
     if (time >= time_to_enter_screensaver_mode)

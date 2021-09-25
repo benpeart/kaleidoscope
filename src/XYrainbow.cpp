@@ -5,6 +5,10 @@
 
 #ifdef DEMO
 
+#define DEFAULT_MILLIS 500
+#define MIN_MILLIS 0
+#define MAX_MILLIS (4 * DEFAULT_MILLIS)
+
 static void drawOneFrame(byte startHue8, int8_t yHueDelta8, int8_t xHueDelta8)
 {
     byte lineStartHue = startHue8;
@@ -23,9 +27,9 @@ static void drawOneFrame(byte startHue8, int8_t yHueDelta8, int8_t xHueDelta8)
 
 void mode_xy_rainbow()
 {
-    EVERY_N_MILLIS_I(timer, 500)
+    EVERY_N_MILLIS_I(timer, DEFAULT_MILLIS)
     {
-        timer.setPeriod(constrain(ms_between_frames - DEFAULT_SPEED_DELAY + 500, 0, MAX_SPEED_DELAY));
+        timer.setPeriod(MAX_MILLIS - map(kaleidoscope_speed, KALEIDOSCOPE_MIN_SPEED, KALEIDOSCOPE_MAX_SPEED, MIN_MILLIS, MAX_MILLIS));
         uint32_t ms = millis();
         int32_t yHueDelta32 = ((int32_t)cos16(ms * (27 / 1)) * (350 / NUM_COLS));
         int32_t xHueDelta32 = ((int32_t)cos16(ms * (39 / 1)) * (310 / NUM_ROWS));

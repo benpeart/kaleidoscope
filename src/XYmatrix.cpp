@@ -5,6 +5,10 @@
 
 #ifdef DEMO
 
+#define DEFAULT_MILLIS 75
+#define MIN_MILLIS 0
+#define MAX_MILLIS (4 * DEFAULT_MILLIS)
+
 // mode_kaleidoscope_matrix spawns new falling code in the top row and then moves them down screen.
 // Since most of our top row is missing, map it to the top row available for the given column.
 static uint8_t col_to_top_row [] = {
@@ -14,9 +18,9 @@ static uint8_t col_to_top_row [] = {
 // https://gist.github.com/Jerware/b82ad4768f9935c8acfccc98c9211111#file-matrixeffect-ino
 void mode_xy_matrix()
 {
-    EVERY_N_MILLIS_I(timer, 75) // falling speed
+    EVERY_N_MILLIS_I(timer, DEFAULT_MILLIS) // falling speed
     {
-        timer.setPeriod(constrain(ms_between_frames - DEFAULT_SPEED_DELAY + 75, 0, MAX_SPEED_DELAY));
+        timer.setPeriod(MAX_MILLIS - map(kaleidoscope_speed, KALEIDOSCOPE_MIN_SPEED, KALEIDOSCOPE_MAX_SPEED, MIN_MILLIS, MAX_MILLIS));
         // move code downward
         // start with lowest row to allow proper overlapping on each column
         for (int8_t row = NUM_ROWS - 1; row >= 0; row--)
@@ -54,14 +58,14 @@ void mode_xy_matrix()
         if (random8(3) == 0 || emptyScreen) // lower number == more frequent spawns
         {
             int8_t spawnX = random8(NUM_COLS);
-            leds[XY(spawnX, col_to_top_row[spawnX])] = CRGB(175, 255, 175);
+            leds[XY(spawnX, pgm_read_byte_near(&col_to_top_row[spawnX]))] = CRGB(175, 255, 175);
         }
 
         leds_dirty = true;
     }
 
-    adjustBrightness();
     adjustSpeed();
+    adjustBrightness();
 }
 
 #endif

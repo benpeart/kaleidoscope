@@ -287,30 +287,33 @@ void adjustBrightness(bool useKnob)
 
 //
 // use the left rotary knob to adjust the speed of the kaleidoscope
-// by in/decreasing the number of milliseconds between frames
 //
-#define SPEED_INCREMENT 10
-int ms_between_frames = DEFAULT_SPEED_DELAY;
+
+// The increment is defined to require two complete knob rotations to go from min to max
+// Each knob roration is 20 clicks.
+#define INCREMENT_SPEED (KALEIDOSCOPE_MAX_SPEED / 40)
+uint8_t kaleidoscope_speed = KALEIDOSCOPE_DEFAULT_SPEED;
 int adjustSpeed()
 {
 #ifdef ENCODER
   static int lastLeftKnob = 0;
+  int new_speed = kaleidoscope_speed;
 
   int knob = knobLeft.getCount();
   if (knob != lastLeftKnob)
   {
     if (knob > lastLeftKnob)
-      ms_between_frames += SPEED_INCREMENT;
+      new_speed -= INCREMENT_SPEED;
     else
-      ms_between_frames -= SPEED_INCREMENT;
+      new_speed += INCREMENT_SPEED;
 
-    ms_between_frames = constrain(ms_between_frames, 0, MAX_SPEED_DELAY);
+    kaleidoscope_speed = constrain(new_speed, 0, KALEIDOSCOPE_MAX_SPEED);
     lastLeftKnob = knob;
 
-    DB_PRINTF("ms between frames = %d\r\n", ms_between_frames);
+    DB_PRINTF("ms between frames = %d\r\n", kaleidoscope_speed);
   }
 #endif
-  return ms_between_frames;
+  return kaleidoscope_speed;
 }
 
 // TODO: refactor the kaleidoscope mode logic into kaleidoscope.h/.cpp
@@ -487,7 +490,7 @@ void setKaleidoscopeMode(int new_mode)
 typedef struct
 {
   int LEDBrightnessManualOffset;
-  int ms_between_frames;
+  int kaleidoscope_speed;
   int kaleidoscope_mode;
   int clock_face;
   int draw_style;
@@ -495,7 +498,7 @@ typedef struct
 } kaleidoscope_settings;
 kaleidoscope_settings settings = {
     LEDBrightnessManualOffset,
-    ms_between_frames,
+    kaleidoscope_speed,
     kaleidoscope_mode,
     clock_face,
     draw_style,
@@ -512,9 +515,9 @@ void applySettings(kaleidoscope_settings &settings)
     LEDBrightnessManualOffset = settings.LEDBrightnessManualOffset;
   }
 
-  if (ms_between_frames != settings.ms_between_frames)
+  if (kaleidoscope_speed != settings.kaleidoscope_speed)
   {
-    ms_between_frames = settings.ms_between_frames;
+    kaleidoscope_speed = settings.kaleidoscope_speed;
   }
 
   if (kaleidoscope_mode != settings.kaleidoscope_mode)
@@ -548,7 +551,7 @@ void getSettings(AsyncWebServerRequest *request)
   String response;
 
   doc["brightness"] = LEDBrightnessManualOffset;
-  doc["speed"] = ms_between_frames;
+  doc["speed"] = kaleidoscope_speed;
   doc["mode"] = modeNames[kaleidoscope_mode];
   doc["clockFace"] = clockFaces[clock_face];
   doc["drawStyle"] = drawStyles[draw_style];
@@ -643,7 +646,7 @@ void saveSettings(AsyncWebServerRequest *request, JsonVariant &json)
   JsonVariant speed = jsonObj["speed"];
   if (!speed.isNull())
   {
-    settings.ms_between_frames = constrain(speed, 0, MAX_SPEED_DELAY);
+    settings.kaleidoscope_speed = constrain(speed, 0, KALEIDOSCOPE_MAX_SPEED);
     newSettings = true;
   }
 
