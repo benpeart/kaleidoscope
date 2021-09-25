@@ -52,7 +52,7 @@ const uint8_t cos_wave[256] = {
 void GammaCorrection()
 {
     byte r, g, b;
-    for (uint16_t i = 0; i < NUM_LEDS; i++)
+    for (uint16_t i = 0; i < NUM_STRIPS * NUM_LEDS_PER_STRIP; i++)
     {
         r = leds[i].r;
         g = leds[i].g;
@@ -92,7 +92,7 @@ void mode_xy_distortion_waves()
         for (int y = 0; y < NUM_ROWS; y++)
         {
             uint16_t index = XY(x, y);
-            if (index == 241)
+            if (index == OUTOFBOUNDS)
                 continue; //for skip unused cells in lookup table. add some fps )). may be delete
 
             yoffs += scale;
