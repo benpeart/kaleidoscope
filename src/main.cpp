@@ -11,6 +11,7 @@
 #include "TwinkleFox.h"
 #include "XYDistortionWaves.h"
 #include "XY.h"
+#include "XYAALines.h"
 #include "XYmatrix.h"
 #include "XYpacifica.h"
 #include "XYrainbow.h"
@@ -339,6 +340,7 @@ void (*renderFunc[])(void){
     mode_kaleidoscope_ripples,
     mode_kaleidoscope_twinkle_fox,
     mode_doom,
+    mode_xy_aalines,
     mode_xy_distortion_waves,
     mode_xy_matrix,
     mode_xy_pacifica,
@@ -375,6 +377,7 @@ const PROGMEM char modeNames[N_MODES][64] =
         "Ripples",
         "Twinkle Fox",
         "Doom",
+        "AA Lines",
         "Distortion Waves",
         "Matrix",
         "Pacifica",
@@ -400,6 +403,7 @@ const PROGMEM char showInRESTAPI[N_MODES]{
 #endif
 #ifdef DEMO
     0,
+    1,
     1,
     1,
     1,
@@ -439,6 +443,7 @@ int modeEncoderCounts[N_MODES][2] =
         {0, 0},
 #endif
 #ifdef DEMO
+        {0, 0},
         {0, 0},
         {0, 0},
         {0, 0},
