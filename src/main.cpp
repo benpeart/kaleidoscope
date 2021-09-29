@@ -1,16 +1,12 @@
 #include "main.h"
 #include "Kaleidoscope.h"
-#include "RealTimeClock.h"
+#include "XY.h"
 #ifdef DEMO
-#include "beatwave.h"
-#include "blendwave.h"
 #include "doom.h"
 #include "plasma.h"
-#include "rainbowmarch.h"
 #include "ripples.h"
 #include "TwinkleFox.h"
 #include "XYDistortionWaves.h"
-#include "XY.h"
 #include "XYAALines.h"
 #include "XYmatrix.h"
 #include "XYpacifica.h"
@@ -324,6 +320,7 @@ int adjustSpeed()
 // we return to "mode_off" at several points in the sequence.
 void (*renderFunc[])(void){
     mode_kaleidoscope,
+#ifdef ENCODER
     mode_off, // make it obvious we're entering 'setup' modes
     mode_kaleidoscope_select_speed_brightness,
     //    mode_kaleidoscope_select_disks,
@@ -331,12 +328,10 @@ void (*renderFunc[])(void){
 #ifdef TIME
     mode_select_clock_face,
 #endif
+#endif
 #ifdef DEMO
     mode_off, // make it obvious we're entering 'demo' modes
-              //    mode_kaleidoscope_beatWave,
-              //    mode_kaleidoscope_blendWave,
     mode_kaleidoscope_plasma,
-    //    mode_kaleidoscope_rainbowMarch,
     mode_kaleidoscope_ripples,
     mode_kaleidoscope_twinkle_fox,
     mode_xy_aalines,
@@ -358,9 +353,10 @@ void (*renderFunc[])(void){
 #define N_MODES (sizeof(renderFunc) / sizeof(renderFunc[0]))
 uint8_t kaleidoscope_mode = 0; // Index of current mode in table
 
-const PROGMEM char modeNames[N_MODES][64] =
+const char modeNames[N_MODES][64] =
     {
         "Kaleidoscope",
+#ifdef ENCODER
         "off",
         "kaleidoscope_select_speed_brightness",
         //        "kaleidoscope_select_disks",
@@ -368,12 +364,10 @@ const PROGMEM char modeNames[N_MODES][64] =
 #ifdef TIME
         "select_clock_face",
 #endif
+#endif
 #ifdef DEMO
         "off",
-        //        "Beat Wave",
-        //        "Blend Wave",
         "Plasma",
-        //        "Rainbow March",
         "Ripples",
         "Twinkle Fox",
         "AA Lines",
@@ -394,6 +388,7 @@ const PROGMEM char modeNames[N_MODES][64] =
 
 const PROGMEM char showInRESTAPI[N_MODES]{
     1,
+#ifdef ENCODER
     0,
     0,
     //        "kaleidoscope_select_disks",
@@ -401,12 +396,10 @@ const PROGMEM char showInRESTAPI[N_MODES]{
 #ifdef TIME
     0,
 #endif
+#endif
 #ifdef DEMO
     0,
-    //    1,
-    //    1,
     1,
-    //    1,
     1,
     1,
     1,
@@ -419,9 +412,9 @@ const PROGMEM char showInRESTAPI[N_MODES]{
     1,
 #endif
 #ifdef DEBUG
-    "kaleidoscope_test",
-    "xy_test",
-    "test",
+    1,
+    1,
+    1,
 #endif
     0};
 
@@ -438,16 +431,13 @@ int modeEncoderCounts[N_MODES][2] =
         {0, 0},
         //        {0, 0},
         {0, 0},
-        {0, 0},
 #ifdef TIME
         {0, 0},
 #endif
 #ifdef DEMO
         {0, 0},
-        //        {0, 0},
-        //        {0, 0},
         {0, 0},
-        //        {0, 0},
+        {0, 0},
         {0, 0},
         {0, 0},
         {0, 0},
@@ -471,9 +461,9 @@ void setKaleidoscopeMode(int new_mode)
   // if the mode changed
   if (kaleidoscope_mode != new_mode)
   {
-    int old_mode = kaleidoscope_mode;
-    kaleidoscope_mode = new_mode;
 #ifdef ENCODER
+    int old_mode = kaleidoscope_mode;
+
     // save the encoder count for the old mode and restore the new mode count
     modeEncoderCounts[old_mode][LEFT_ENCODER] = knobLeft.getCount();
     knobLeft.setCount(modeEncoderCounts[new_mode][LEFT_ENCODER]);
@@ -482,12 +472,14 @@ void setKaleidoscopeMode(int new_mode)
 #endif
 
     // output the new mode name and clear the led strips for the new mode
+    kaleidoscope_mode = new_mode;
     DB_PRINTLN(modeNames[kaleidoscope_mode]);
     FastLED.clear();
     leds_dirty = true;
   }
 }
 
+#ifdef REST
 // This is needed to solve some threading issues with the REST APIs coming in via
 // asyncronous messages. When we get a change, just store them in the temporary
 // settings object then apply them on the primary thread so we aren't racing
@@ -548,8 +540,6 @@ void applySettings(kaleidoscope_settings &settings)
   newSettings = false;
 }
 
-#ifdef WIFI
-#ifdef REST
 void getSettings(AsyncWebServerRequest *request)
 {
   StaticJsonDocument<128> doc;
@@ -580,7 +570,7 @@ void getModes(AsyncWebServerRequest *request)
   // add the names
   for (int x = 0; x < N_MODES; x++)
   {
-    if (showInRESTAPI[x])
+    if (pgm_read_byte_near(&showInRESTAPI[x]))
       array.add(modeNames[x]);
   }
 
@@ -741,7 +731,6 @@ void hueChanged(EspalexaDevice *d)
     break;
   }
 }
-#endif
 #endif
 
 //
@@ -910,8 +899,10 @@ void setup()
 //
 void loop()
 {
+#ifdef REST
   // apply any settings changes received via the REST APIs
   applySettings(settings);
+#endif
 
 #ifdef BOUNCE
   // check for a mode change
@@ -982,7 +973,7 @@ void loop()
   {
     if (triggerTimer)
     {
-      DB_PRINTF("\r0 fps   \r");
+      DB_PRINT("\r0 fps   \r");
     }
   }
 #endif

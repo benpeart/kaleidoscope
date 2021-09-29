@@ -163,7 +163,7 @@ void mode_xy_test()
   EVERY_N_MILLISECONDS(75)
   {
     // erase the last pixel
-    index = XYToIndex(x, y);
+    index = XY(x, y);
     leds[index] = CRGB::Black; // off
 
     // move to the next pixel
@@ -173,7 +173,7 @@ void mode_xy_test()
       if (++y >= NUM_ROWS)
         y = 0;
     }
-    index = XYToIndex(x, y);
+    index = XY(x, y);
 
     DB_PRINT("x = ");
     DB_PRINT(x);
