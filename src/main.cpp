@@ -333,10 +333,10 @@ void (*renderFunc[])(void){
 #endif
 #ifdef DEMO
     mode_off, // make it obvious we're entering 'demo' modes
-//    mode_kaleidoscope_beatWave,
-//    mode_kaleidoscope_blendWave,
+              //    mode_kaleidoscope_beatWave,
+              //    mode_kaleidoscope_blendWave,
     mode_kaleidoscope_plasma,
-//    mode_kaleidoscope_rainbowMarch,
+    //    mode_kaleidoscope_rainbowMarch,
     mode_kaleidoscope_ripples,
     mode_kaleidoscope_twinkle_fox,
     mode_xy_aalines,
@@ -370,10 +370,10 @@ const PROGMEM char modeNames[N_MODES][64] =
 #endif
 #ifdef DEMO
         "off",
-//        "Beat Wave",
-//        "Blend Wave",
+        //        "Beat Wave",
+        //        "Blend Wave",
         "Plasma",
-//        "Rainbow March",
+        //        "Rainbow March",
         "Ripples",
         "Twinkle Fox",
         "AA Lines",
@@ -403,10 +403,10 @@ const PROGMEM char showInRESTAPI[N_MODES]{
 #endif
 #ifdef DEMO
     0,
-//    1,
-//    1,
+    //    1,
+    //    1,
     1,
-//    1,
+    //    1,
     1,
     1,
     1,
@@ -444,10 +444,10 @@ int modeEncoderCounts[N_MODES][2] =
 #endif
 #ifdef DEMO
         {0, 0},
-//        {0, 0},
-//        {0, 0},
+        //        {0, 0},
+        //        {0, 0},
         {0, 0},
-//        {0, 0},
+        //        {0, 0},
         {0, 0},
         {0, 0},
         {0, 0},
