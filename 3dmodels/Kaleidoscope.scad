@@ -20,50 +20,80 @@ diffuser_thickness = 3.175; // 1/8 inch
 backboard_thickness = 6.35; // 1/4 inch
 
 // side wall dimensions
-side_wall_thickness = 6.35;//19.05; // 3/4 inch
-side_wall_height = wall_height + 2 * diffuser_thickness;
+side_wall_thickness = 19.05;// 3/4 inch
+side_wall_height = backboard_thickness + wall_height + (2 * diffuser_thickness);
 
 // chin dimensions
-chin_width = (radius + side_wall_thickness) * sin(60) * 2 - 70;
+chin_width = (radius + side_wall_thickness) * sin(60) * 2 - (4 * side_wall_thickness);
 chin_depth = side_wall_thickness + wall_height;
-chin_wall_height = 25.4; // 1 inch
+chin_wall_height = 31.75; // 1 1/4 inch
 
 // knob dimensions
 knob_height = 15;
 knob_radius = 35;
 
-//color("yellow") backboard();
-color("black") translate([0, 0, backboard_thickness]) honeycomb();
-//color("gray", 0.25) translate([0, 0, backboard_thickness + wall_height]) diffuser();
-///*color("blue") */translate([0, 0, backboard_thickness]) honeycomb_sidewall();
-//color("silver") translate([chin_width / 4 + 50, radius - chin_depth - 20, chin_wall_height + 2 * backboard_thickness]) rotate(15) cylinder(h=knob_height, r=knob_radius, $fn=6);
-//color("silver") translate([-(chin_width / 4 + 50), radius - chin_depth - 20, chin_wall_height + 2 * backboard_thickness]) rotate(45) cylinder(h=knob_height, r=knob_radius, $fn=6);
 
-///*color("brown", 0.5) */translate([0, 0, backboard_thickness]) chin_sidewall();
-//color("green") translate([-566.3 - side_wall_thickness, -770, backboard_thickness]) rotate(90) resize([72.8, 80.4, 25]) import("OBJ_PCB_ESP32 Kaleidoscope.stl");
+//
+// Draw all the component pieces
+//
+ color("yellow") backboard();
+color("blue") honeycomb_sidewall();
+//color("black") honeycomb();
+color("gray", 0.25) diffuser();
+
+color("brown") chin_sidewall();
+color("green") translate([-559 - side_wall_thickness, -770, backboard_thickness]) rotate(90) resize([72.8, 80.4, 25]) import("OBJ_PCB_ESP32 Kaleidoscope.stl");
+color("brown", 0.5) chin_top();
+
+color("silver") translate([chin_width / 4 + 50, radius - chin_depth + 50, chin_wall_height + backboard_thickness]) rotate(15) cylinder(h=knob_height, r=knob_radius, $fn=6);
+color("silver") translate([-(chin_width / 4 + 50), radius - chin_depth + 50, chin_wall_height + backboard_thickness]) rotate(45) cylinder(h=knob_height, r=knob_radius, $fn=6);
+
 
 module backboard()
 {
     union()
     {
         // draw the hexagon
-        rotate(30) cylinder(h=backboard_thickness, r=(radius + side_wall_thickness), $fn=6);
+        rotate(30)
+        cylinder(h=backboard_thickness, r=(radius + diffuser_thickness), $fn=6);
         
         // draw the chin
-        translate([-chin_width / 2, chin_depth, 0])
-        cube([chin_width, radius, backboard_thickness]);
+        translate([side_wall_thickness - chin_width / 2 - diffuser_thickness, chin_depth + side_wall_thickness, 0])
+        cube([chin_width - (2 * side_wall_thickness) + (2 *  + diffuser_thickness), radius - (2 * side_wall_thickness) + diffuser_thickness, backboard_thickness]);
     }
+}
+
+module diffuser()
+{
+    // draw the diffuser hexagon
+    rotate(30)
+    translate([0, 0, backboard_thickness + wall_height]) 
+    cylinder(h=diffuser_thickness, r=(radius + diffuser_thickness), $fn=6);
 }
 
 module honeycomb_sidewall()
 {
-    rotate(30) difference()
+    rotate(30)
+    difference()
     {
         // draw the expanded hexagon
-        cylinder(h=side_wall_height, r=(radius + side_wall_thickness), $fn=6);
+        cylinder(h=side_wall_height, r=(radius + side_wall_thickness - diffuser_thickness), $fn=6);
 
-        // now remove the honeycomb
-        translate([0, fudge / 2, 0]) cylinder(h=side_wall_height + fudge, r=radius, $fn=6);
+        // now remove the face of the honeycomb leaving a lip to hold the contents (diffuser + honeycomb + backboard)
+        translate([0, 0, -fudge / 2]) 
+        cylinder(h=side_wall_height + fudge, r=radius - diffuser_thickness, $fn=6);
+
+        // now remove bottom of the honeycomb to leave room for the diffuser, honeycomb and backboard
+        translate([0, 0, -diffuser_thickness]) 
+        cylinder(h=side_wall_height, r=radius, $fn=6);
+        
+        // remove the chin
+        rotate(-30)
+        translate([-chin_width / 2, chin_depth, -fudge/2]) 
+        cube([chin_width / 2 - 10, radius, chin_wall_height + fudge]);
+        rotate(-30)
+        translate([10, chin_depth, -fudge/2]) 
+        cube([chin_width / 2 - 10, radius, chin_wall_height + fudge]);
     }
 }
 
@@ -72,19 +102,40 @@ module chin_sidewall()
     difference()
     {
         // draw the chin
-        translate([-chin_width / 2, chin_depth, 0]) cube([chin_width, radius, chin_wall_height]);
+        translate([-chin_width / 2, chin_depth, 0]) 
+        cube([chin_width, radius, chin_wall_height]);
         
         // remove the chin insides
-        translate([-chin_width / 2 + side_wall_thickness, chin_depth, 0]) cube([chin_width - 2 * side_wall_thickness, radius - side_wall_thickness, chin_wall_height - diffuser_thickness]);
+        translate([-chin_width / 2 + side_wall_thickness, chin_depth, - fudge / 2]) 
+        cube([chin_width - (2 * side_wall_thickness), radius - side_wall_thickness, chin_wall_height + fudge]);
 
         // remove the expanded hexagon
-        rotate(30) cylinder(h=chin_wall_height + fudge, r=(radius + side_wall_thickness), $fn=6);
+        rotate(30) translate([0, fudge / 2, 0]) 
+        cylinder(h=side_wall_height + fudge, r=(radius + diffuser_thickness), $fn=6);
+        
+        // remove a notch for the backboard
+        backboard();
+    }
+}
+
+module chin_top()
+{
+    difference()
+    {
+        // draw a lid for the chin
+        translate([-chin_width / 2, chin_depth, chin_wall_height]) 
+        cube([chin_width, radius, diffuser_thickness]);
+        
+        // remove the expanded hexagon
+        rotate(30) translate([0, fudge / 2, 0]) 
+        cylinder(h=side_wall_height + fudge, r=(radius + side_wall_thickness - diffuser_thickness), $fn=6);
     }
 }
 
 module honeycomb()
 {
-    color("white") difference()
+    translate([0, 0, backboard_thickness]) 
+    difference()
     {
         // draw the hexagon
         rotate(30) cylinder(h=wall_height, r=radius, $fn=6);
@@ -126,8 +177,3 @@ module honeycomb()
     }
 }
 
-module diffuser()
-{
-    // draw the diffuser hexagon
-    rotate(30) cylinder(h=diffuser_thickness, r=(radius + diffuser_thickness), $fn=6);
-}
