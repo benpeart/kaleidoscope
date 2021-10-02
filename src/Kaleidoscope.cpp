@@ -19,6 +19,11 @@ CRGB leds[NUM_STRIPS * NUM_LEDS_PER_STRIP];
 CRGB leds2[NUM_STRIPS * NUM_LEDS_PER_STRIP];
 CRGB leds3[NUM_STRIPS * NUM_LEDS_PER_STRIP];
 
+// How often to change color palettes.
+#define SECONDS_PER_PALETTE 30
+
+CRGBPalette16 gKTargetPalette;
+
 // Create a lookup table where the index is the number of the triangle and the result is
 // three pairs of {strip, index} that can be passed to MirroredSetPixelColor so they are
 // mirrored to the other 3 axis. This way we only have to store 3 LED/offset pairs.
@@ -558,6 +563,24 @@ void mode_kaleidoscope()
     static int time_of_last_frame = 0;
     static boolean drawframe = true; // start by drawing the first frame
     static boolean blendframes = false;
+    static bool init = false;
+
+    // do a one time init
+    if (!init)
+    {
+        init = true;
+        chooseNextDiskPalette(gKTargetPalette);
+    }
+
+    EVERY_N_SECONDS(SECONDS_PER_PALETTE)
+    {
+        chooseNextDiskPalette(gKTargetPalette);
+    }
+
+    EVERY_N_MILLIS(10)
+    {
+        nblendPaletteTowardPalette(gCurrentDiskPalette, gKTargetPalette, 12);
+    }
 
     int time = millis();
     int ms_between_frames = MAX_MILLIS - map(kaleidoscope_speed, KALEIDOSCOPE_MIN_SPEED, KALEIDOSCOPE_MAX_SPEED, MIN_MILLIS, MAX_MILLIS);

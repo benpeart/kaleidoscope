@@ -5,7 +5,7 @@
 class GlassDisk
 {
 public:
-    GlassDisk(TProgmemRGBPalette16 const *disk_pal, uint8_t const *disk_array, uint8_t disk_cols, uint8_t disk_offset = 0)
+    GlassDisk(CRGBPalette16 const *disk_pal, uint8_t const *disk_array, uint8_t disk_cols, uint8_t disk_offset = 0)
     {
         pal = disk_pal;
         array = disk_array;
@@ -46,17 +46,18 @@ public:
     }
 
     // TODO: make these private and add getter/setter methods for any that are needed
-    TProgmemRGBPalette16 const *pal;
+    CRGBPalette16 const *pal;
     uint8_t const *array;
     uint8_t columns;
     uint8_t offset;
 };
 
-// some default pallets and glass disks
-extern const TProgmemRGBPalette16 JewelColors_p;
+// Advance to the next color palette in the list.
+void chooseNextDiskPalette(CRGBPalette16 &pal);
+extern CRGBPalette16 gCurrentDiskPalette;
+
 extern GlassDisk TriangleDisk;
 extern GlassDisk SquareDisk;
 #ifdef DEBUG
-extern const TProgmemRGBPalette16 BlackAndWhiteColors_p;
 extern GlassDisk TestDisk;
 #endif
