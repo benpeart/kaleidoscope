@@ -33,39 +33,44 @@ void inputEvent()
     int knob = knobLeft.getCount();
     if (knob != lastLeftKnob)
     {
+        // if the knob was twisted left
         if (knob > lastLeftKnob)
         {
-            snakeGame.goLeft(); // Snake will go left on the next move
-            isMoveTone = true;
-            direction = LEFT;
+            switch (snakeGame.getSnakeDirection())
+            {
+            case LEFT:
+                snakeGame.goDown();
+                break;
+            case RIGHT:
+                snakeGame.goUp();
+                break;
+            case UP:
+                snakeGame.goLeft();
+                break;
+            case DOWN:
+                snakeGame.goRight();
+                break;
+            }
         }
         else
         {
-            snakeGame.goRight(); // Snake will go right on the next move
-            isMoveTone = true;
-            direction = RIGHT;
+            switch (snakeGame.getSnakeDirection())
+            {
+            case LEFT:
+                snakeGame.goUp();
+                break;
+            case RIGHT:
+                snakeGame.goDown();
+                break;
+            case UP:
+                snakeGame.goRight();
+                break;
+            case DOWN:
+                snakeGame.goLeft();
+                break;
+            }
         }
         lastLeftKnob = knob;
-    }
-
-    // use the right knob to change directions up/down
-    static int lastRightKnob = 0;
-    knob = knobRight.getCount();
-    if (knob != lastRightKnob)
-    {
-        if (knob > lastRightKnob)
-        {
-            snakeGame.goDown(); // Snake will go down on the next move
-            isMoveTone = true;
-            direction = DOWN;
-        }
-        else
-        {
-            snakeGame.goUp(); // Snake will go up on the next move
-            isMoveTone = true;
-            direction = UP;
-        }
-        lastRightKnob = knob;
     }
 #endif
 
@@ -86,7 +91,8 @@ void inputEvent()
 
 void setPixel(byte x, byte y, byte r, byte g, byte b)
 {
-    leds[XY(x, y)].setRGB(r, g, b);
+    // invert the Y-Axis as Snake assumes x=0, y=0 is at the bottom left, but my library has it at top left
+    leds[XY(x, HEIGHT - 1 - y)].setRGB(r, g, b);
     leds_dirty = true;
 }
 
@@ -133,12 +139,11 @@ void mode_xy_snake()
 
         clearScreen();
 
-        setPixel(snakeFood[0].posX, HEIGHT - snakeFood[0].posY, snakeFood[0].pixelColor.r, snakeFood[0].pixelColor.g, snakeFood[0].pixelColor.b); // display the food
+        setPixel(snakeFood[0].posX, snakeFood[0].posY, snakeFood[0].pixelColor.r, snakeFood[0].pixelColor.g, snakeFood[0].pixelColor.b); // display the food
 
         for (int i = 0; i < snakeGame.getSnakeLenght(); i++)
         {
-            // Display the snake, my setpixel method has x=0, y=0 at the top left, but the library has it at bottom left, so I invert the Y-Axis:
-            setPixel(snakeLimbs[i].posX, HEIGHT - snakeLimbs[i].posY, snakeLimbs[i].pixelColor.r, snakeLimbs[i].pixelColor.g, snakeLimbs[i].pixelColor.b);
+            setPixel(snakeLimbs[i].posX, snakeLimbs[i].posY, snakeLimbs[i].pixelColor.r, snakeLimbs[i].pixelColor.g, snakeLimbs[i].pixelColor.b);
         }
 
         if (lastSnakeLenght != snakeGame.getSnakeLenght())
@@ -148,7 +153,7 @@ void mode_xy_snake()
             timerSnakeRose = millis();
         }
 
-        //        FastLED.show();
+        //FastLED.show();
         snakeGame.tick(); // Main loop for the snake library
     }
 
@@ -168,7 +173,7 @@ void mode_xy_snake()
     if (snakeGame.wasGameReset())
     {
         changeRGBtoGBR();
-        //        FastLED.show();
+        //FastLED.show();
         isGameReset = true;
         timerReset = millis();
     }

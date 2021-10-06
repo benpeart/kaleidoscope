@@ -130,7 +130,7 @@ uint16_t XY(uint16_t x, uint16_t y)
 
   // if we are returning an out of bounds value for an individual strip, return the first hidden LED instead
   // to make error handling easier.
-  if (stripOffset > NUM_LEDS_PER_STRIP)
+  if (stripOffset >= NUM_LEDS_PER_STRIP)
     return OUTOFBOUNDS;
 
   if (x < STRIP_0_NUM_COLS)

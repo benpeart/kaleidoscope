@@ -141,6 +141,11 @@ void Snake::goDown()
     _direction = DOWN;
 }
 
+byte Snake::getSnakeDirection()
+{
+    return _direction;
+}
+
 int Snake::getSnakeLenght()
 {
     return _snakeLength;

@@ -20,7 +20,7 @@ CRGB leds2[NUM_STRIPS * NUM_LEDS_PER_STRIP];
 CRGB leds3[NUM_STRIPS * NUM_LEDS_PER_STRIP];
 
 // How often to change color palettes.
-#define SECONDS_PER_PALETTE 30
+#define SECONDS_PER_PALETTE (5 * 60)
 
 CRGBPalette16 gKTargetPalette;
 

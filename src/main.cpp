@@ -746,11 +746,11 @@ void setup()
   Serial.begin(115200);
   while (!Serial)
     ; // wait for serial port to connect. Needed for native USB port only
+  DB_PRINT("\nStarting Kaleidoscope on " + String(ARDUINO_BOARD));
 #endif
 
 #ifdef WIFI
   // connect to wifi or enter AP mode so it can be configured
-  DB_PRINT("\nStarting Kaleidoscope on " + String(ARDUINO_BOARD));
   DB_PRINTLN(ESP_ASYNC_WIFIMANAGER_VERSION);
 
 #ifdef DRD

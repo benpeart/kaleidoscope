@@ -83,6 +83,7 @@ public:
 
     void resetGame();
     bool wasGameReset();
+    byte getSnakeDirection();
     int getSnakeLenght();
     void increaseSize();
     void setDelay(int moveDelay);

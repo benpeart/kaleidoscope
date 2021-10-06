@@ -144,7 +144,7 @@ static const PROGMEM uint8_t SquareDiskArray[DISK_ROWS * SQUARE_DISK_COLUMNS] =
 GlassDisk SquareDisk(&gCurrentDiskPalette, SquareDiskArray, SQUARE_DISK_COLUMNS);
 
 #ifdef DEBUG
-const TProgmemRGBPalette16 BlackAndWhiteColors_p FL_PROGMEM =
+const CRGBPalette16 BlackAndWhiteColors_p FL_PROGMEM =
     {
         0x000000, 0xFFFFFF, 0x000000, 0xFFFFFF,
         0x000000, 0xFFFFFF, 0x000000, 0xFFFFFF,
