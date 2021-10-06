@@ -36,13 +36,13 @@ knob_radius = 35;
 //
 // Draw all the component pieces
 //
- color("yellow") backboard();
+color("yellow") backboard();
 color("blue") honeycomb_sidewall();
 //color("black") honeycomb();
 color("gray", 0.25) diffuser();
 
 color("brown") chin_sidewall();
-color("green") translate([-559 - side_wall_thickness, -770, backboard_thickness]) rotate(90) resize([72.8, 80.4, 25]) import("OBJ_PCB_ESP32 Kaleidoscope.stl");
+//color("green") translate([-559 - side_wall_thickness, -770, backboard_thickness]) rotate(90) resize([72.8, 80.4, 25]) import("OBJ_PCB_ESP32 Kaleidoscope.stl");
 color("brown", 0.5) chin_top();
 
 color("silver") translate([chin_width / 4 + 50, radius - chin_depth + 50, chin_wall_height + backboard_thickness]) rotate(15) cylinder(h=knob_height, r=knob_radius, $fn=6);
@@ -87,13 +87,13 @@ module honeycomb_sidewall()
         translate([0, 0, -diffuser_thickness]) 
         cylinder(h=side_wall_height, r=radius, $fn=6);
         
-        // remove the chin
+        // remove the chin in two pieces to leave a support
         rotate(-30)
         translate([-chin_width / 2, chin_depth, -fudge/2]) 
-        cube([chin_width / 2 - 10, radius, chin_wall_height + fudge]);
+        cube([chin_width / 2 - 10, radius, chin_wall_height + diffuser_thickness + fudge]);
         rotate(-30)
         translate([10, chin_depth, -fudge/2]) 
-        cube([chin_width / 2 - 10, radius, chin_wall_height + fudge]);
+        cube([chin_width / 2 - 10, radius, chin_wall_height + diffuser_thickness + fudge]);
     }
 }
 
@@ -111,7 +111,7 @@ module chin_sidewall()
 
         // remove the expanded hexagon
         rotate(30) translate([0, fudge / 2, 0]) 
-        cylinder(h=side_wall_height + fudge, r=(radius + diffuser_thickness), $fn=6);
+        cylinder(h=side_wall_height + fudge, r=radius, $fn=6);
         
         // remove a notch for the backboard
         backboard();
@@ -128,7 +128,7 @@ module chin_top()
         
         // remove the expanded hexagon
         rotate(30) translate([0, fudge / 2, 0]) 
-        cylinder(h=side_wall_height + fudge, r=(radius + side_wall_thickness - diffuser_thickness), $fn=6);
+        cylinder(h=side_wall_height + fudge, r=radius, $fn=6);
     }
 }
 
