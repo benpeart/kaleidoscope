@@ -147,11 +147,12 @@ void drawDigitalClock()
 // https://wokwi.com/arduino/projects/286985034843292172
 #include "wuLineAA.h"
 
-void wuVectorAA(const uint16_t x, const uint16_t y, const uint16_t length, const uint16_t theta, CRGB *col)
+// https://mathopenref.com/coordparamellipse.html
+void wuVectorAA(const uint16_t x, const uint16_t y, const uint16_t a, const uint16_t b, const uint16_t theta, CRGB *col)
 {
     int16_t dx, dy;
-    dx = ((int32_t)cos16(theta) * length) / 32768;
-    dy = ((int32_t)sin16(theta) * length) / 32768;
+    dx = (a * (int32_t)cos16(theta)) / 32768;
+    dy = (b * (int32_t)sin16(theta)) / 32768;
     wuLineAA(x, y, x + dx, y + dy, col);
 }
 
@@ -169,7 +170,8 @@ void displayHands(int hours, int minutes, int seconds, CRGB color)
     // everything is fixed-point, with 8-bits of fraction
     uint16_t centrex = WIDTH * 128 - 128;
     uint16_t centrey = HEIGHT * 128 - 128;
-    uint16_t length = WIDTH * 128;
+    uint16_t a = WIDTH * 128;
+    uint16_t b = HEIGHT * 128;
     uint16_t base_theta = 65536 * 3 / 4;
 
     // second hand with sweep action
@@ -179,17 +181,19 @@ void displayHands(int hours, int minutes, int seconds, CRGB color)
     if (diff < 0)
         diff += 65536;
     sweep_theta += (diff + 8) / 16;
-    wuVectorAA(centrex, centrey, length, base_theta + sweep_theta, &color);
+    wuVectorAA(centrex, centrey, a, b, base_theta + sweep_theta, &color);
 
     // minute hand
-    length = length * 7 / 8;
+    a = a * 7 / 8;
+    b = b * 7 / 8;
     theta = (theta + minutes * 65536) / 60;
-    wuVectorAA(centrex, centrey, length, base_theta + theta, &color);
+    wuVectorAA(centrex, centrey, a, b, base_theta + theta, &color);
 
     // hour hand
-    length = length * 3 / 4;
+    a = a * 3 / 4;
+    b = b * 3 / 4;
     theta = (theta + (hours % 12) * 65536) / 12;
-    wuVectorAA(centrex, centrey, length, base_theta + theta, &color);
+    wuVectorAA(centrex, centrey, a, b, base_theta + theta, &color);
 }
 
 void drawAnalogClock()
