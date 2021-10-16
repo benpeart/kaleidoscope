@@ -1,1 +1,0 @@
-void mode_doom();

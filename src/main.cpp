@@ -2,7 +2,6 @@
 #include "Kaleidoscope.h"
 #include "XY.h"
 #ifdef DEMO
-#include "doom.h"
 #include "plasma.h"
 #include "ripples.h"
 #include "TwinkleFox.h"
@@ -341,7 +340,6 @@ void (*renderFunc[])(void){
     mode_xy_pacifica,
     mode_xy_snake,
     mode_xy_fire,
-    mode_doom,
 #endif
 #ifdef DEBUG
     mode_kaleidoscope_test,
@@ -377,7 +375,6 @@ const char modeNames[N_MODES][64] =
         "Pacifica",
         "Snake",
         "Fire",
-        "Doom",
 #endif
 #ifdef DEBUG
         "kaleidoscope_test",
@@ -399,7 +396,6 @@ const PROGMEM char showInRESTAPI[N_MODES]{
 #endif
 #ifdef DEMO
     0,
-    1,
     1,
     1,
     1,
@@ -435,7 +431,6 @@ int modeEncoderCounts[N_MODES][2] =
         {0, 0},
 #endif
 #ifdef DEMO
-        {0, 0},
         {0, 0},
         {0, 0},
         {0, 0},
