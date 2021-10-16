@@ -156,6 +156,7 @@ void wuVectorAA(const uint16_t x, const uint16_t y, const uint16_t a, const uint
     wuLineAA(x, y, x + dx, y + dy, col);
 }
 
+// https://wokwi.com/arduino/projects/286985034843292172
 void displayHands(int hours, int minutes, int seconds, CRGB color)
 {
 #ifdef DEBUG
@@ -200,6 +201,71 @@ void drawAnalogClock()
 {
     struct tm timeinfo;
     static int hours = -1, minutes = -1, seconds = -1;
+
+    if (leds_dirty)
+    {
+        // draw marks at every 5 seconds
+#ifdef COMPUTEDHASHMARKS
+        for (int x = 0; x < 60; x += 5)
+        {
+            uint16_t centrex = WIDTH * 128 - 128;
+            uint16_t centrey = HEIGHT * 128 - 128;
+            uint16_t a = WIDTH * 128;
+            uint16_t b = HEIGHT * 128;
+            uint16_t base_theta = 65536 * 3 / 4;
+            uint16_t theta = x * 65536 / 60;
+            int16_t x1, y1, x2, y2;
+
+            x1 = (a * 3 / 4 * (int32_t)cos16(base_theta + theta)) / 32768;
+            y1 = (b * 3 / 4 * (int32_t)sin16(base_theta + theta)) / 32768;
+            x2 = (a * (int32_t)cos16(base_theta + theta)) / 32768;
+            y2 = (b * (int32_t)sin16(base_theta + theta)) / 32768;
+            wuLineAA(centrex + x1, centrey + y1, centrex + x2, centrey + y2, &handsColor);
+        }
+#else
+        uint16_t index;
+
+        // the even numbers are marked by the points of the hexagon so no need to draw them
+#ifdef false
+        // 0/12
+        index = XY(WIDTH / 2, 0);
+        leds[index] = BlendColors(leds[index]);
+        // 2
+        index = XY(WIDTH - 1, HEIGHT / 2 - 10);
+        leds[index] = BlendColors(leds[index]);
+        // 4
+        index = XY(WIDTH - 1, HEIGHT / 2 + 10);
+        leds[index] = BlendColors(leds[index]);
+        // 6
+        index = XY(WIDTH / 2, HEIGHT - 1);
+        leds[index] = BlendColors(leds[index]);
+        // 8
+        index = XY(0, HEIGHT / 2 + 10);
+        leds[index] = BlendColors(leds[index]);
+        // 10
+        index = XY(0, HEIGHT / 2 - 10);
+        leds[index] = BlendColors(leds[index]);
+#endif
+        // 1
+        index = XY(WIDTH / 2 + 4, 5);
+        leds[index] = BlendColors(leds[index]);
+        // 3
+        index = XY(WIDTH - 1, HEIGHT / 2);
+        leds[index] = BlendColors(leds[index]);
+        // 5
+        index = XY(WIDTH - 6, HEIGHT / 2 + 14);
+        leds[index] = BlendColors(leds[index]);
+        // 7
+        index = XY(WIDTH / 2 - 5, HEIGHT - 6);
+        leds[index] = BlendColors(leds[index]);
+        // 9
+        index = XY(0, HEIGHT / 2);
+        leds[index] = BlendColors(leds[index]);
+        // 11
+        index = XY(WIDTH / 2 - 5, 5);
+        leds[index] = BlendColors(leds[index]);
+#endif
+    }
 
     if (getLocalTime(&timeinfo))
     {
