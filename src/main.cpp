@@ -177,7 +177,10 @@ void mode_test()
 // BRIGHTNESS helpers -------------------------------------------------
 //
 
-#define KNOB_INCREMENT 100
+#define MIN_BRIGHTNESS 32
+#define MAX_BRIGHTNESS 255
+#define MAX_BRIGHTNESS_READING 1024
+#define KNOB_INCREMENT (MAX_BRIGHTNESS / 20)  // brightness range / number of pulses in one rotation of rotary encoder
 
 #ifdef PHOTOCELL
 #define FILTER_LEN 50
@@ -204,8 +207,8 @@ uint32_t readADC_Avg(int ADC_Raw)
 int ambientBrightness()
 {
   // The ADC input channels have a 12 bit resolution. This means that you can get analog readings
-  // ranging from 0 to 4095, in which 0 corresponds to 0V and 4095 to 3.3V
-  // https://randomnerdtutorials.com/esp32-pinout-reference-gpios/
+  // ranging from 0 to 4095, in which 0 corresponds to 0V and 4095 (I've only seen it go as high
+  // as 1903) to 3.3V. https://randomnerdtutorials.com/esp32-pinout-reference-gpios/
 
   // check the photocell and debounce it a bit as it moves around a lot
   static int lastPhotocell = 0;
@@ -219,10 +222,11 @@ int ambientBrightness()
   }
 #endif
 
-  return lastPhotocell;
+  // ensure we stay between our min and max valid values
+  return constrain(map(lastPhotocell, 0, MAX_BRIGHTNESS_READING, 0, MAX_BRIGHTNESS), 0, MAX_BRIGHTNESS);
 }
 
-// manually adjust the brightness of the LED strips
+// manually adjust the brightness of the LED strips up or down from the ambientBrightness
 static int LEDBrightnessManualOffset = 0;
 int manualBrightness(bool useKnob)
 {
@@ -240,7 +244,7 @@ int manualBrightness(bool useKnob)
     else
       LEDBrightnessManualOffset += KNOB_INCREMENT;
 
-    LEDBrightnessManualOffset = constrain(LEDBrightnessManualOffset, -4095, 4095);
+    LEDBrightnessManualOffset = constrain(LEDBrightnessManualOffset, -MAX_BRIGHTNESS, MAX_BRIGHTNESS);
     lastRightKnob = knob;
 
     DB_PRINTF("LEDBrightnessManualOffset = %d\r\n", LEDBrightnessManualOffset);
@@ -266,9 +270,8 @@ void adjustBrightness(bool useKnob)
   // store the current LED brightness so we can minimize minor differences
   static int LEDbrightness = 0;
 
-  // map our total brightness from 0-4095 to 0-255 since that is the range for setBrightness
-  int newBrightness = map(ambientBrightness() + manualBrightness(useKnob), 0, 4095, 0, 255);
-  newBrightness = constrain(newBrightness, 0, 255);
+  // constrain our total brightness from MIN_BRIGHTNESS to MAX_BRIGHTNESS so it doesn't get too dark
+  int newBrightness = constrain(ambientBrightness() + manualBrightness(useKnob), MIN_BRIGHTNESS, MAX_BRIGHTNESS);
 
   // adjust our brightness if it has changed
   if (newBrightness != LEDbrightness)
@@ -502,6 +505,7 @@ void applySettings(kaleidoscope_settings &settings)
   if (!newSettings)
     return;
 
+  // all validation of values happens in saveSettings()
   if (LEDBrightnessManualOffset != settings.LEDBrightnessManualOffset)
   {
     LEDBrightnessManualOffset = settings.LEDBrightnessManualOffset;
@@ -540,7 +544,8 @@ void getSettings(AsyncWebServerRequest *request)
   StaticJsonDocument<128> doc;
   String response;
 
-  doc["brightness"] = LEDBrightnessManualOffset;
+  // convert the brightness setting to the range the app expects
+  doc["brightness"] = map(LEDBrightnessManualOffset, -MAX_BRIGHTNESS, MAX_BRIGHTNESS, -305, 4095);
   doc["speed"] = kaleidoscope_speed;
   doc["mode"] = modeNames[kaleidoscope_mode];
   doc["clockFace"] = clockFaces[clock_face];
@@ -629,7 +634,8 @@ void saveSettings(AsyncWebServerRequest *request, JsonVariant &json)
   JsonVariant brightness = jsonObj["brightness"];
   if (!brightness.isNull())
   {
-    settings.LEDBrightnessManualOffset = constrain(brightness, -4095, 4095);
+    // convert the brightness setting from the range the app sends, to the needed range
+    settings.LEDBrightnessManualOffset = map(brightness, -305, 4095, -MAX_BRIGHTNESS, MAX_BRIGHTNESS);
     newSettings = true;
   }
 
