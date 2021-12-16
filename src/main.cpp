@@ -177,10 +177,11 @@ void mode_test()
 // BRIGHTNESS helpers -------------------------------------------------
 //
 
-#define MIN_BRIGHTNESS 32
-#define MAX_BRIGHTNESS 255
-#define MAX_BRIGHTNESS_READING 1024
-#define KNOB_INCREMENT (MAX_BRIGHTNESS / 20)  // brightness range / number of pulses in one rotation of rotary encoder
+#define MIN_BRIGHTNESS 32                    // the minimum brightness we want (above zero so it doesn't go completely dark)
+#define MAX_BRIGHTNESS 255                   // the max possible brightness
+#define MAX_BRIGHTNESS_READING 1024          // set this to the higest reading you get from the photocell
+#define KNOB_INCREMENT (MAX_BRIGHTNESS / 20) // brightness range / number of pulses in one rotation of rotary encoder
+#define DEBOUNCE_PHOTOCELL 64                // how much change we need to see in the average photocell reading before we change the brightness
 
 #ifdef PHOTOCELL
 #define FILTER_LEN 50
@@ -206,16 +207,15 @@ uint32_t readADC_Avg(int ADC_Raw)
 // compute the brightness of the LED strips to match the ambient lighting
 int ambientBrightness()
 {
-  // The ADC input channels have a 12 bit resolution. This means that you can get analog readings
-  // ranging from 0 to 4095, in which 0 corresponds to 0V and 4095 (I've only seen it go as high
-  // as 1903) to 3.3V. https://randomnerdtutorials.com/esp32-pinout-reference-gpios/
-
   // check the photocell and debounce it a bit as it moves around a lot
   static int lastPhotocell = 0;
 
 #ifdef PHOTOCELL
+  // The ADC input channels have a 12 bit resolution. This means that you can get analog readings
+  // ranging from 0 to 4095, in which 0 corresponds to 0V and 4095 to 3.3V. https://randomnerdtutorials.com/esp32-pinout-reference-gpios/
+  // However, I've only measured it as high as 1903 with a very bright light directly on the photocell.
   int photocellReading = readADC_Avg(analogRead(PHOTOCELL_PIN));
-  if ((photocellReading > lastPhotocell + 256) || (photocellReading < lastPhotocell - 256))
+  if ((photocellReading > lastPhotocell + DEBOUNCE_PHOTOCELL) || (photocellReading < lastPhotocell - DEBOUNCE_PHOTOCELL))
   {
     lastPhotocell = photocellReading;
     DB_PRINTF("photocell reading = %d\r\n", photocellReading);
