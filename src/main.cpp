@@ -489,7 +489,7 @@ typedef struct
   int kaleidoscope_mode;
   int clock_face;
   int draw_style;
-  CRGB handsColor;
+  CRGB clockColor;
 } kaleidoscope_settings;
 kaleidoscope_settings settings = {
     LEDBrightnessManualOffset,
@@ -497,7 +497,7 @@ kaleidoscope_settings settings = {
     kaleidoscope_mode,
     clock_face,
     draw_style,
-    handsColor};
+    clockColor};
 volatile bool newSettings = false;
 
 void applySettings(kaleidoscope_settings &settings)
@@ -531,9 +531,9 @@ void applySettings(kaleidoscope_settings &settings)
     set_draw_style(settings.draw_style);
   }
 
-  if (handsColor != settings.handsColor)
+  if (clockColor != settings.clockColor)
   {
-    handsColor = settings.handsColor;
+    clockColor = settings.clockColor;
   }
 
   newSettings = false;
@@ -544,13 +544,13 @@ void getSettings(AsyncWebServerRequest *request)
   StaticJsonDocument<128> doc;
   String response;
 
-  // convert the brightness setting to the range the app expects
-  doc["brightness"] = map(LEDBrightnessManualOffset, -MAX_BRIGHTNESS, MAX_BRIGHTNESS, -305, 4095);
-  doc["speed"] = kaleidoscope_speed;
   doc["mode"] = modeNames[kaleidoscope_mode];
-  doc["clockFace"] = clockFaces[clock_face];
   doc["drawStyle"] = drawStyles[draw_style];
-  doc["handsColor"] = handsColor.r << 16 | handsColor.g << 8 | handsColor.b;
+  // convert the brightness setting to the range the app expects
+  doc["brightness"] = LEDBrightnessManualOffset;
+  doc["speed"] = kaleidoscope_speed;
+  doc["clockFace"] = clockFaces[clock_face];
+  doc["clockColor"] = clockColor.r << 16 | clockColor.g << 8 | clockColor.b;
 
   serializeJson(doc, response);
   request->send(200, "text/json", response);
@@ -635,7 +635,7 @@ void saveSettings(AsyncWebServerRequest *request, JsonVariant &json)
   if (!brightness.isNull())
   {
     // convert the brightness setting from the range the app sends, to the needed range
-    settings.LEDBrightnessManualOffset = map(brightness, -305, 4095, -MAX_BRIGHTNESS, MAX_BRIGHTNESS);
+    settings.LEDBrightnessManualOffset = constrain(brightness, -MAX_BRIGHTNESS, MAX_BRIGHTNESS);
     newSettings = true;
   }
 
@@ -688,10 +688,10 @@ void saveSettings(AsyncWebServerRequest *request, JsonVariant &json)
     }
   }
 
-  JsonVariant handsColor = jsonObj["handsColor"];
-  if (!handsColor.isNull())
+  JsonVariant clockColor = jsonObj["clockColor"];
+  if (!clockColor.isNull())
   {
-    settings.handsColor = CRGB((uint32_t)handsColor);
+    settings.clockColor = CRGB((uint32_t)clockColor);
     newSettings = true;
   }
 

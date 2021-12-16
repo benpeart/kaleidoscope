@@ -26,87 +26,126 @@ If you are still having problems, reboot the Kaleidoscope (unplug/plug) twice a 
 
 ## REST API documentation
 
-The REST API is available at: http://kaleidoscope/api/settings. Alternately, check your router for the IP address.
+The Kaleidoscope connects to the WiFi with the device name "kaleidoscope." The web ui and REST API can be found at http://kaleidoscope/. 
+Alternately, check your router for the IP address.
 
-GET will return a result that includes the following entries:
+There are four REST endpoints that make up the REST API:
+
+1. "http://kaleidoscope/api/settings"
+1. "http://kaleidoscope/api/modes"
+1. "http://kaleidoscope/api/faces"
+1. "http://kaleidoscope/api/drawstyles"
+
+## 'Settings' REST API
+
+A GET sent to the Settings endpoint will return a result that includes the following entries:
+PUT will allow you to set some or all of the same values.
 
 ```
 {
+    "mode": "Twinkle Fox",
+    "drawStyle": "Six way",
     "brightness": 4095,
     "speed": 25,
-    "mode": "Twinkle Fox",
-    "clockFace": "None",
-    "drawStyle": "Six way",
-    "handsColor": 16646134
+    "clockFace": "Off",
+    "clockColor": 16646134
 }
 ```
 
-PUT will allow you to set some or all of the same values.
+### Mode
+
+The mode specifies which of the available Kaleidoscope modes is currently active. This can vary as more are added or removed but currently the list of available modes includes:
+
+```
+{
+    "off",
+    "Kaleidoscope",
+    "Plasma",
+    "Ripples",
+    "Twinkle Fox",
+    "AA Lines",
+    "Distortion Waves",
+    "Rainbow",
+    "Matrix",
+    "Pacifica",
+    "Snake",
+    "Fire"
+}    
+```        
+
+### drawStyle
+
+The drawStyle controls the type of reflection style the Kaleidoscope emulates. Currently this includes:
+
+```
+{
+    "Six way",
+    "Twelve way",
+    "Twenty four way"
+}
+```        
 
 ### Brightness
 
-TODO, switch this to be 0-255 which is the actual available range that it gets mapped to.
-
-Control how brightly the LEDs are lit. The valid range is -305 (dim) to 4095 (bright).
+Brightness is treated as an adjustment to the automatic brightness as computed using the photoresister to determine
+the ambient brightness of the room. Greater than zero makes it brighter than default, less than zero makes it darker than default.
+The valid range is -255 (dark) to 255 (bright). The default is 0.
 
 ### Speed
 
-The Kaleidoscope speed is a value between 0 (slow) to 255 (fast).
+The Kaleidoscope speed is a value between 0 (slow) to 255 (fast). The default is 127.
 Not all modes can honor all speeds; each one is responsible for making a 'best effort.'
 
-### Mode
-
-All the available modes for the Kaleidoscope. This can vary as more are added or removed but currently it includes:
-
-```
-    {
-        "off",
-        "Kaleidoscope",
-        "Plasma",
-        "Ripples",
-        "Twinkle Fox",
-        "AA Lines",
-        "Distortion Waves",
-        "Rainbow",
-        "Matrix",
-        "Pacifica",
-        "Snake",
-        "Fire",
-```        
-
 ### clockFace
-
-TODO: change clockFace from 'None' to 'Off' for consistency with the Mode
 
 Choose what clock face (if any) is displayed.
 
 ```
-    {
-        "None",
-        "Digital",
-        "Analog"
-    }
+{
+    "Off",
+    "Digital",
+    "Analog"
+}
 ```
 
-### drawStyle
-
-Controls the type of reflection style the Kaleidoscope emulates. Currently this includes:
-
-```
-    {
-        "Six way",
-        "Twelve way",
-        "Twenty four way"
-    }
-```        
-
-#### handsColor
-
-TODO: rename this value to "clockColor" as it is used by both the digital and analog clock
+### clockColor
 
 Specified the color used to draw the clock. It is a 3 byte RGB value stored as:
 
 ```
     handsColor.r << 16 | handsColor.g << 8 | handsColor.b;
+```
+
+## 'Modes' REST API
+
+A GET sent to the /api/modes endpoint will return an array of the available modes.
+PUT will allow you to set some or all of the same values.
+
+A sample result would be the following:
+
+```
+["Kaleidoscope","Plasma","Ripples","Twinkle Fox","AA Lines","Distortion Waves","Rainbow","Matrix","Pacifica","Snake","Fire"]
+```
+
+## 'Faces' REST API
+
+A GET sent to the /api/faces endpoint will return an array of the available clock faces.
+PUT will allow you to set some or all of the same values.
+
+A sample result would be the following:
+
+```
+["Off","Digital","Analog"]
+```
+
+## 'DrawStyles' REST API
+
+A GET sent to the /api/drawstyles endpoint will return an array of the posible draw styles.
+PUT will allow you to set some or all of the same values.
+
+A sample result would be the following:
+
+```
+["Six way","Twelve way","Twenty four way"]
 ```
 

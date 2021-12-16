@@ -13,7 +13,7 @@
 #define DEBUG
 #include "debug.h"
 
-CRGB handsColor = CRGB::Black;
+CRGB clockColor = CRGB::Black;
 
 /* Useful Constants */
 #define SECS_PER_MIN ((time_t)(60UL))
@@ -88,7 +88,7 @@ CRGB FadeColors(CRGB rgb)
 
 CRGB BlendColors(CRGB rgb)
 {
-    return blend(rgb, handsColor, 200);
+    return blend(rgb, clockColor, 200);
 }
 
 void drawNullClock()
@@ -220,7 +220,7 @@ void drawAnalogClock()
             y1 = (b * 3 / 4 * (int32_t)sin16(base_theta + theta)) / 32768;
             x2 = (a * (int32_t)cos16(base_theta + theta)) / 32768;
             y2 = (b * (int32_t)sin16(base_theta + theta)) / 32768;
-            wuLineAA(centrex + x1, centrey + y1, centrex + x2, centrey + y2, &handsColor);
+            wuLineAA(centrex + x1, centrey + y1, centrex + x2, centrey + y2, &clockColor);
         }
 #else
         uint16_t index;
@@ -297,7 +297,7 @@ void drawAnalogClock()
         }
 
         if (leds_dirty)
-            displayHands(hours, minutes, seconds, handsColor);
+            displayHands(hours, minutes, seconds, clockColor);
     }
 }
 
@@ -311,7 +311,7 @@ uint8_t clock_face = 0; // Index of current clock face in table
 
 const PROGMEM char clockFaces[N_CLOCK_FACES][16] =
     {
-        "None",
+        "Off",
         "Digital",
         "Analog"};
 
@@ -324,7 +324,7 @@ void mode_select_clock_face()
 {
     static boolean drawClockChanged = false;
 #ifdef ENCODER
-    // use the left knob to select kaleidoscope draw style
+    // use the left knob to select the clock face to draw
     static int lastLeftKnob = 0;
     int knob = knobLeft.getCount();
     if (knob != lastLeftKnob)
