@@ -9,7 +9,6 @@
 #include "XYAALines.h"
 #include "XYmatrix.h"
 #include "XYpacifica.h"
-#include "XYrainbow.h"
 #include "XYsnake.h"
 #include "XYfire.h"
 #endif
@@ -28,6 +27,7 @@
 #endif
 #define USE_ESP_WIFIMANAGER_NTP true
 #include <ESPAsync_WiFiManager.h>
+#include "ESPAsync_WiFiManager-Impl.h"
 #ifdef REST
 #include <AsyncJson.h>
 #include <ArduinoJson.h>
@@ -338,7 +338,6 @@ void (*renderFunc[])(void){
     mode_kaleidoscope_twinkle_fox,
     mode_xy_aalines,
     mode_xy_distortion_waves,
-    mode_xy_rainbow,
     mode_xy_matrix,
     mode_xy_pacifica,
     mode_xy_snake,
@@ -373,7 +372,6 @@ const char modeNames[N_MODES][64] =
         "Twinkle Fox",
         "AA Lines",
         "Distortion Waves",
-        "Rainbow",
         "Matrix",
         "Pacifica",
         "Snake",
@@ -408,7 +406,6 @@ const PROGMEM char showInRESTAPI[N_MODES]{
     1,
     1,
     1,
-    1,
 #endif
 #ifdef DEBUG
     1,
@@ -434,7 +431,6 @@ int modeEncoderCounts[N_MODES][2] =
         {0, 0},
 #endif
 #ifdef DEMO
-        {0, 0},
         {0, 0},
         {0, 0},
         {0, 0},
@@ -804,11 +800,11 @@ void setup()
 
 #ifdef REST
   webServer.on("/api/settings", HTTP_GET, getSettings);
+  AsyncCallbackJsonWebHandler *handler = new AsyncCallbackJsonWebHandler("/api/settings", saveSettings);
+  webServer.addHandler(handler);
   webServer.on("/api/modes", HTTP_GET, getModes);
   webServer.on("/api/faces", HTTP_GET, getFaces);
   webServer.on("/api/drawstyles", HTTP_GET, getDrawStyles);
-  AsyncCallbackJsonWebHandler *handler = new AsyncCallbackJsonWebHandler("/api/settings", saveSettings);
-  webServer.addHandler(handler);
 #endif
 
 #ifdef ALEXA
