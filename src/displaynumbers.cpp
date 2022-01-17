@@ -527,8 +527,12 @@ void displayNumbers(int n1, int n2, int n3, int n4, getColor color)
     }
 #endif
 
-    drawN1(n1, color);
-    drawN2(n2, color);
-    drawN3(n3, color);
-    drawN4(n4, color);
+    if (n1 >= 0)
+        drawN1(n1, color);
+    if (n2 >= 0)
+        drawN2(n2, color);
+    if (n3 >= 0)
+        drawN3(n3, color);
+    if (n4 >= 0)
+        drawN4(n4, color);
 }

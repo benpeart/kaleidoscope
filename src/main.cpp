@@ -57,6 +57,10 @@
 #include "RealTimeClock.h"
 #include <Preferences.h>
 #endif
+
+#ifdef WEATHER
+#include "weather.h"
+#endif
 #endif // WIFI
 
 //
@@ -844,6 +848,10 @@ void setup()
   rtc_setup();
 #endif
 
+#ifdef WEATHER
+  weather_setup(current_weather);
+#endif
+
 #ifndef ALEXA
   webServer.begin(); //omit this since it will be done by espalexa.begin(&webServer)
 #endif
@@ -949,6 +957,10 @@ void loop()
   // don't draw the clock if we're in 'off' mode
   if (renderFunc[kaleidoscope_mode] != mode_off)
     draw_clock();
+#endif
+
+#ifdef WEATHER
+  weather_loop(current_weather);
 #endif
 #endif // WIFI
 

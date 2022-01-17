@@ -15,6 +15,7 @@
 #define REST
 //#define ALEXA // can't get Alexa to discover my devices, from the issues, seems like this is a common problem
 #define TIME
+#define WEATHER
 #endif
 
 // include debugging macros
@@ -31,7 +32,7 @@ extern ESP32Encoder knobLeft;
 #endif
 
 // update the FastLED brightness based on our ambient and manual settings only if requested (using the right knob)
-void adjustBrightness(bool useKnob = true);
+extern void adjustBrightness(bool useKnob = true);
 
 // 'speed' ranges from 0-255 with the default speed being 128 and two rotations of the knob being required to move
 // from min to max. Each mode can map() that to the correct min/max speed range and value required to make smaller

@@ -3,7 +3,11 @@
 
 void rtc_setup();
 
+#ifdef WEATHER
+#define N_CLOCK_FACES 4
+#else
 #define N_CLOCK_FACES 3
+#endif
 extern uint8_t clock_face; // Index of current clock face in table
 extern const PROGMEM char clockFaces[N_CLOCK_FACES][16];
 

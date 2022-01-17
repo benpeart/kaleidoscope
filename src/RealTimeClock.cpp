@@ -5,6 +5,9 @@
 #include "RealTimeClock.h"
 #include "displaynumbers.h"
 #include "XY.h"
+#ifdef WEATHER
+#include "weather.h"
+#endif
 
 // example of using GFX library with custom remap function (ie XY())
 // https://github.com/marcmerlin/FastLED_NeoMatrix/issues/6
@@ -143,6 +146,51 @@ void drawDigitalClock()
             displayNumbers(digit1, digit2, digit3, digit4, BlendColors);
     }
 }
+
+#ifdef WEATHER
+
+#define SECONDS_AS_CLOCK 55
+#define SECONDS_AS_TEMP 5
+
+void drawTimeTempClock()
+{
+    static bool display_time = true;
+    static int digit1 = -1, digit2 = -1;
+
+    EVERY_N_SECONDS_I(timer, SECONDS_AS_CLOCK)
+    {
+        display_time = !display_time;
+        timer.setPeriod(display_time ? SECONDS_AS_CLOCK : SECONDS_AS_TEMP);
+    }
+
+    if (display_time)
+    {
+        drawDigitalClock();
+    }
+    else
+    {
+        // compute first digit of tempreture
+        int tmp = current_weather.temp;
+        tmp /= 10;
+        if (digit1 != tmp)
+        {
+            digit1 = tmp;
+            leds_dirty = true;
+        }
+
+        // compute second digit of tempreture
+        tmp = current_weather.temp % 10;
+        if (digit2 != tmp)
+        {
+            digit2 = tmp;
+            leds_dirty = true;
+        }
+
+        if (leds_dirty)
+            displayNumbers(digit1, digit2, -1, -1, BlendColors);
+    }
+}
+#endif
 
 // https://wokwi.com/arduino/projects/286985034843292172
 #include "wuLineAA.h"
@@ -305,6 +353,9 @@ void drawAnalogClock()
 void (*drawClockFunc[N_CLOCK_FACES])(void){
     drawNullClock,
     drawDigitalClock,
+#ifdef WEATHER
+    drawTimeTempClock,
+#endif
     drawAnalogClock};
 //#define N_CLOCK_FACES (sizeof(drawClockFunc) / sizeof(drawClockFunc[0]))
 uint8_t clock_face = 0; // Index of current clock face in table
@@ -313,6 +364,9 @@ const PROGMEM char clockFaces[N_CLOCK_FACES][16] =
     {
         "Off",
         "Digital",
+#ifdef WEATHER
+        "Time and Temp",
+#endif
         "Analog"};
 
 void draw_clock()
