@@ -344,21 +344,19 @@ int set_draw_style(int new_draw_style)
     if (draw_style != new_draw_style)
     {
         draw_style = new_draw_style;
+        DB_PRINTLN(drawStyles[draw_style]);
         switch (draw_style)
         {
         case 0:
             num_leds = DRAWPIXEL6_INDEX;
-            DB_PRINTLN("reflection_style is 6 way reflection");
             break;
 
         case 1:
             num_leds = DRAWPIXEL12_INDEX;
-            DB_PRINTLN("reflection_style is 12 way reflection");
             break;
 
         case 2:
             num_leds = DRAWPIXEL24_INDEX;
-            DB_PRINTLN("reflection_style is 24 way reflection");
             break;
         }
         leds_dirty = true;

@@ -149,7 +149,8 @@ void drawDigitalClock()
 
 #ifdef WEATHER
 
-#define SECONDS_AS_CLOCK 55
+// show the time for 25 seconds, then the temp for 5 seconds
+#define SECONDS_AS_CLOCK 25
 #define SECONDS_AS_TEMP 5
 
 void drawTimeTempClock()
@@ -376,36 +377,31 @@ void draw_clock()
 
 void mode_select_clock_face()
 {
-    static boolean drawClockChanged = false;
 #ifdef ENCODER
     // use the left knob to select the clock face to draw
     static int lastLeftKnob = 0;
+    int new_face = clock_face;
     int knob = knobLeft.getCount();
     if (knob != lastLeftKnob)
     {
         if (knob < lastLeftKnob)
         {
-            clock_face++;
-            clock_face = clock_face % N_CLOCK_FACES;
+            new_face++;
+            new_face = new_face % N_CLOCK_FACES;
         }
         else
         {
             // offset is an unsigned 8 bits so can't go negative
-            if (clock_face == 0)
-                clock_face += N_CLOCK_FACES;
-            --clock_face;
+            if (new_face == 0)
+                new_face += N_CLOCK_FACES;
+            --new_face;
         }
         lastLeftKnob = knob;
-        drawClockChanged = true;
     }
 #endif
 
-    // redraw the frame of the kaleidoscope with the new style
-    if (drawClockChanged)
-    {
-        leds_dirty = true;
-        drawClockChanged = false;
-    }
+    // save the new clock face
+    set_clock_face(new_face);
 
     // draw this on a fixed schedule so that when you enter the mode, you aren't
     // faced with a black screen until you rotate the left knob
@@ -422,7 +418,12 @@ int set_clock_face(int new_face)
     if (clock_face != new_face)
     {
         clock_face = new_face;
+        DB_PRINTLN(clockFaces[clock_face]);
         leds_dirty = true;
+#ifdef WEATHER
+        // update whether we need to fetch the weather
+        need_weather = (drawClockFunc[clock_face] == drawTimeTempClock) ? true : false;
+#endif
     }
 
     return clock_face;

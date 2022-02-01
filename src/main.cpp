@@ -27,7 +27,6 @@
 #endif
 #define USE_ESP_WIFIMANAGER_NTP true
 #include <ESPAsync_WiFiManager.h>
-#include "ESPAsync_WiFiManager-Impl.h"
 #ifdef REST
 #include <AsyncJson.h>
 #include <ArduinoJson.h>
@@ -131,6 +130,7 @@ ESP32Encoder knobLeft;
 #ifdef WIFI
 AsyncWebServer webServer(80);
 DNSServer dnsServer;
+ESPAsync_WiFiManager ESPAsync_wifiManager(&webServer, &dnsServer, "Kaleidoscope");
 bool initialConfig = false;
 
 #ifdef DRD
@@ -477,6 +477,7 @@ void setKaleidoscopeMode(int new_mode)
   }
 }
 
+#ifdef WIFI
 #ifdef REST
 // This is needed to solve some threading issues with the REST APIs coming in via
 // asyncronous messages. When we get a change, just store them in the temporary
@@ -541,12 +542,11 @@ void applySettings(kaleidoscope_settings &settings)
 
 void getSettings(AsyncWebServerRequest *request)
 {
-  StaticJsonDocument<128> doc;
+  StaticJsonDocument<512> doc;
   String response;
 
   doc["mode"] = modeNames[kaleidoscope_mode];
   doc["drawStyle"] = drawStyles[draw_style];
-  // convert the brightness setting to the range the app expects
   doc["brightness"] = LEDBrightnessManualOffset;
   doc["speed"] = kaleidoscope_speed;
   doc["clockFace"] = clockFaces[clock_face];
@@ -634,16 +634,17 @@ void saveSettings(AsyncWebServerRequest *request, JsonVariant &json)
   JsonVariant brightness = jsonObj["brightness"];
   if (!brightness.isNull())
   {
-    // convert the brightness setting from the range the app sends, to the needed range
-    settings.LEDBrightnessManualOffset = constrain(brightness, -MAX_BRIGHTNESS, MAX_BRIGHTNESS);
+    settings.LEDBrightnessManualOffset = constrain((int)brightness, -MAX_BRIGHTNESS, MAX_BRIGHTNESS);
     newSettings = true;
+    DB_PRINTF("brightness = %d\r\n", settings.LEDBrightnessManualOffset);
   }
 
   JsonVariant speed = jsonObj["speed"];
   if (!speed.isNull())
   {
-    settings.kaleidoscope_speed = constrain(speed, 0, KALEIDOSCOPE_MAX_SPEED);
+    settings.kaleidoscope_speed = constrain((int)speed, 0, KALEIDOSCOPE_MAX_SPEED);
     newSettings = true;
+    DB_PRINTF("speed = %d\r\n", settings.kaleidoscope_speed);
   }
 
   const char *modeName = jsonObj["mode"];
@@ -655,6 +656,7 @@ void saveSettings(AsyncWebServerRequest *request, JsonVariant &json)
       {
         settings.kaleidoscope_mode = x;
         newSettings = true;
+        DB_PRINTF("mode = %s\r\n", modeNames[x]);
         break;
       }
     }
@@ -669,6 +671,7 @@ void saveSettings(AsyncWebServerRequest *request, JsonVariant &json)
       {
         settings.clock_face = x;
         newSettings = true;
+        DB_PRINTF("clockFace = %s\r\n", clockFaces[x]);
         break;
       }
     }
@@ -683,6 +686,7 @@ void saveSettings(AsyncWebServerRequest *request, JsonVariant &json)
       {
         settings.draw_style = x;
         newSettings = true;
+        DB_PRINTF("drawStyle = %s\r\n", drawStyles[x]);
         break;
       }
     }
@@ -693,6 +697,7 @@ void saveSettings(AsyncWebServerRequest *request, JsonVariant &json)
   {
     settings.clockColor = CRGB((uint32_t)clockColor);
     newSettings = true;
+    DB_PRINTF("clockColor = %d\r\n", (uint32_t)settings.clockColor);
   }
 
   request->send(200, "text/plain", "OK");
@@ -730,6 +735,29 @@ void hueChanged(EspalexaDevice *d)
   case EspalexaColorMode::none:
     Serial.println("none");
     break;
+  }
+}
+#endif
+
+void check_WiFi(void)
+{
+  if ((WiFi.status() != WL_CONNECTED))
+  {
+    DB_PRINTLN(F("\nWiFi lost. Attempting to reconnect"));
+
+    // attempt to reconnect
+    ESPAsync_wifiManager.autoConnect("KaleidoscopeAP");
+
+    // report on our WiFi connection status
+    if (WiFi.status() == WL_CONNECTED)
+    {
+      DB_PRINT(F("Connected. Local IP: "));
+      DB_PRINTLN(WiFi.localIP());
+    }
+    else
+    {
+      DB_PRINTLN(ESPAsync_wifiManager.getStatus(WiFi.status()));
+    }
   }
 }
 #endif
@@ -848,10 +876,6 @@ void setup()
   rtc_setup();
 #endif
 
-#ifdef WEATHER
-  weather_setup(current_weather);
-#endif
-
 #ifndef ALEXA
   webServer.begin(); //omit this since it will be done by espalexa.begin(&webServer)
 #endif
@@ -937,13 +961,16 @@ void loop()
 #endif
 
 #ifdef WIFI
+  // check and reconnect to WiFi if needed
+  check_WiFi();
+
 #ifdef DRD
   drd->loop();
 #endif
 
 #ifdef ALEXA
   espalexa.loop();
-#endif
+#endif // ALEXA
 #endif // WIFI
 
   // Render one frame in current mode. To control the speed of updates, use the
@@ -957,11 +984,12 @@ void loop()
   // don't draw the clock if we're in 'off' mode
   if (renderFunc[kaleidoscope_mode] != mode_off)
     draw_clock();
-#endif
+#endif // TIME
 
 #ifdef WEATHER
-  weather_loop(current_weather);
-#endif
+  if (WiFi.status() == WL_CONNECTED)
+    weather_loop(current_weather);
+#endif // WEATHER
 #endif // WIFI
 
 // Show an activity spinner and the current fps. After 500 ms of no LED updates show 0 fps.
