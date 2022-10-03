@@ -5,6 +5,7 @@
  *  here https://chome.nerpa.tech/mcu/reading-rotary-encoder-on-arduino/ and using interrupts 
  *  https://chome.nerpa.tech/mcu/rotary-encoder-interrupt-service-routine-for-avr-micros/
  */
+#ifdef STATEMACHINEENCODER
 #include <ESP32StateMachineEncoder.h>
 
 enum puType ESP32Encoder::useInternalWeakPullResistors = DOWN;
@@ -108,3 +109,4 @@ void ESP32Encoder::setCount(int64_t value)
     count = value;
     interrupts();
 }
+#endif // STATEMACHINEENCODER

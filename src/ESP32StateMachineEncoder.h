@@ -1,4 +1,6 @@
 #pragma once
+
+#ifdef STATEMACHINEENCODER
 #include <Arduino.h>
 
 enum puType
@@ -29,3 +31,4 @@ public:
     void setFilter(uint16_t value){};
     static enum puType useInternalWeakPullResistors;
 };
+#endif // STATEMACHINEENCODER

@@ -79,36 +79,17 @@
 #define ENCODER_DT_PIN_RIGHT 18
 #endif
 
-// setup our LED strips for parallel output using FastLED
-#if defined(__AVR_ATmega1280__) || defined(__AVR_ATmega2560__)
-
-// this will compile for Arduino Mega
-
-#ifdef BOUNCE
-// Change these pin numbers to the button pins on your encoder.
-#define ENCODER_SW_PIN_LEFT 2
-#define ENCODER_SW_PIN_RIGHT 3
-#endif
-
-#define LED_STRIP_PIN_1 11
-#define LED_STRIP_PIN_2 10
-#define LED_STRIP_PIN_3 12
-#define LED_STRIP_PIN_4 13
-#else
-
-// this will compile for ESP32
-
 #ifdef BOUNCE
 // Change these pin numbers to the button pins on your encoder.
 #define ENCODER_SW_PIN_LEFT 17
 #define ENCODER_SW_PIN_RIGHT 19
-#endif
+#endif // BOUNCE
 
+// setup our LED strips for parallel output using FastLED
 #define LED_STRIP_PIN_1 14
 #define LED_STRIP_PIN_2 27
 #define LED_STRIP_PIN_3 26
 #define LED_STRIP_PIN_4 25
-#endif
 #define LED_TYPE WS2812B
 #define COLOR_ORDER GRB
 

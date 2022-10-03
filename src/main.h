@@ -5,6 +5,7 @@
 #define BOUNCE
 #define DEMO
 #define ENCODER
+//#define STATEMACHINEENCODER
 #define PHOTOCELL
 
 // don't include components that require WiFi unless it is included
@@ -22,7 +23,7 @@
 #include "debug.h"
 
 #ifdef ENCODER
-#ifndef STATEMACHINEENCODER
+#ifdef STATEMACHINEENCODER
 #include <ESP32StateMachineEncoder.h>
 #else
 #include <ESP32Encoder.h>
