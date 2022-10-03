@@ -15,7 +15,7 @@
 #define REST
 //#define ALEXA // can't get Alexa to discover my devices, from the issues, seems like this is a common problem
 #define TIME
-#define WEATHER
+//#define WEATHER
 #endif
 
 // include debugging macros

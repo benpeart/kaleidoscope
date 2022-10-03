@@ -24,13 +24,14 @@
 #ifdef DRD
 //#define USE_SPIFFS true
 #define ESP_DRD_USE_EEPROM true
-#endif
+#endif // DRD
 #define USE_ESP_WIFIMANAGER_NTP true
 #include <ESPAsync_WiFiManager.h>
+#include <ESPAsync_WiFiManager-Impl.h>
 #ifdef REST
 #include <AsyncJson.h>
 #include <ArduinoJson.h>
-#endif
+#endif // REST
 
 #ifdef DRD
 // https://github.com/khoih-prog/ESP_DoubleResetDetector
@@ -50,16 +51,17 @@
 #define ESPALEXA_MAXDEVICES 1
 #define ESPALEXA_DEBUG
 #include <Espalexa.h>
-#endif
+#endif // ALEXA
 
 #ifdef TIME
 #include "RealTimeClock.h"
 #include <Preferences.h>
-#endif
+#endif // TIME
 
 #ifdef WEATHER
 #include "weather.h"
-#endif
+#endif // WEATHER
+
 #endif // WIFI
 
 //

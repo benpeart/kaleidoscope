@@ -1,4 +1,5 @@
 #include "main.h"
+#ifdef WEATHER
 #include "weather.h"
 #include <AsyncHTTPRequest_Generic.h> // https://github.com/khoih-prog/AsyncHTTPRequest_Generic
 #include <ArduinoJson.h>               // https://github.com/bblanchon/ArduinoJson
@@ -103,3 +104,5 @@ void weather_loop(weather &w)
 void weather_draw_icon(weather *w)
 {
 }
+
+#endif // WEATHER
