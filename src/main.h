@@ -6,7 +6,7 @@
 #define DEMO
 #define ENCODER
 //#define STATEMACHINEENCODER
-#define PHOTOCELL
+//#define PHOTOCELL
 
 // don't include components that require WiFi unless it is included
 #define WIFI

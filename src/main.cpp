@@ -25,9 +25,9 @@
 //#define USE_SPIFFS true
 #define ESP_DRD_USE_EEPROM true
 #endif // DRD
+
 #define USE_ESP_WIFIMANAGER_NTP true
 #include <ESPAsync_WiFiManager.h>
-#include <ESPAsync_WiFiManager-Impl.h>
 #ifdef REST
 #include <AsyncJson.h>
 #include <ArduinoJson.h>
@@ -112,7 +112,7 @@ ESP32Encoder knobLeft;
 
 #ifdef WIFI
 AsyncWebServer webServer(80);
-DNSServer dnsServer;
+AsyncDNSServer dnsServer;
 ESPAsync_WiFiManager ESPAsync_wifiManager(&webServer, &dnsServer, "Kaleidoscope");
 bool initialConfig = false;
 
