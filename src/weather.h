@@ -1,7 +1,7 @@
 #ifndef WEATHER_H
 #define WEATHER_H
 
-#include "Kaleidoscope.h"
+#include "render.h"
 
 struct weather {
     uint8_t iconCode;

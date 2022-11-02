@@ -1,5 +1,5 @@
 #include "main.h"
-#include "Kaleidoscope.h"
+#include "render.h"
 #include "GlassDisk.h"
 
 // custom created to emulate the airplane kaleidoscope that started it all

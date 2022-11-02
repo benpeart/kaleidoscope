@@ -1,7 +1,6 @@
 // https://wokwi.com/arduino/projects/286181658485326348
 #include "main.h"
-#include "Kaleidoscope.h"
-#include "XY.h"
+#include "render.h"
 #include "XYsnake.h"
 #include "Snake.h"
 

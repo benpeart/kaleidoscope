@@ -1,6 +1,6 @@
 #include "main.h"
+#include "render.h"
 #include "Kaleidoscope.h"
-#include "XY.h"
 #ifdef DEMO
 #include "plasma.h"
 #include "ripples.h"

@@ -1,6 +1,5 @@
 #include "main.h"
-#include "Kaleidoscope.h"
-#include "XY.h"
+#include "render.h"
 #include "XYrainbow.h"
 
 #ifdef DEMO

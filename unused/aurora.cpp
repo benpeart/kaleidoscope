@@ -1,6 +1,6 @@
 #include <Arduino.h>
 #include <FastLED.h>
-#include "Kaleidoscope.h"
+#include "render.h"
 #include "aurora.h"
 
 /*

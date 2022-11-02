@@ -16,7 +16,7 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include "Snake.h"
-#include "XY.h"
+#include "render.h"
 
 Snake::Snake(int fieldSizeX, int fieldSizeY, int moveDelay)
 {

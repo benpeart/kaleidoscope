@@ -1,5 +1,5 @@
 #include "main.h"
-#include "Kaleidoscope.h"
+#include "render.h"
 #include "displaynumbers.h"
 
 /************************************************************

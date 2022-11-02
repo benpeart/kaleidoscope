@@ -1,5 +1,5 @@
 #include "main.h"
-#include "Kaleidoscope.h"
+#include "render.h"
 #include "pulse.h"
 
 uint8_t bloodHue = 96;       // Blood color [hue from 0-255]

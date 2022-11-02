@@ -1,10 +1,9 @@
 #include "main.h"
-#include "Kaleidoscope.h"
+#include "render.h"
 #include <Time.h>
 #include <Preferences.h>
 #include "RealTimeClock.h"
 #include "displaynumbers.h"
-#include "XY.h"
 #ifdef WEATHER
 #include "weather.h"
 #endif

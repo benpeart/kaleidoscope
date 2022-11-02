@@ -6,8 +6,7 @@
 //https://www.reddit.com/user/ldirko/
 
 #include "main.h"
-#include "Kaleidoscope.h"
-#include "XY.h"
+#include "render.h"
 #include "XYDistortionWaves.h"
 
 #ifdef DEMO
