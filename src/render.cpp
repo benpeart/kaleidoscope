@@ -1,3 +1,4 @@
+#include "main.h"
 #include "render.h"
 #include "debug.h"
 

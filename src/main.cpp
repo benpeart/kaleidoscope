@@ -1,17 +1,7 @@
 #include "main.h"
 #include "render.h"
-#include "Kaleidoscope.h"
-#ifdef DEMO
-#include "plasma.h"
-#include "ripples.h"
-#include "TwinkleFox.h"
-#include "XYDistortionWaves.h"
-#include "XYAALines.h"
-#include "XYmatrix.h"
-#include "XYpacifica.h"
-#include "XYsnake.h"
-#include "XYfire.h"
-#endif
+#include "settings.h"
+#include "WebUI.h"
 
 #ifdef BOUNCE
 // https://github.com/thomasfredericks/Bounce2
@@ -40,11 +30,6 @@
 #include <ESP_DoubleResetDetector.h>
 #endif
 
-#ifdef OTA
-// https://github.com/ayushsharma82/AsyncElegantOTA
-#include <AsyncElegantOTA.h>
-#endif
-
 #ifdef ALEXA
 // https://github.com/Aircoookie/Espalexa
 #define ESPALEXA_ASYNC
@@ -52,11 +37,6 @@
 #define ESPALEXA_DEBUG
 #include <Espalexa.h>
 #endif // ALEXA
-
-#ifdef TIME
-#include "RealTimeClock.h"
-#include <Preferences.h>
-#endif // TIME
 
 #ifdef WEATHER
 #include "weather.h"
@@ -125,12 +105,6 @@ Espalexa espalexa;
 #endif
 #endif // WIFI
 
-// All Pixels off
-void mode_off()
-{
-  // nothing to see here... (the pixels got cleared by the button press)
-}
-
 #ifdef DEBUG
 // test the wiring and ensure all pixels light up correctly
 // Q: Why does led[300] ==> led[312] not light up?
@@ -166,7 +140,7 @@ void mode_test()
 
 #define MIN_BRIGHTNESS 32                    // the minimum brightness we want (above zero so it doesn't go completely dark)
 #define MAX_BRIGHTNESS 255                   // the max possible brightness
-#define MAX_BRIGHTNESS_READING 1024          // set this to the higest reading you get from the photocell
+#define MAX_BRIGHTNESS_READING 1024          // set this to the highest reading you get from the photocell
 #define KNOB_INCREMENT (MAX_BRIGHTNESS / 20) // brightness range / number of pulses in one rotation of rotary encoder
 #define DEBOUNCE_PHOTOCELL 64                // how much change we need to see in the average photocell reading before we change the brightness
 
@@ -189,7 +163,7 @@ uint32_t readADC_Avg(int ADC_Raw)
   }
   return (Sum / FILTER_LEN);
 }
-#endif
+#endif // PHOTOCELL
 
 // compute the brightness of the LED strips to match the ambient lighting
 int ambientBrightness()
@@ -207,14 +181,14 @@ int ambientBrightness()
     lastPhotocell = photocellReading;
     DB_PRINTF("photocell reading = %d\r\n", photocellReading);
   }
-#endif
+#endif // PHOTOCELL
 
   // ensure we stay between our min and max valid values
   return constrain(map(lastPhotocell, 0, MAX_BRIGHTNESS_READING, 0, MAX_BRIGHTNESS), 0, MAX_BRIGHTNESS);
 }
 
 // manually adjust the brightness of the LED strips up or down from the ambientBrightness
-static int LEDBrightnessManualOffset = 0;
+static int LEDBrightnessManualOffset = MAX_BRIGHTNESS;
 int manualBrightness(bool useKnob)
 {
   if (!useKnob)
@@ -245,8 +219,8 @@ int manualBrightness(bool useKnob)
     lastLeftKnob = knob;
     DB_PRINTF("Left knob count = %d\r\n", lastLeftKnob);
   }
-#endif
-#endif
+#endif // DEBUG
+#endif // ENCODER
 
   return LEDBrightnessManualOffset;
 }
@@ -525,7 +499,7 @@ void applySettings(kaleidoscope_settings &settings)
 
 void getSettings(AsyncWebServerRequest *request)
 {
-  StaticJsonDocument<512> doc;
+  DynamicJsonDocument doc(512);
   String response;
 
   doc["mode"] = modeNames[kaleidoscope_mode];
@@ -541,11 +515,8 @@ void getSettings(AsyncWebServerRequest *request)
 
 void getModes(AsyncWebServerRequest *request)
 {
-  // compute the required size
-  const size_t CAPACITY = JSON_ARRAY_SIZE(N_MODES);
-
   // allocate the memory for the document
-  StaticJsonDocument<CAPACITY> doc;
+  DynamicJsonDocument doc(JSON_ARRAY_SIZE(N_MODES));
 
   // create an empty array
   JsonArray array = doc.to<JsonArray>();
@@ -565,11 +536,8 @@ void getModes(AsyncWebServerRequest *request)
 
 void getFaces(AsyncWebServerRequest *request)
 {
-  // compute the required size
-  const size_t CAPACITY = JSON_ARRAY_SIZE(N_CLOCK_FACES);
-
   // allocate the memory for the document
-  StaticJsonDocument<CAPACITY> doc;
+  DynamicJsonDocument doc(JSON_ARRAY_SIZE(N_CLOCK_FACES));
 
   // create an empty array
   JsonArray array = doc.to<JsonArray>();
@@ -588,11 +556,8 @@ void getFaces(AsyncWebServerRequest *request)
 
 void getDrawStyles(AsyncWebServerRequest *request)
 {
-  // compute the required size
-  const size_t CAPACITY = JSON_ARRAY_SIZE(N_DRAW_STYLES);
-
   // allocate the memory for the document
-  StaticJsonDocument<CAPACITY> doc;
+  DynamicJsonDocument doc(JSON_ARRAY_SIZE(N_DRAW_STYLES));
 
   // create an empty array
   JsonArray array = doc.to<JsonArray>();
@@ -685,7 +650,7 @@ void saveSettings(AsyncWebServerRequest *request, JsonVariant &json)
 
   request->send(200, "text/plain", "OK");
 }
-#endif
+#endif // REST
 
 #ifdef ALEXA
 //our Alexa callback function
@@ -720,7 +685,7 @@ void hueChanged(EspalexaDevice *d)
     break;
   }
 }
-#endif
+#endif // ALEXA
 
 void check_WiFi(void)
 {
@@ -743,7 +708,7 @@ void check_WiFi(void)
     }
   }
 }
-#endif
+#endif // WIFI
 
 //
 // SETUP FUNCTION -- RUNS ONCE AT PROGRAM START ----------------------------
@@ -803,15 +768,8 @@ void setup()
     DB_PRINTLN(ESPAsync_wifiManager.getStatus(WiFi.status()));
   }
 
-#ifdef OTA
-  // add a simple home page (OTA update UI is on /update)
-  webServer.on("/", HTTP_GET, [](AsyncWebServerRequest *request)
-               { request->send(200, "text/plain", "Hi! I an a digital Kaleidoscope. You can do an over the air update by visiting http://kaleidoscope/update"); });
-
-  // Start ElegantOTA and require a username/password
-  AsyncElegantOTA.begin(&webServer, "admin", "admin");
-  DB_PRINTLN(F("OTA web server started."));
-#endif
+  // setup the home page and other web UI (WiFi settings, upgrade, etc)
+  WebUI_setup(webServer);
 
 #ifdef REST
   webServer.on("/api/settings", HTTP_GET, getSettings);

@@ -1,6 +1,7 @@
 #ifndef KALEIDOSCOPE_H
 #define KALEIDOSCOPE_H
 
+void mode_off();
 void mode_kaleidoscope();
 void mode_kaleidoscope_select_speed_brightness();
 //void mode_kaleidoscope_select_disks();

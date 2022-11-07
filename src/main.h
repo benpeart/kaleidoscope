@@ -1,3 +1,6 @@
+#ifndef MAIN_H
+#define MAIN_H
+
 #include <Arduino.h>
 
 // flags to enable turning of various parts of the app for debugging purposes
@@ -40,6 +43,8 @@ extern void adjustBrightness(bool useKnob = true);
 // numbers (rotate left) being slower and larger numbers (rotate right) being faster
 #define KALEIDOSCOPE_MIN_SPEED 0
 #define KALEIDOSCOPE_MAX_SPEED 255
-#define KALEIDOSCOPE_DEFAULT_SPEED ((KALEIDOSCOPE_MAX_SPEED - KALEIDOSCOPE_MIN_SPEED) / 2)
+#define KALEIDOSCOPE_DEFAULT_SPEED ((KALEIDOSCOPE_MAX_SPEED - KALEIDOSCOPE_MIN_SPEED) / 4)
 extern uint8_t kaleidoscope_speed;
 int adjustSpeed();
+
+#endif // MAIN_H
