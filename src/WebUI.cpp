@@ -41,8 +41,8 @@ const char index_html[] PROGMEM = R"rawliteral(
   <select name="drawstyles" id="drawstyles" onchange="onchangeDrawStyle(this)"></select><br>
   <img width="20"
     src='data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iaXNvLTg4NTktMSI/Pg0KPCEtLSBHZW5lcmF0b3I6IEFkb2JlIElsbHVzdHJhdG9yIDE5LjAuMCwgU1ZHIEV4cG9ydCBQbHVnLUluIC4gU1ZHIFZlcnNpb246IDYuMDAgQnVpbGQgMCkgIC0tPg0KPHN2ZyB2ZXJzaW9uPSIxLjEiIGlkPSJMYXllcl8xIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB4PSIwcHgiIHk9IjBweCINCgkgdmlld0JveD0iMCAwIDUxMiA1MTIiIHN0eWxlPSJlbmFibGUtYmFja2dyb3VuZDpuZXcgMCAwIDUxMiA1MTI7IiB4bWw6c3BhY2U9InByZXNlcnZlIj4NCjxnPg0KCTxwYXRoIHN0eWxlPSJmaWxsOiNGMkQyM0Q7IiBkPSJNMjU2LjAwNyw0MjMuNzI0Yy0wLjAwNCwwLTAuMDA0LDAtMC4wMDcsMGMtMTQuNjI2LDAtMjYuNDgzLDExLjg1Ny0yNi40ODMsMjYuNDgzdjM1LjMxDQoJCUMyMjkuNTE3LDUwMC4xNDMsMjQxLjM3NCw1MTIsMjU2LDUxMmMwLjAwNCwwLDAuMDA0LDAsMC4wMDcsMGMxNC42MjItMC4wMDQsMjYuNDc2LTExLjg1OSwyNi40NzYtMjYuNDgzdi0zNS4zMQ0KCQlDMjgyLjQ4Myw0MzUuNTgzLDI3MC42MjksNDIzLjcyOCwyNTYuMDA3LDQyMy43MjR6Ii8+DQoJPHBhdGggc3R5bGU9ImZpbGw6I0YyRDIzRDsiIGQ9Ik0yNTYuMDA3LDBjLTAuMDA0LDAtMC4wMDQsMC0wLjAwNywwYy0xNC42MjYsMC0yNi40ODMsMTEuODU3LTI2LjQ4MywyNi40ODN2MzUuMzENCgkJYzAsMTQuNjI2LDExLjg1NywyNi40ODMsMjYuNDgzLDI2LjQ4M2MwLjAwNCwwLDAuMDA0LDAsMC4wMDcsMGMxNC42MjItMC4wMDQsMjYuNDc2LTExLjg1OSwyNi40NzYtMjYuNDgzdi0zNS4zMQ0KCQlDMjgyLjQ4MywxMS44NTksMjcwLjYyOSwwLjAwNCwyNTYuMDA3LDB6Ii8+DQoJPHBhdGggc3R5bGU9ImZpbGw6I0YyRDIzRDsiIGQ9Ik0yNTYuMDA3LDE0MS4yNDFoLTAuMDA0Yy02My4yNzYsMC0xMTQuNzU1LDUxLjQ4MS0xMTQuNzU1LDExNC43NTlzNTEuNDc5LDExNC43NTksMTE0Ljc1NSwxMTQuNzU5DQoJCWgwLjAwNGM2My4yNzgtMC4wMDIsMTE0Ljc1OS01MS40ODEsMTE0Ljc1OS0xMTQuNzU5QzM3MC43NjYsMTkyLjcyNCwzMTkuMjg1LDE0MS4yNDMsMjU2LjAwNywxNDEuMjQxeiIvPg0KPC9nPg0KPGc+DQoJPHBhdGggc3R5bGU9ImZpbGw6I0VFQkYwMDsiIGQ9Ik0yNTYuMDA0LDE0MS4yNDFjLTYzLjI3NiwwLTExNC43NTUsNTEuNDgxLTExNC43NTUsMTE0Ljc2YzAsNjMuMjc4LDUxLjQ3OSwxMTQuNzU3LDExNC43NTUsMTE0Ljc1Nw0KCQloMC4wMDRWMTQxLjI0MUgyNTYuMDA0eiIvPg0KCTxwYXRoIHN0eWxlPSJmaWxsOiNFRUJGMDA7IiBkPSJNMjU2LjAwNyw4OC4yNzZWMGMtMC4wMDQsMC0wLjAwNCwwLTAuMDA3LDBjLTE0LjYyNiwwLTI2LjQ4MywxMS44NTctMjYuNDgzLDI2LjQ4M3YzNS4zMQ0KCQljMCwxNC42MjYsMTEuODU3LDI2LjQ4MywyNi40ODMsMjYuNDgzQzI1Ni4wMDQsODguMjc2LDI1Ni4wMDQsODguMjc2LDI1Ni4wMDcsODguMjc2eiIvPg0KCTxwYXRoIHN0eWxlPSJmaWxsOiNFRUJGMDA7IiBkPSJNMjU2LDQyMy43MjRjLTE0LjYyNiwwLTI2LjQ4MywxMS44NTctMjYuNDgzLDI2LjQ4M3YzNS4zMUMyMjkuNTE3LDUwMC4xNDMsMjQxLjM3NCw1MTIsMjU2LDUxMg0KCQljMC4wMDQsMCwwLjAwNCwwLDAuMDA3LDB2LTg4LjI3NkMyNTYuMDA0LDQyMy43MjQsMjU2LjAwNCw0MjMuNzI0LDI1Niw0MjMuNzI0eiIvPg0KPC9nPg0KPHBhdGggc3R5bGU9ImZpbGw6I0YyRDIzRDsiIGQ9Ik00MjMuNzI0LDI1NmMwLDE0LjYyNiwxMS44NTcsMjYuNDgzLDI2LjQ4MywyNi40ODNoMzUuMzFDNTAwLjE0MywyODIuNDgzLDUxMiwyNzAuNjI2LDUxMiwyNTYNCgljMC0xNC42MjYtMTEuODU3LTI2LjQ4My0yNi40ODMtMjYuNDgzaC0zNS4zMUM0MzUuNTgxLDIyOS41MTcsNDIzLjcyNCwyNDEuMzc0LDQyMy43MjQsMjU2eiIvPg0KPHBhdGggc3R5bGU9ImZpbGw6I0VFQkYwMDsiIGQ9Ik0yNi40ODMsMjgyLjQ4M2gzNS4zMWMxNC42MjYsMCwyNi40ODMtMTEuODU3LDI2LjQ4My0yNi40ODNjMC0xNC42MjYtMTEuODU3LTI2LjQ4My0yNi40ODMtMjYuNDgzDQoJaC0zNS4zMUMxMS44NTcsMjI5LjUxNywwLDI0MS4zNzQsMCwyNTZDMCwyNzAuNjI2LDExLjg1NywyODIuNDgzLDI2LjQ4MywyODIuNDgzeiIvPg0KPHBhdGggc3R5bGU9ImZpbGw6I0YyRDIzRDsiIGQ9Ik0zOTkuNTY3LDc0Ljk4bC0yNC45NywyNC45NjhjLTEwLjM0MiwxMC4zNDItMTAuMzQyLDI3LjExLDAsMzcuNDUyDQoJYzUuMTcxLDUuMTcxLDExLjk0OSw3Ljc1OCwxOC43MjUsNy43NThzMTMuNTU2LTIuNTg2LDE4LjcyNS03Ljc1NmwyNC45Ny0yNC45NjhjMTAuMzQyLTEwLjM0MiwxMC4zNDItMjcuMTEsMC0zNy40NTINCglDNDI2LjY4LDY0LjYzNyw0MDkuOTExLDY0LjYzNywzOTkuNTY3LDc0Ljk4eiIvPg0KPHBhdGggc3R5bGU9ImZpbGw6I0VFQkYwMDsiIGQ9Ik05OS45NDksMzc0LjU5N2wtMjQuOTY4LDI0Ljk2OGMtMTAuMzQyLDEwLjM0Mi0xMC4zNDIsMjcuMTA5LDAsMzcuNDUyDQoJYzUuMTcxLDUuMTcxLDExLjk0OSw3Ljc1NiwxOC43MjUsNy43NTZzMTMuNTU2LTIuNTg2LDE4LjcyNS03Ljc1NmwyNC45Ny0yNC45NjhjMTAuMzQyLTEwLjM0MiwxMC4zNDItMjcuMTEsMC0zNy40NTINCglDMTI3LjA2MSwzNjQuMjU2LDExMC4yOTIsMzY0LjI1NCw5OS45NDksMzc0LjU5N3oiLz4NCjxwYXRoIHN0eWxlPSJmaWxsOiNGMkQyM0Q7IiBkPSJNMzk5LjU2Nyw0MzcuMDE4YzUuMTcxLDUuMTcxLDExLjk0OSw3Ljc1NiwxOC43MjUsNy43NTZjNi43NzgsMCwxMy41NTYtMi41ODUsMTguNzI3LTcuNzU2DQoJYzEwLjM0Mi0xMC4zNDIsMTAuMzQyLTI3LjExLDAtMzcuNDUybC0yNC45Ny0yNC45NjhjLTEwLjM0MS0xMC4zNDEtMjcuMTEtMTAuMzQxLTM3LjQ1MiwwLjAwMg0KCWMtMTAuMzQyLDEwLjM0Mi0xMC4zNDIsMjcuMTA5LDAsMzcuNDUyTDM5OS41NjcsNDM3LjAxOHoiLz4NCjxwYXRoIHN0eWxlPSJmaWxsOiNFRUJGMDA7IiBkPSJNOTkuOTQ5LDEzNy40MDFjNS4xNzEsNS4xNzEsMTEuOTQ5LDcuNzU2LDE4LjcyNyw3Ljc1NmM2Ljc3OCwwLDEzLjU1Ni0yLjU4NiwxOC43MjUtNy43NTgNCgljMTAuMzQyLTEwLjM0MiwxMC4zNDItMjcuMTEsMC0zNy40NTJMMTEyLjQzMyw3NC45OGMtMTAuMzQxLTEwLjM0MS0yNy4xMS0xMC4zNDEtMzcuNDUyLDBjLTEwLjM0MiwxMC4zNDItMTAuMzQyLDI3LjExLDAsMzcuNDUyDQoJTDk5Ljk0OSwxMzcuNDAxeiIvPg0KPGc+DQo8L2c+DQo8Zz4NCjwvZz4NCjxnPg0KPC9nPg0KPGc+DQo8L2c+DQo8Zz4NCjwvZz4NCjxnPg0KPC9nPg0KPGc+DQo8L2c+DQo8Zz4NCjwvZz4NCjxnPg0KPC9nPg0KPGc+DQo8L2c+DQo8Zz4NCjwvZz4NCjxnPg0KPC9nPg0KPGc+DQo8L2c+DQo8Zz4NCjwvZz4NCjxnPg0KPC9nPg0KPC9zdmc+DQo=' />
-  <input min="-255" max="255" class="slider" id="brightness" onchange="onchangeBrightness(this)" type="range"><br>
-  <input checked="checked" id="power" type="checkbox">
+  <input min="0" max="255" class="slider" id="brightness" onchange="onchangeBrightness(this)" type="range"><br>
+  <input checked="checked" id="power" onchange="onchangePower(this)" type="checkbox">
   <img width="50"
     src='data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iaXNvLTg4NTktMSI/Pg0KPCEtLSBHZW5lcmF0b3I6IEFkb2JlIElsbHVzdHJhdG9yIDE5LjAuMCwgU1ZHIEV4cG9ydCBQbHVnLUluIC4gU1ZHIFZlcnNpb246IDYuMDAgQnVpbGQgMCkgIC0tPg0KPHN2ZyB2ZXJzaW9uPSIxLjEiIGlkPSJDYXBhXzEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIHg9IjBweCIgeT0iMHB4Ig0KCSB2aWV3Qm94PSIwIDAgNDYwIDQ2MCIgc3R5bGU9ImVuYWJsZS1iYWNrZ3JvdW5kOm5ldyAwIDAgNDYwIDQ2MDsiIHhtbDpzcGFjZT0icHJlc2VydmUiPg0KPGcgaWQ9IlhNTElEXzUxMl8iPg0KCTxwYXRoIGlkPSJYTUxJRF81MTVfIiBzdHlsZT0iZmlsbDojNzhCOUVCOyIgZD0iTTgwLDIzMGMwLTU2LjEyNSwzMC45NDMtMTA3LjExOSw4MC43NTYtMTMzLjA4MmwxOC40ODgsMzUuNDcxDQoJCUMxNDIuNzAxLDE1MS40MzYsMTIwLDE4OC44MzgsMTIwLDIzMGMwLDYwLjY1NCw0OS4zNDYsMTEwLDExMCwxMTBWMjMwaC0yMFY0MGgyMFYwQzEwMi45NzUsMCwwLDEwMi45NzUsMCwyMzBzMTAyLjk3NSwyMzAsMjMwLDIzMA0KCQl2LTgwQzE0Ny4yOSwzODAsODAsMzEyLjcxLDgwLDIzMHoiLz4NCgk8cGF0aCBpZD0iWE1MSURfNTE2XyIgc3R5bGU9ImZpbGw6IzNEOUFFMjsiIGQ9Ik0yMzAsMHY0MGgyMHYxOTBoLTIwdjExMGM2MC42NTQsMCwxMTAtNDkuMzQ2LDExMC0xMTANCgkJYzAtNDEuMTYyLTIyLjcwMS03OC41NjQtNTkuMjQ0LTk3LjYxMWwxOC40ODgtMzUuNDcxQzM0OS4wNTcsMTIyLjg4MSwzODAsMTczLjg3NSwzODAsMjMwYzAsODIuNzEtNjcuMjksMTUwLTE1MCwxNTB2ODANCgkJYzEyNy4wMjUsMCwyMzAtMTAyLjk3NSwyMzAtMjMwUzM1Ny4wMjUsMCwyMzAsMHoiLz4NCgk8cGF0aCBpZD0iWE1MSURfNTE3XyIgc3R5bGU9ImZpbGw6I0ZGRkZGRjsiIGQ9Ik0xMjAsMjMwYzAtNDEuMTYyLDIyLjcwMS03OC41NjQsNTkuMjQ0LTk3LjYxMWwtMTguNDg4LTM1LjQ3MQ0KCQlDMTEwLjk0MywxMjIuODgxLDgwLDE3My44NzUsODAsMjMwYzAsODIuNzEsNjcuMjksMTUwLDE1MCwxNTBzMTUwLTY3LjI5LDE1MC0xNTBjMC01Ni4xMjUtMzAuOTQzLTEwNy4xMTktODAuNzU2LTEzMy4wODINCgkJbC0xOC40ODgsMzUuNDcxQzMxNy4yOTksMTUxLjQzNiwzNDAsMTg4LjgzOCwzNDAsMjMwYzAsNjAuNjU0LTQ5LjM0NiwxMTAtMTEwLDExMFMxMjAsMjkwLjY1NCwxMjAsMjMweiIvPg0KCTxyZWN0IGlkPSJYTUxJRF81MThfIiB4PSIyMTAiIHk9IjQwIiBzdHlsZT0iZmlsbDojRkZGRkZGOyIgd2lkdGg9IjQwIiBoZWlnaHQ9IjE5MCIvPg0KPC9nPg0KPGc+DQo8L2c+DQo8Zz4NCjwvZz4NCjxnPg0KPC9nPg0KPGc+DQo8L2c+DQo8Zz4NCjwvZz4NCjxnPg0KPC9nPg0KPGc+DQo8L2c+DQo8Zz4NCjwvZz4NCjxnPg0KPC9nPg0KPGc+DQo8L2c+DQo8Zz4NCjwvZz4NCjxnPg0KPC9nPg0KPGc+DQo8L2c+DQo8Zz4NCjwvZz4NCjxnPg0KPC9nPg0KPC9zdmc+DQo=' /><br>
   <img width="20"
@@ -131,13 +131,18 @@ const char index_html[] PROGMEM = R"rawliteral(
       fetch(window.location.origin + '/api/settings')
         .then(
           function (response) {
-            if (response.status !== 200) {
+            if (!response.ok) {
               console.warn('Error requesting /api/settings. Status Code: ' + response.status);
               return;
             }
 
             response.json().then(function (data) {
-              document.getElementById('modes').value = data["mode"];
+              if (data["mode"] === 'off') {
+                document.getElementById('modes').value = 'Kaleidoscope';
+                document.getElementById('power').checked = false;
+              } else {
+                document.getElementById('modes').value = data["mode"];
+              }
               document.getElementById('faces').value = data["clockFace"];
               document.getElementById('drawstyles').value = data["drawStyle"];
               document.getElementById('brightness').value = data["brightness"];
@@ -146,6 +151,30 @@ const char index_html[] PROGMEM = R"rawliteral(
             });
           }
         )
+    }
+
+    //
+    // We 'fake' a power button by sending 'mode_off' but not updating the UI to show that 'invalid' mode name
+    // If we just turned 'off', set the mode to 'off' but still show the old mode in the UI
+    // If we just turned 'on', send the saved mode from the UI
+    //
+    function onchangePower(element) {
+      let newMode = "off";
+      if (element.checked)
+      {
+        newMode = document.getElementById('modes').value;
+        if (newMode.length === 0)
+          newMode = 'Kaleidoscope';
+      }
+
+      fetch(window.location.origin + '/api/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mode: newMode })
+      })
+        .then((response) => {
+            console.log('changePower: changeModeName = ' + newMode + ' : ' + response.statusText);
+        });
     }
 
     function onchangeModeName(element) {
