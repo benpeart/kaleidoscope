@@ -32,18 +32,16 @@
 
       let modesDropdown = document.getElementById('modes');
       modesDropdown.length = 0;
-
       fetch(window.location.origin + '/api/modes')
         .then(
           function (response) {
-            if (response.status !== 200) {
-              console.warn('Error requesting /api/modes. Status Code: ' + response.status);
+            if (!response.ok) {
+              console.error('Error requesting /api/modes. Status Code: ' + response.status);
               return;
             }
 
             response.json().then(function (data) {
               let option;
-
               console.info('modes = ' + data);
               for (let i = 0; i < data.length; i++) {
                 option = document.createElement('option');
@@ -54,47 +52,49 @@
           }
         )
 
-      let dropdown2 = document.getElementById('faces');
-      dropdown2.length = 0;
-      const url2 = window.location.origin + '/api/faces'
-      const request2 = new XMLHttpRequest();
-      request2.open('GET', url2, true)
-      request2.onload = function () {
-        if (request2.status === 200) {
-          console.info('faces = ' + request2.responseText);
-          const data = JSON.parse(request2.responseText);
-          let option;
-          for (let i = 0; i < data.length; i++) {
-            option = document.createElement('option');
-            option.text = data[i];
-            dropdown2.append(option);
-          }
-        } else {
-          console.error('An error occurred fetching the JSON from ' + url2)
-        }
-      }
-      request2.send();
+      let facesDropdown = document.getElementById('faces');
+      facesDropdown.length = 0;
+      fetch(window.location.origin + '/api/faces')
+        .then(
+          function (response) {
+            if (!response.ok) {
+              console.error('Error requesting /api/faces. Status Code: ' + response.status);
+              return;
+            }
 
-      let dropdown3 = document.getElementById('drawstyles');
-      dropdown3.length = 0;
-      const url3 = window.location.origin + '/api/drawstyles'
-      const request3 = new XMLHttpRequest();
-      request3.open('GET', url3, true)
-      request3.onload = function () {
-        if (request3.status === 200) {
-          console.info('drawstyles = ' + request3.responseText);
-          const data = JSON.parse(request3.responseText);
-          let option;
-          for (let i = 0; i < data.length; i++) {
-            option = document.createElement('option');
-            option.text = data[i];
-            dropdown3.append(option);
+            response.json().then(function (data) {
+              let option;
+              console.info('faces = ' + data);
+              for (let i = 0; i < data.length; i++) {
+                option = document.createElement('option');
+                option.text = data[i];
+                facesDropdown.append(option);
+              }
+            });
           }
-        } else {
-          console.error('An error occurred fetching the JSON from ' + url3)
-        }
-      }
-      request3.send();
+        )
+
+      let drawStylesDropdown = document.getElementById('drawstyles');
+      drawStylesDropdown.length = 0;
+      fetch(window.location.origin + '/api/drawstyles')
+        .then(
+          function (response) {
+            if (!response.ok) {
+              console.error('Error requesting /api/drawstyles. Status Code: ' + response.status);
+              return;
+            }
+
+            response.json().then(function (data) {
+              let option;
+              console.info('drawstyles = ' + data);
+              for (let i = 0; i < data.length; i++) {
+                option = document.createElement('option');
+                option.text = data[i];
+                drawStylesDropdown.append(option);
+              }
+            });
+          }
+        )
 
       updateState();
     }
@@ -122,50 +122,59 @@
     }
 
     function onchangeModeName(element) {
-      const xhr = new XMLHttpRequest();
-      const json = { mode: element.value }
-      xhr.open('POST', window.location.origin + '/api/settings')
-      xhr.setRequestHeader('Content-Type', 'application/json')
-      xhr.send(JSON.stringify(json))
-      console.info('changeModeName = ' + element.value)
+      fetch(window.location.origin + '/api/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mode: element.value })
+      })
+        .then((response) => {
+            console.log('changeModeName = ' + element.value + ' : ' + response.statusText);
+        });
     }
 
     function onchangeClockFace(element) {
-      const xhr = new XMLHttpRequest();
-      const json = { clockFace: element.value }
-      xhr.open('POST', window.location.origin + '/api/settings')
-      xhr.setRequestHeader('Content-Type', 'application/json')
-      xhr.send(JSON.stringify(json))
-      console.info('changeClockFace = ' + element.value)
+      fetch(window.location.origin + '/api/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ clockFace: element.value })
+      })
+        .then((response) => {
+            console.log('changeClockFace = ' + element.value + ' : ' + response.statusText);
+        });
     }
 
     function onchangeDrawStyle(element) {
-      const xhr = new XMLHttpRequest();
-      const json = { drawStyle: element.value }
-      xhr.open('POST', window.location.origin + '/api/settings')
-      xhr.setRequestHeader('Content-Type', 'application/json')
-      xhr.send(JSON.stringify(json))
-      console.info('changeDrawStyle = ' + element.value)
+      fetch(window.location.origin + '/api/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ drawStyle: element.value })
+      })
+        .then((response) => {
+            console.log('changeDrawStyle = ' + element.value + ' : ' + response.statusText);
+        });
     }
 
     function onchangeBrightness(element) {
-      const xhr = new XMLHttpRequest();
-      const json = { brightness: element.value }
-      xhr.open('POST', window.location.origin + '/api/settings')
-      xhr.setRequestHeader('Content-Type', 'application/json')
-      xhr.send(JSON.stringify(json))
-      console.info('changeBrightness = ' + element.value)
+      fetch(window.location.origin + '/api/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ brightness: element.value })
+      })
+        .then((response) => {
+            console.log('changeBrightness = ' + element.value + ' : ' + response.statusText);
+        });
     }
 
     function onchangeSpeed(element) {
-      const xhr = new XMLHttpRequest();
-      const json = { speed: element.value }
-      xhr.open('POST', window.location.origin + '/api/settings')
-      xhr.setRequestHeader('Content-Type', 'application/json')
-      xhr.send(JSON.stringify(json))
-      console.info('changeSpeed = ' + element.value)
+      fetch(window.location.origin + '/api/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ speed: element.value })
+      })
+        .then((response) => {
+            console.log('changeSpeed = ' + element.value + ' : ' + response.statusText);
+        });
     }
   </script>
 </body>
-
 </html>
