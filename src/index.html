@@ -21,11 +21,13 @@
   <img width="20"
     src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNThweCIgaGVpZ2h0PSI1OHB4IiB2aWV3Qm94PSItNSAwIDU4IDU4IiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgo8cmVjdCB3aWR0aD0iNDgiIGhlaWdodD0iNDgiIGZpbGw9IndoaXRlIiBmaWxsLW9wYWNpdHk9IjAuMDEiLz4KPHJlY3Qgd2lkdGg9IjQ4IiBoZWlnaHQ9IjU4IiBmaWxsPSJ3aGl0ZSIgZmlsbC1vcGFjaXR5PSIwLjAxIi8+CjxwYXRoIGQ9Ik0zNC4wMjM0IDYuNjg5MjFDMzEuMDc2NCA0Ljk3OTEyIDI3LjY1MjUgNCAyNCA0QzEyLjk1NDMgNCA0IDEyLjk1NDMgNCAyNEM0IDM1LjA0NTcgMTIuOTU0MyA0NCAyNCA0NEMzNS4wNDU3IDQ0IDQ0IDM1LjA0NTcgNDQgMjRDNDQgMjAuMzcyNyA0My4wMzQ0IDE2Ljk3MDkgNDEuMzQ2MSAxNC4wMzc3IiBzdHJva2U9ImJsYWNrIiBzdHJva2Utd2lkdGg9IjQiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPgo8cGF0aCBkPSJNMzEuOTQ5OCAxNi4wNTAyQzMxLjk0OTggMTYuMDUwMiAyOC41NjIxIDI1LjA5NDcgMjcuMDAwMSAyNi42NTY4QzI1LjQzOCAyOC4yMTg5IDIyLjkwNTMgMjguMjE4OSAyMS4zNDMyIDI2LjY1NjhDMTkuNzgxMSAyNS4wOTQ3IDE5Ljc4MTEgMjIuNTYyIDIxLjM0MzIgMjAuOTk5OUMyMi45MDUzIDE5LjQzNzggMzEuOTQ5OCAxNi4wNTAyIDMxLjk0OTggMTYuMDUwMloiIGZpbGw9IiMyRjg4RkYiIHN0cm9rZT0iYmxhY2siIHN0cm9rZS13aWR0aD0iNCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPgo8L3N2Zz4K' />
   <input min="0" max="255" class="slider" id="speed" onchange="onchangeSpeed(this)" type="range"> <br>
-  <input value="#0000ff" id="clockColor" type="color"><br>
+  <input type="color" id="clockColor" value="#000000" onchange="onchangeClockColor(this)"><br>
   <img src="/favicon.ico" width="150">
   <br>
+  <a href="/update">
   <img width="30"
     src='data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iaXNvLTg4NTktMSI/Pg0KPCEtLSBHZW5lcmF0b3I6IEFkb2JlIElsbHVzdHJhdG9yIDE5LjAuMCwgU1ZHIEV4cG9ydCBQbHVnLUluIC4gU1ZHIFZlcnNpb246IDYuMDAgQnVpbGQgMCkgIC0tPg0KPHN2ZyB2ZXJzaW9uPSIxLjEiIGlkPSJDYXBhXzEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIHg9IjBweCIgeT0iMHB4Ig0KCSB2aWV3Qm94PSIwIDAgNDg5LjgwMiA0ODkuODAyIiBzdHlsZT0iZW5hYmxlLWJhY2tncm91bmQ6bmV3IDAgMCA0ODkuODAyIDQ4OS44MDI7IiB4bWw6c3BhY2U9InByZXNlcnZlIj4NCjxnPg0KCTxwYXRoIGQ9Ik0yMC43MDEsMjgxLjkwMWwzMi4xLDAuMmM0LjgsMjQuNywxNC4zLDQ4LjcsMjguNyw3MC41bC0yMi44LDIyLjZjLTguMiw4LjEtOC4yLDIxLjItMC4yLDI5LjRsMjQuNiwyNC45DQoJCWM4LjEsOC4yLDIxLjIsOC4yLDI5LjQsMC4ybDIyLjgtMjIuNmMyMS42LDE0LjYsNDUuNSwyNC41LDcwLjIsMjkuNWwtMC4yLDMyLjFjLTAuMSwxMS41LDkuMiwyMC44LDIwLjcsMjAuOWwzNSwwLjINCgkJYzExLjUsMC4xLDIwLjgtOS4yLDIwLjktMjAuN2wwLjItMzIuMWMyNC43LTQuOCw0OC43LTE0LjMsNzAuNS0yOC43bDIyLjYsMjIuOGM4LjEsOC4yLDIxLjIsOC4yLDI5LjQsMC4ybDI0LjktMjQuNg0KCQljOC4yLTguMSw4LjItMjEuMiwwLjItMjkuNGwtMjIuNi0yMi44YzE0LjYtMjEuNiwyNC41LTQ1LjUsMjkuNS03MC4ybDMyLjEsMC4yYzExLjUsMC4xLDIwLjgtOS4yLDIwLjktMjAuN2wwLjItMzUNCgkJYzAuMS0xMS41LTkuMi0yMC44LTIwLjctMjAuOWwtMzIuMS0wLjJjLTQuOC0yNC43LTE0LjMtNDguNy0yOC43LTcwLjVsMjIuOC0yMi42YzguMi04LjEsOC4yLTIxLjIsMC4yLTI5LjRsLTI0LjYtMjQuOQ0KCQljLTguMS04LjItMjEuMi04LjItMjkuNC0wLjJsLTIyLjgsMjIuNmMtMjEuNi0xNC42LTQ1LjUtMjQuNS03MC4yLTI5LjVsMC4yLTMyLjFjMC4xLTExLjUtOS4yLTIwLjgtMjAuNy0yMC45bC0zNS0wLjINCgkJYy0xMS41LTAuMS0yMC44LDkuMi0yMC45LDIwLjdsLTAuMywzMi4xYy0yNC44LDQuOC00OC44LDE0LjMtNzAuNSwyOC43bC0yMi42LTIyLjhjLTguMS04LjItMjEuMi04LjItMjkuNC0wLjJsLTI0LjgsMjQuNg0KCQljLTguMiw4LjEtOC4yLDIxLjItMC4yLDI5LjRsMjIuNiwyMi44Yy0xNC42LDIxLjYtMjQuNSw0NS41LTI5LjUsNzAuMmwtMzIuMS0wLjJjLTExLjUtMC4xLTIwLjgsOS4yLTIwLjksMjAuN2wtMC4yLDM1DQoJCUMtMC4wOTksMjcyLjQwMSw5LjIwMSwyODEuODAxLDIwLjcwMSwyODEuOTAxeiBNMTc5LjMwMSwxNzguNjAxYzM2LjYtMzYuMiw5NS41LTM1LjksMTMxLjcsMC43czM1LjksOTUuNS0wLjcsMTMxLjcNCgkJcy05NS41LDM1LjktMTMxLjctMC43UzE0Mi43MDEsMjE0LjgwMSwxNzkuMzAxLDE3OC42MDF6Ii8+DQo8L2c+DQo8Zz4NCjwvZz4NCjxnPg0KPC9nPg0KPGc+DQo8L2c+DQo8Zz4NCjwvZz4NCjxnPg0KPC9nPg0KPGc+DQo8L2c+DQo8Zz4NCjwvZz4NCjxnPg0KPC9nPg0KPGc+DQo8L2c+DQo8Zz4NCjwvZz4NCjxnPg0KPC9nPg0KPGc+DQo8L2c+DQo8Zz4NCjwvZz4NCjxnPg0KPC9nPg0KPGc+DQo8L2c+DQo8L3N2Zz4NCg==' />
+  </a>
   <script>
     function initialize() {
       console.info('body.onload called')
@@ -97,6 +99,7 @@
         )
 
       updateState();
+//      window.setInterval(updateState, 1000);
     }
 
     function updateState() {
@@ -120,7 +123,7 @@
               document.getElementById('drawstyles').value = data["drawStyle"];
               document.getElementById('brightness').value = data["brightness"];
               document.getElementById('speed').value = data["speed"];
-              console.info('clockColor = ' + data["clockColor"])
+              document.getElementById('clockColor').value = '#' + data["clockColor"].toString(16);
             });
           }
         )
@@ -202,6 +205,17 @@
       })
         .then((response) => {
             console.log('changeSpeed = ' + element.value + ' : ' + response.statusText);
+        });
+    }
+
+    function onchangeClockColor(element) {
+      fetch(window.location.origin + '/api/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ clockColor: parseInt(element.value, 16) })
+      })
+        .then((response) => {
+            console.log('changeClockColor = ' + element.value + ' : ' + response.statusText);
         });
     }
   </script>
