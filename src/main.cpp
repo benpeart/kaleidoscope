@@ -11,13 +11,9 @@
 #ifdef WIFI
 
 // https://github.com/khoih-prog/ESPAsync_WiFiManager
-#ifdef DRD
-//#define USE_SPIFFS true
-#define ESP_DRD_USE_EEPROM true
-#endif // DRD
-
 #define USE_ESP_WIFIMANAGER_NTP true
 #include <ESPAsync_WiFiManager.h>
+
 #ifdef REST
 #include <AsyncJson.h>
 #include <ArduinoJson.h>
@@ -25,6 +21,7 @@
 
 #ifdef DRD
 // https://github.com/khoih-prog/ESP_DoubleResetDetector
+#define ESP_DRD_USE_EEPROM true
 #define DRD_TIMEOUT 10
 #define DRD_ADDRESS 0
 #include <ESP_DoubleResetDetector.h>
@@ -92,8 +89,7 @@ ESP32Encoder knobLeft;
 
 #ifdef WIFI
 AsyncWebServer webServer(80);
-AsyncDNSServer dnsServer;
-ESPAsync_WiFiManager ESPAsync_wifiManager(&webServer, &dnsServer, "Kaleidoscope");
+ESPAsync_WiFiManager ESPAsync_wifiManager(&webServer, NULL, "Kaleidoscope");
 bool initialConfig = false;
 
 #ifdef DRD
@@ -429,7 +425,7 @@ void setKaleidoscopeMode(int new_mode)
     // output the new mode name and clear the led strips for the new mode
     kaleidoscope_mode = new_mode;
     DB_PRINTLN(modeNames[kaleidoscope_mode]);
-    FastLED.clear();
+    FastLED.clear(true);
     leds_dirty = true;
   }
 }
@@ -739,9 +735,6 @@ void setup()
   }
 #endif
 
-  ESPAsync_WiFiManager ESPAsync_wifiManager(&webServer, &dnsServer, "Kaleidoscope");
-  //ESPAsync_wifiManager.setAPStaticIPConfig(IPAddress(192, 168, 132, 1), IPAddress(192, 168, 132, 1), IPAddress(255, 255, 255, 0));
-  //ESPAsync_wifiManager.resetSettings();   //reset saved settings
   if (ESPAsync_wifiManager.WiFi_SSID() == "")
   {
     DB_PRINTLN(F("No AP credentials"));
@@ -769,8 +762,9 @@ void setup()
   }
 
   // setup the home page and other web UI (WiFi settings, upgrade, etc)
-  WebUI_setup(webServer);
+  WebUI_setup(&webServer);
 
+  // setup the REST API endpoints and handlers
 #ifdef REST
   webServer.on("/api/settings", HTTP_GET, getSettings);
   AsyncCallbackJsonWebHandler *handler = new AsyncCallbackJsonWebHandler("/api/settings", saveSettings);

@@ -131,7 +131,7 @@ const char index_html[] PROGMEM = R"rawliteral(
         )
 
       updateState();
-//      window.setInterval(updateState, 1000);
+      window.setInterval(updateState, 1000);
     }
 
     function updateState() {
@@ -255,19 +255,19 @@ const char index_html[] PROGMEM = R"rawliteral(
 </html>
 )rawliteral";
 
-void WebUI_setup(AsyncWebServer &webServer)
+void WebUI_setup(AsyncWebServer *webServer)
 {
   // Add root web page
-  webServer.on("/", HTTP_GET, [](AsyncWebServerRequest *request)
+  webServer->on("/", HTTP_GET, [](AsyncWebServerRequest *request)
                { request->send_P(200, "text/html", index_html); });
 
   // Add favicon.ico (used in browser UI and the root page)
-  webServer.on("/favicon.ico", HTTP_GET, [](AsyncWebServerRequest *request)
+  webServer->on("/favicon.ico", HTTP_GET, [](AsyncWebServerRequest *request)
                { request->send_P(200, "image/png", favicon_png, FAVICON_LEN); });
 
 #ifdef OTA
   // Start ElegantOTA and require a username/password
-  AsyncElegantOTA.begin(&webServer, "admin", "admin");
+  AsyncElegantOTA.begin(webServer, "admin", "admin");
   DB_PRINTLN(F("OTA web server started."));
 #endif
 }
