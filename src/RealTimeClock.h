@@ -12,7 +12,6 @@ void rtc_setup();
 #endif
 extern uint8_t clock_face; // Index of current clock face in table
 extern const PROGMEM char clockFaces[N_CLOCK_FACES][16];
-
 extern CRGB clockColor;
 
 void draw_clock();

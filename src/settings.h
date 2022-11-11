@@ -17,7 +17,6 @@
 
 #ifdef TIME
 #include "RealTimeClock.h"
-#include <Preferences.h>
 #endif // TIME
 
 #define N_MODES 16

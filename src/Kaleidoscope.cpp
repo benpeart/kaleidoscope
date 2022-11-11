@@ -316,6 +316,33 @@ void mode_kaleidoscope_select_reflection_style()
 }
 
 #ifdef DEBUG
+// test the wiring and ensure all pixels light up correctly
+// Q: Why does led[300] ==> led[312] not light up?
+// A: Our strips aren't the same length (156 vs 144) so the shorter strips (1 and 2)
+// have extra leds[x] positions that don't have physical LEDs.
+void mode_test()
+{
+  static int index = 0;
+
+  EVERY_N_MILLISECONDS(50)
+  {
+    // erase the last pixel
+    leds[index] = CRGB::Black; // off
+
+    // move to the next pixel
+    if (++index >= NUM_STRIPS * NUM_LEDS_PER_STRIP)
+      index = 0;
+    DB_PRINTLN(index);
+
+    // light up the next pixel
+    leds[index] = CRGB::Red;
+
+    leds_dirty = true;
+  }
+
+  adjustBrightness();
+}
+
 // loop through all pixels in the source triange making sure they
 // get reflected and mirrored properly
 void mode_kaleidoscope_test()
@@ -338,4 +365,4 @@ void mode_kaleidoscope_test()
 
     adjustBrightness();
 }
-#endif
+#endif // DEBUG

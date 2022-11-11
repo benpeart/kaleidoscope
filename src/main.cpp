@@ -1,31 +1,20 @@
 #include "main.h"
 #include "render.h"
 #include "settings.h"
-#include "WebUI.h"
 
 #ifdef BOUNCE
 // https://github.com/thomasfredericks/Bounce2
 #include <Bounce2.h>
-#endif
+#endif // BOUNCE
 
 #ifdef WIFI
-
-// https://github.com/khoih-prog/ESPAsync_WiFiManager
-#define USE_ESP_WIFIMANAGER_NTP true
-#include <ESPAsync_WiFiManager.h>
+#include "WiFiHelpers.h"
+#include "WebUI.h"
 
 #ifdef REST
 #include <AsyncJson.h>
 #include <ArduinoJson.h>
 #endif // REST
-
-#ifdef DRD
-// https://github.com/khoih-prog/ESP_DoubleResetDetector
-#define ESP_DRD_USE_EEPROM true
-#define DRD_TIMEOUT 10
-#define DRD_ADDRESS 0
-#include <ESP_DoubleResetDetector.h>
-#endif
 
 #ifdef ALEXA
 // https://github.com/Aircoookie/Espalexa
@@ -87,47 +76,8 @@ ESP32Encoder knobRight;
 ESP32Encoder knobLeft;
 #endif
 
-#ifdef WIFI
-AsyncWebServer webServer(80);
-ESPAsync_WiFiManager ESPAsync_wifiManager(&webServer, NULL, "Kaleidoscope");
-bool initialConfig = false;
-
-#ifdef DRD
-DoubleResetDetector *drd;
-#endif
-
 #ifdef ALEXA
 Espalexa espalexa;
-#endif
-#endif // WIFI
-
-#ifdef DEBUG
-// test the wiring and ensure all pixels light up correctly
-// Q: Why does led[300] ==> led[312] not light up?
-// A: Our strips aren't the same length (156 vs 144) so the shorter strips (1 and 2)
-// have extra leds[x] positions that don't have physical LEDs.
-void mode_test()
-{
-  static int index = 0;
-
-  EVERY_N_MILLISECONDS(50)
-  {
-    // erase the last pixel
-    leds[index] = CRGB::Black; // off
-
-    // move to the next pixel
-    if (++index >= NUM_STRIPS * NUM_LEDS_PER_STRIP)
-      index = 0;
-    DB_PRINTLN(index);
-
-    // light up the next pixel
-    leds[index] = CRGB::Red;
-
-    leds_dirty = true;
-  }
-
-  adjustBrightness();
-}
 #endif
 
 //
@@ -405,7 +355,7 @@ int modeEncoderCounts[N_MODES][2] =
         {0, 0},
 #endif
         {0, 0}};
-#endif
+#endif // ENCODER
 
 void setKaleidoscopeMode(int new_mode)
 {
@@ -430,7 +380,6 @@ void setKaleidoscopeMode(int new_mode)
   }
 }
 
-#ifdef WIFI
 #ifdef REST
 // This is needed to solve some threading issues with the REST APIs coming in via
 // asyncronous messages. When we get a change, just store them in the temporary
@@ -441,17 +390,22 @@ typedef struct
   int LEDBrightnessManualOffset;
   int kaleidoscope_speed;
   int kaleidoscope_mode;
-  int clock_face;
   int draw_style;
+#ifdef TIME
+  int clock_face;
   CRGB clockColor;
+#endif // TIME
 } kaleidoscope_settings;
 kaleidoscope_settings settings = {
     LEDBrightnessManualOffset,
     kaleidoscope_speed,
     kaleidoscope_mode,
-    clock_face,
     draw_style,
-    clockColor};
+#ifdef TIME
+    clock_face,
+    clockColor
+#endif // TIME
+};
 volatile bool newSettings = false;
 
 void applySettings(kaleidoscope_settings &settings)
@@ -475,20 +429,22 @@ void applySettings(kaleidoscope_settings &settings)
     setKaleidoscopeMode(settings.kaleidoscope_mode);
   }
 
-  if (clock_face != settings.clock_face)
-  {
-    set_clock_face(settings.clock_face);
-  }
-
   if (draw_style != settings.draw_style)
   {
     set_draw_style(settings.draw_style);
+  }
+
+#ifdef TIME
+  if (clock_face != settings.clock_face)
+  {
+    set_clock_face(settings.clock_face);
   }
 
   if (clockColor != settings.clockColor)
   {
     clockColor = settings.clockColor;
   }
+#endif // TIME
 
   newSettings = false;
 }
@@ -502,9 +458,10 @@ void getSettings(AsyncWebServerRequest *request)
   doc["drawStyle"] = drawStyles[draw_style];
   doc["brightness"] = LEDBrightnessManualOffset;
   doc["speed"] = kaleidoscope_speed;
+#ifdef TIME
   doc["clockFace"] = clockFaces[clock_face];
   doc["clockColor"] = clockColor.r << 16 | clockColor.g << 8 | clockColor.b;
-
+#endif // TIME
   serializeJson(doc, response);
   request->send(200, "text/json", response);
 }
@@ -530,6 +487,7 @@ void getModes(AsyncWebServerRequest *request)
   request->send(200, "text/json", response);
 }
 
+#ifdef TIME
 void getFaces(AsyncWebServerRequest *request)
 {
   // allocate the memory for the document
@@ -549,6 +507,7 @@ void getFaces(AsyncWebServerRequest *request)
   serializeJson(doc, response);
   request->send(200, "text/json", response);
 }
+#endif // TIME
 
 void getDrawStyles(AsyncWebServerRequest *request)
 {
@@ -606,21 +565,6 @@ void saveSettings(AsyncWebServerRequest *request, JsonVariant &json)
     }
   }
 
-  const char *clockFace = jsonObj["clockFace"];
-  if (clockFace)
-  {
-    for (int x = 0; x < N_CLOCK_FACES; x++)
-    {
-      if (String(clockFaces[x]).equalsIgnoreCase(String(clockFace)))
-      {
-        settings.clock_face = x;
-        newSettings = true;
-        DB_PRINTF("clockFace = %s\r\n", clockFaces[x]);
-        break;
-      }
-    }
-  }
-
   const char *drawStyle = jsonObj["drawStyle"];
   if (drawStyle)
   {
@@ -636,6 +580,22 @@ void saveSettings(AsyncWebServerRequest *request, JsonVariant &json)
     }
   }
 
+#ifdef TIME
+  const char *clockFace = jsonObj["clockFace"];
+  if (clockFace)
+  {
+    for (int x = 0; x < N_CLOCK_FACES; x++)
+    {
+      if (String(clockFaces[x]).equalsIgnoreCase(String(clockFace)))
+      {
+        settings.clock_face = x;
+        newSettings = true;
+        DB_PRINTF("clockFace = %s\r\n", clockFaces[x]);
+        break;
+      }
+    }
+  }
+
   JsonVariant clockColor = jsonObj["clockColor"];
   if (!clockColor.isNull())
   {
@@ -643,13 +603,14 @@ void saveSettings(AsyncWebServerRequest *request, JsonVariant &json)
     newSettings = true;
     DB_PRINTF("clockColor = %d\r\n", (uint32_t)settings.clockColor);
   }
+#endif // TIME
 
   request->send(200, "text/plain", "OK");
 }
 #endif // REST
 
 #ifdef ALEXA
-//our Alexa callback function
+// our Alexa callback function
 void hueChanged(EspalexaDevice *d)
 {
   Serial.print("E changed to ");
@@ -683,29 +644,6 @@ void hueChanged(EspalexaDevice *d)
 }
 #endif // ALEXA
 
-void check_WiFi(void)
-{
-  if ((WiFi.status() != WL_CONNECTED))
-  {
-    DB_PRINTLN(F("\nWiFi lost. Attempting to reconnect"));
-
-    // attempt to reconnect
-    ESPAsync_wifiManager.autoConnect("KaleidoscopeAP");
-
-    // report on our WiFi connection status
-    if (WiFi.status() == WL_CONNECTED)
-    {
-      DB_PRINT(F("Connected. Local IP: "));
-      DB_PRINTLN(WiFi.localIP());
-    }
-    else
-    {
-      DB_PRINTLN(ESPAsync_wifiManager.getStatus(WiFi.status()));
-    }
-  }
-}
-#endif // WIFI
-
 //
 // SETUP FUNCTION -- RUNS ONCE AT PROGRAM START ----------------------------
 //
@@ -724,54 +662,24 @@ void setup()
 
 #ifdef WIFI
   // connect to wifi or enter AP mode so it can be configured
-  DB_PRINTLN(ESP_ASYNC_WIFIMANAGER_VERSION);
+  wifi_setup();
 
-#ifdef DRD
-  drd = new DoubleResetDetector(DRD_TIMEOUT, DRD_ADDRESS);
-  if (drd->detectDoubleReset())
-  {
-    DB_PRINTLN("Double reset detected");
-    initialConfig = true;
-  }
-#endif
-
-  if (ESPAsync_wifiManager.WiFi_SSID() == "")
-  {
-    DB_PRINTLN(F("No AP credentials"));
-    initialConfig = true;
-  }
-  if (initialConfig)
-  {
-    DB_PRINTLN(F("Starting Config Portal"));
-    ESPAsync_wifiManager.startConfigPortal("KaleidoscopeAP");
-  }
-  else
-  {
-    ESPAsync_wifiManager.autoConnect("KaleidoscopeAP");
-  }
-
-  // report on our WiFi connection status
-  if (WiFi.status() == WL_CONNECTED)
-  {
-    DB_PRINT(F("Connected. Local IP: "));
-    DB_PRINTLN(WiFi.localIP());
-  }
-  else
-  {
-    DB_PRINTLN(ESPAsync_wifiManager.getStatus(WiFi.status()));
-  }
+  // create a web server for our Web UI
+  webServer = new AsyncWebServer(80);
 
   // setup the home page and other web UI (WiFi settings, upgrade, etc)
-  WebUI_setup(&webServer);
+  WebUI_setup(webServer);
 
   // setup the REST API endpoints and handlers
 #ifdef REST
-  webServer.on("/api/settings", HTTP_GET, getSettings);
+  webServer->on("/api/settings", HTTP_GET, getSettings);
   AsyncCallbackJsonWebHandler *handler = new AsyncCallbackJsonWebHandler("/api/settings", saveSettings);
-  webServer.addHandler(handler);
-  webServer.on("/api/modes", HTTP_GET, getModes);
-  webServer.on("/api/faces", HTTP_GET, getFaces);
-  webServer.on("/api/drawstyles", HTTP_GET, getDrawStyles);
+  webServer->addHandler(handler);
+  webServer->on("/api/modes", HTTP_GET, getModes);
+#ifdef TIME
+  webServer->on("/api/faces", HTTP_GET, getFaces);
+#endif // TIME
+  webServer->on("/api/drawstyles", HTTP_GET, getDrawStyles);
 #endif
 
 #ifdef ALEXA
@@ -782,37 +690,17 @@ void setup()
                          {
                            // handle the 404 error
                            request->send(404, "text/plain", "Not found");
-                         }
-                       });
+                         } });
 
   // Define your devices here.
-  espalexa.addDevice("Hue", hueChanged, EspalexaDeviceType::extendedcolor); //color + color temperature
+  espalexa.addDevice("Hue", hueChanged, EspalexaDeviceType::extendedcolor); // color + color temperature
 
   // give espalexa a pointer to your server object so it can use your server instead of creating its own
   espalexa.begin(&webServer);
 #endif
 
-#ifdef TIME
-  // this only returns a value during the initial config step (call resetSettings() to test)
-  // store the string in persistant storage for later use
-  String timezoneName = ESPAsync_wifiManager.getTimezoneName();
-  if (timezoneName.length())
-  {
-    // write the timezone string into persistant memory
-    DB_PRINTF("Saving timezone '%s'\r\n", timezoneName.c_str());
-    const char *tz = ESPAsync_wifiManager.getTZ(timezoneName);
-    Preferences preferences;
-    preferences.begin("kaleidoscope", false);
-    preferences.putString("tz", tz);
-    preferences.end();
-  }
-
-  // intialize the real time clock
-  rtc_setup();
-#endif
-
 #ifndef ALEXA
-  webServer.begin(); //omit this since it will be done by espalexa.begin(&webServer)
+  webServer->begin(); // omit this since it will be done by espalexa.begin(&webServer)
 #endif
 #endif // WIFI
 
@@ -822,7 +710,7 @@ void setup()
   pinMode(PHOTOCELL_PIN, INPUT /*_PULLUP*/);
 
 // D:\src\kaleidoscope\.pio\libdeps\node32s\ESP32Encoder\src\ESP32Encoder.cpp
-//gpio_pullup_en((gpio_num_t)PHOTOCELL_PIN);
+// gpio_pullup_en((gpio_num_t)PHOTOCELL_PIN);
 #endif
 
   // initialize the random number generator using noise from an analog pin
@@ -896,12 +784,8 @@ void loop()
 #endif
 
 #ifdef WIFI
-  // check and reconnect to WiFi if needed
-  check_WiFi();
-
-#ifdef DRD
-  drd->loop();
-#endif
+  // check that WiFi is still connected and reconnect if necessary
+  wifi_loop();
 
 #ifdef ALEXA
   espalexa.loop();
@@ -914,7 +798,6 @@ void loop()
   (*renderFunc[kaleidoscope_mode])();
 
   // draw the clock face (can be a null clock face - see mode_select_clock_face())
-#ifdef WIFI
 #ifdef TIME
   // don't draw the clock if we're in 'off' mode
   if (renderFunc[kaleidoscope_mode] != mode_off)
@@ -925,7 +808,6 @@ void loop()
   if (WiFi.status() == WL_CONNECTED)
     weather_loop(current_weather);
 #endif // WEATHER
-#endif // WIFI
 
 // Show an activity spinner and the current fps. After 500 ms of no LED updates show 0 fps.
 // This is to prevent the fps flickering between 0 fps and x fps when there are no updates
