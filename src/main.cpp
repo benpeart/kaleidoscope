@@ -664,22 +664,19 @@ void setup()
   // connect to wifi or enter AP mode so it can be configured
   wifi_setup();
 
-  // create a web server for our Web UI
-  webServer = new AsyncWebServer(80);
-
   // setup the home page and other web UI (WiFi settings, upgrade, etc)
-  WebUI_setup(webServer);
+  WebUI_setup(&webServer);
 
   // setup the REST API endpoints and handlers
 #ifdef REST
-  webServer->on("/api/settings", HTTP_GET, getSettings);
+  webServer.on("/api/settings", HTTP_GET, getSettings);
   AsyncCallbackJsonWebHandler *handler = new AsyncCallbackJsonWebHandler("/api/settings", saveSettings);
-  webServer->addHandler(handler);
-  webServer->on("/api/modes", HTTP_GET, getModes);
+  webServer.addHandler(handler);
+  webServer.on("/api/modes", HTTP_GET, getModes);
 #ifdef TIME
-  webServer->on("/api/faces", HTTP_GET, getFaces);
+  webServer.on("/api/faces", HTTP_GET, getFaces);
 #endif // TIME
-  webServer->on("/api/drawstyles", HTTP_GET, getDrawStyles);
+  webServer.on("/api/drawstyles", HTTP_GET, getDrawStyles);
 #endif
 
 #ifdef ALEXA
@@ -700,7 +697,7 @@ void setup()
 #endif
 
 #ifndef ALEXA
-  webServer->begin(); // omit this since it will be done by espalexa.begin(&webServer)
+  webServer.begin(); // omit this since it will be done by espalexa.begin(&webServer)
 #endif
 #endif // WIFI
 
