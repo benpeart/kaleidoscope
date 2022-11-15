@@ -1,7 +1,7 @@
 #ifndef REALTIMECLOCK_H
 #define REALTIMECLOCK_H
 
-#include <FastLED.h>
+#include "render.h"
 
 void rtc_setup();
 

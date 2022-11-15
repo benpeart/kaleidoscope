@@ -266,7 +266,7 @@ void WebUI_setup(AsyncWebServer *webServer)
                { request->send_P(200, "image/png", favicon_png, FAVICON_LEN); });
 
 #ifdef OTA
-  // Start ElegantOTA and require a username/password
+  // Add the ElegantOTA UI and require a username/password to update the firmware
   AsyncElegantOTA.begin(webServer, "admin", "admin");
   DB_PRINTLN(F("OTA web server started."));
 #endif
