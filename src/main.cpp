@@ -52,7 +52,14 @@
 #endif // BOUNCE
 
 // setup our LED strips for parallel output using FastLED
+#ifdef JTAG
+// JTAG uses GPIO12-GPIO15 so we can't use GPIO14 for an LED strip. Redefine it to use an unused GPIO
+// so that we can debug even though we can't see the output of LED_STRIP_PIN_1 when mounted on the PCB.
+// TODO: when we rev the PCB, use a different GPIO for LED_STRIP_PIN_1
+#define LED_STRIP_PIN_1 32
+#else
 #define LED_STRIP_PIN_1 14
+#endif
 #define LED_STRIP_PIN_2 27
 #define LED_STRIP_PIN_3 26
 #define LED_STRIP_PIN_4 25
@@ -374,7 +381,7 @@ void setKaleidoscopeMode(int new_mode)
 
     // output the new mode name and clear the led strips for the new mode
     kaleidoscope_mode = new_mode;
-    DB_PRINTLN(modeNames[kaleidoscope_mode]);
+    DB_PRINTF("setKaleidoscopeMode: %s\r\n", modeNames[kaleidoscope_mode]);
     FastLED.clear(true);
     leds_dirty = true;
   }
@@ -414,6 +421,7 @@ void applySettings(kaleidoscope_settings &settings)
     return;
 
   // all validation of values happens in saveSettings()
+  DB_PRINTF("REST applySettings: %s\r\n", newSettings ? "TRUE" : "FALSE");
   if (LEDBrightnessManualOffset != settings.LEDBrightnessManualOffset)
   {
     LEDBrightnessManualOffset = settings.LEDBrightnessManualOffset;
@@ -449,6 +457,86 @@ void applySettings(kaleidoscope_settings &settings)
   newSettings = false;
 }
 
+void saveSettings(AsyncWebServerRequest *request, JsonVariant &json)
+{
+  const JsonObject &jsonObj = json.as<JsonObject>();
+
+  // update the brightness (if it was passed)
+  DB_PRINTLN("REST saveSettings:");
+  JsonVariant brightness = jsonObj["brightness"];
+  if (!brightness.isNull())
+  {
+    settings.LEDBrightnessManualOffset = constrain((int)brightness, -MAX_BRIGHTNESS, MAX_BRIGHTNESS);
+    newSettings = true;
+    DB_PRINTF("  brightness = %d\r\n", settings.LEDBrightnessManualOffset);
+  }
+
+  JsonVariant speed = jsonObj["speed"];
+  if (!speed.isNull())
+  {
+    settings.kaleidoscope_speed = constrain((int)speed, 0, KALEIDOSCOPE_MAX_SPEED);
+    newSettings = true;
+    DB_PRINTF("  speed = %d\r\n", settings.kaleidoscope_speed);
+  }
+
+  const char *modeName = jsonObj["mode"];
+  if (modeName)
+  {
+    for (int x = 0; x < N_MODES; x++)
+    {
+      if (String(modeNames[x]).equalsIgnoreCase(String(modeName)))
+      {
+        settings.kaleidoscope_mode = x;
+        newSettings = true;
+        DB_PRINTF("  mode = %s\r\n", modeNames[x]);
+        break;
+      }
+    }
+  }
+
+  const char *drawStyle = jsonObj["drawStyle"];
+  if (drawStyle)
+  {
+    for (int x = 0; x < N_DRAW_STYLES; x++)
+    {
+      if (String(drawStyles[x]).equalsIgnoreCase(String(drawStyle)))
+      {
+        settings.draw_style = x;
+        newSettings = true;
+        DB_PRINTF("  drawStyle = %s\r\n", drawStyles[x]);
+        break;
+      }
+    }
+  }
+
+#ifdef TIME
+  const char *clockFace = jsonObj["clockFace"];
+  if (clockFace)
+  {
+    for (int x = 0; x < N_CLOCK_FACES; x++)
+    {
+      if (String(clockFaces[x]).equalsIgnoreCase(String(clockFace)))
+      {
+        settings.clock_face = x;
+        newSettings = true;
+        DB_PRINTF("  clockFace = %s\r\n", clockFaces[x]);
+        break;
+      }
+    }
+  }
+
+  JsonVariant clockColor = jsonObj["clockColor"];
+  if (!clockColor.isNull())
+  {
+    settings.clockColor = CRGB((uint32_t)clockColor);
+    newSettings = true;
+    DB_PRINTF("  clockColor = 0x%06X\r\n", settings.clockColor.r << 16 | settings.clockColor.g << 8 | settings.clockColor.b);
+  }
+#endif // TIME
+
+  request->send(200, "text/plain", "OK");
+}
+
 void getSettings(AsyncWebServerRequest *request)
 {
   DynamicJsonDocument doc(512);
@@ -463,6 +551,7 @@ void getSettings(AsyncWebServerRequest *request)
   doc["clockColor"] = clockColor.r << 16 | clockColor.g << 8 | clockColor.b;
 #endif // TIME
   serializeJson(doc, response);
+  DB_PRINTLN("REST getSettings: " + response);
   request->send(200, "text/json", response);
 }
 
@@ -484,6 +573,7 @@ void getModes(AsyncWebServerRequest *request)
   // serialize the array and send the result
   String response;
   serializeJson(doc, response);
+  DB_PRINTLN("REST getModes: " + response);
   request->send(200, "text/json", response);
 }
 
@@ -505,6 +595,7 @@ void getFaces(AsyncWebServerRequest *request)
   // serialize the array and send the result
   String response;
   serializeJson(doc, response);
+  DB_PRINTLN("REST getFaces: " + response);
   request->send(200, "text/json", response);
 }
 #endif // TIME
@@ -529,84 +620,6 @@ void getDrawStyles(AsyncWebServerRequest *request)
   request->send(200, "text/json", response);
 }
 
-void saveSettings(AsyncWebServerRequest *request, JsonVariant &json)
-{
-  const JsonObject &jsonObj = json.as<JsonObject>();
-
-  // update the brightness (if it was passed)
-  JsonVariant brightness = jsonObj["brightness"];
-  if (!brightness.isNull())
-  {
-    settings.LEDBrightnessManualOffset = constrain((int)brightness, -MAX_BRIGHTNESS, MAX_BRIGHTNESS);
-    newSettings = true;
-    DB_PRINTF("brightness = %d\r\n", settings.LEDBrightnessManualOffset);
-  }
-
-  JsonVariant speed = jsonObj["speed"];
-  if (!speed.isNull())
-  {
-    settings.kaleidoscope_speed = constrain((int)speed, 0, KALEIDOSCOPE_MAX_SPEED);
-    newSettings = true;
-    DB_PRINTF("speed = %d\r\n", settings.kaleidoscope_speed);
-  }
-
-  const char *modeName = jsonObj["mode"];
-  if (modeName)
-  {
-    for (int x = 0; x < N_MODES; x++)
-    {
-      if (String(modeNames[x]).equalsIgnoreCase(String(modeName)))
-      {
-        settings.kaleidoscope_mode = x;
-        newSettings = true;
-        DB_PRINTF("mode = %s\r\n", modeNames[x]);
-        break;
-      }
-    }
-  }
-
-  const char *drawStyle = jsonObj["drawStyle"];
-  if (drawStyle)
-  {
-    for (int x = 0; x < N_DRAW_STYLES; x++)
-    {
-      if (String(drawStyles[x]).equalsIgnoreCase(String(drawStyle)))
-      {
-        settings.draw_style = x;
-        newSettings = true;
-        DB_PRINTF("drawStyle = %s\r\n", drawStyles[x]);
-        break;
-      }
-    }
-  }
-
-#ifdef TIME
-  const char *clockFace = jsonObj["clockFace"];
-  if (clockFace)
-  {
-    for (int x = 0; x < N_CLOCK_FACES; x++)
-    {
-      if (String(clockFaces[x]).equalsIgnoreCase(String(clockFace)))
-      {
-        settings.clock_face = x;
-        newSettings = true;
-        DB_PRINTF("clockFace = %s\r\n", clockFaces[x]);
-        break;
-      }
-    }
-  }
-
-  JsonVariant clockColor = jsonObj["clockColor"];
-  if (!clockColor.isNull())
-  {
-    settings.clockColor = CRGB((uint32_t)clockColor);
-    newSettings = true;
-    DB_PRINTF("clockColor = %d\r\n", (uint32_t)settings.clockColor);
-  }
-#endif // TIME
-
-  request->send(200, "text/plain", "OK");
-}
 #endif // REST
 
 #ifdef ALEXA
@@ -657,7 +670,7 @@ void setup()
   Serial.begin(115200);
   while (!Serial)
     ; // wait for serial port to connect. Needed for native USB port only
-  DB_PRINT("\nStarting Kaleidoscope on " + String(ARDUINO_BOARD));
+  DB_PRINTLN("\nStarting Kaleidoscope on " + String(ARDUINO_BOARD));
 #endif
 
 #ifdef WIFI

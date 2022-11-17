@@ -329,7 +329,7 @@ int set_draw_style(int new_draw_style)
     if (draw_style != new_draw_style)
     {
         draw_style = new_draw_style;
-        DB_PRINTLN(drawStyles[draw_style]);
+        DB_PRINTF("set_draw_style: %s\r\n", drawStyles[draw_style]);
         switch (draw_style)
         {
         case 0:

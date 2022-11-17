@@ -4,7 +4,8 @@
 #include <Arduino.h>
 
 // flags to enable turning of various parts of the app for debugging purposes
-//#define DEBUG
+#define DEBUG
+//#define JTAG
 #define BOUNCE
 #define DEMO
 #define ENCODER

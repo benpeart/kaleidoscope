@@ -19,7 +19,11 @@
 #include "RealTimeClock.h"
 #endif // TIME
 
+#ifndef DEBUG
 #define N_MODES 16
+#else
+#define N_MODES 19
+#endif
 extern uint8_t kaleidoscope_mode; // Index of current mode in table
 extern const char modeNames[N_MODES][64];
 extern const PROGMEM char showInRESTAPI[N_MODES];

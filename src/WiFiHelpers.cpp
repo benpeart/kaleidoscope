@@ -46,6 +46,7 @@ bool initialConfig = false;
 
 #define HTTP_PORT 80
 AsyncWebServer webServer(HTTP_PORT);
+AsyncDNSServer dnsServer;
 
 void wifi_setup(const char *iHostname)
 {
@@ -62,7 +63,6 @@ void wifi_setup(const char *iHostname)
 #endif
 
     // Local intialization. Once its business is done, there is no need to keep it around
-    AsyncDNSServer dnsServer;
     ESPAsync_WiFiManager wifiManager(&webServer, &dnsServer, "Kaleidoscope");
 
     // Set config portal channel, default = 1. Use 0 => random channel from 1-13
@@ -135,7 +135,6 @@ void wifi_loop(void)
         DB_PRINTLN(F("\nWiFi lost. Attempting to reconnect"));
 
         // Local intialization. Once its business is done, there is no need to keep it around
-        AsyncDNSServer dnsServer;
         ESPAsync_WiFiManager wifiManager(&webServer, &dnsServer, "Kaleidoscope");
 
         // Set config portal channel, default = 1. Use 0 => random channel from 1-13

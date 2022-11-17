@@ -11,10 +11,6 @@
 // example of using GFX library with custom remap function (ie XY())
 // https://github.com/marcmerlin/FastLED_NeoMatrix/issues/6
 
-// enable debugging macros
-#define DEBUG
-#include "debug.h"
-
 CRGB clockColor = CRGB::Black;
 
 /* Useful Constants */
@@ -417,7 +413,7 @@ int set_clock_face(int new_face)
     if (clock_face != new_face)
     {
         clock_face = new_face;
-        DB_PRINTLN(clockFaces[clock_face]);
+        DB_PRINTF("set_clock_face: %s\r\n", clockFaces[clock_face]);
         leds_dirty = true;
 #ifdef WEATHER
         // update whether we need to fetch the weather
