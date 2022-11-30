@@ -66,7 +66,10 @@ const char index_html[] PROGMEM = R"rawliteral(
 
     /* format the select controls */
     .select {
+      -webkit-appearance: menulist-button;
       width: 100%;
+      height: 35px;
+      font-size: large;
       margin: 1% 0%;
       box-shadow: 0px 0px 10px #c1c1c1;
       box-sizing: border-box;
@@ -142,7 +145,7 @@ const char index_html[] PROGMEM = R"rawliteral(
 
     /* change the appearance of the power button */
     .power {
-      margin: 10% auto;
+      margin: 8% auto;
       vertical-align: middle;
       text-align: center;
     }
@@ -176,8 +179,8 @@ const char index_html[] PROGMEM = R"rawliteral(
     /* change the appearance of the color picker */
     .colorPickerWrapper {
       margin: 5% auto;
-      width: 125px;
-      height: 125px;
+      width: 110px;
+      height: 110px;
       vertical-align: middle;
       text-align: center;
       border-radius: 50%;
@@ -185,16 +188,16 @@ const char index_html[] PROGMEM = R"rawliteral(
 
     .colorPicker {
       opacity: 0;
-      width: 125px;
-      height: 125px;
+      width: 110px;
+      height: 110px;
       border-radius: 50%;
       position: relative;
       top: -150px;
     }
 
     .colorImage {
-      width: 125px;
-      height: 125px;
+      width: 110px;
+      height: 110px;
     }
   </style>
 </head>
@@ -317,7 +320,7 @@ const char index_html[] PROGMEM = R"rawliteral(
         )
 
       updateState();
-      //      window.setInterval(updateState, 1000);
+      window.setInterval(updateState, 1000);
     }
 
     function updateState() {
@@ -331,6 +334,7 @@ const char index_html[] PROGMEM = R"rawliteral(
             }
 
             response.json().then(function (data) {
+              console.info('Successfully requested /api/settings = ' + data["mode"]);
               if (data["mode"] === 'off') {
                 document.getElementById('modes').value = 'Kaleidoscope';
                 document.getElementById('power').checked = false;
@@ -342,6 +346,8 @@ const char index_html[] PROGMEM = R"rawliteral(
               document.getElementById('brightness').value = data["brightness"];
               document.getElementById('speed').value = data["speed"];
               document.getElementById('clockColor').value = '#' + data["clockColor"].toString(16);
+              document.getElementById('colorPickerWrapper').style.backgroundColor = '#' + data["clockColor"].toString(16);
+              console.info('colorPickerWrapper.style.backgroundColor = #' + data["clockColor"].toString(16));
             });
           }
         )
@@ -426,15 +432,14 @@ const char index_html[] PROGMEM = R"rawliteral(
     }
 
     function onchangeClockColor(element) {
-      colorPickerWrapper = document.getElementById("colorPickerWrapper");
-      colorPickerWrapper.style.backgroundColor = element.value;
+      document.getElementById("colorPickerWrapper").style.backgroundColor = element.value;
       fetch(window.location.origin + '/api/settings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ clockColor: parseInt(element.value, 16) })
       })
         .then((response) => {
-          console.log('changeClockColor = ' + element.value + ' : ' + response.statusText);
+          console.log('changeClockColor = ' + parseInt(element.value, 16) + ' : ' + response.statusText);
         });
     }
   </script>
