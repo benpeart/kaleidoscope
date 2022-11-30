@@ -142,7 +142,7 @@ const char index_html[] PROGMEM = R"rawliteral(
 
     /* change the appearance of the power button */
     .power {
-      margin: 15% auto;
+      margin: 10% auto;
       vertical-align: middle;
       text-align: center;
     }
@@ -175,9 +175,9 @@ const char index_html[] PROGMEM = R"rawliteral(
 
     /* change the appearance of the color picker */
     .colorPickerWrapper {
-      margin: 15% auto;
-      width: 150px;
-      height: 150px;
+      margin: 5% auto;
+      width: 125px;
+      height: 125px;
       vertical-align: middle;
       text-align: center;
       border-radius: 50%;
@@ -185,16 +185,16 @@ const char index_html[] PROGMEM = R"rawliteral(
 
     .colorPicker {
       opacity: 0;
-      width: 150px;
-      height: 150px;
+      width: 125px;
+      height: 125px;
       border-radius: 50%;
       position: relative;
       top: -150px;
     }
 
     .colorImage {
-      width: 150px;
-      height: 150px;
+      width: 125px;
+      height: 125px;
     }
   </style>
 </head>
@@ -244,7 +244,7 @@ const char index_html[] PROGMEM = R"rawliteral(
   </div>
 
   <a href="/update">
-     <img width="50" src='/settings.svg' />
+    <img width="50" src='/settings.svg' />
   </a>
   <script>
     function initialize() {
