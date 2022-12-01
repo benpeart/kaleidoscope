@@ -11,7 +11,7 @@
 // example of using GFX library with custom remap function (ie XY())
 // https://github.com/marcmerlin/FastLED_NeoMatrix/issues/6
 
-CRGB clockColor = CRGB::Black;
+CRGB clockColor = CRGB::White;
 
 /* Useful Constants */
 #define SECS_PER_MIN ((time_t)(60UL))
