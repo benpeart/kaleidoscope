@@ -48,7 +48,7 @@ PUT will allow you to set some or all of the same values.
     "brightness": 4095,
     "speed": 25,
     "clockFace": "Off",
-    "clockColor": 16646134
+    "clockColor": "#FFFFFF"
 }
 ```
 
@@ -110,11 +110,7 @@ Choose what clock face (if any) is displayed.
 
 ### clockColor
 
-Specified the color used to draw the clock. It is a 3 byte RGB value stored as:
-
-```
-    handsColor.r << 16 | handsColor.g << 8 | handsColor.b;
-```
+A hexadecimal color is specified with: #RRGGBB, where the RR (red), GG (green) and BB (blue) hexadecimal integers specify the components of the color.
 
 ## 'Modes' REST API
 

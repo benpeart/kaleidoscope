@@ -320,7 +320,7 @@ const char index_html[] PROGMEM = R"rawliteral(
         )
 
       updateState();
-      window.setInterval(updateState, 1000);
+//      window.setInterval(updateState, 1000);
     }
 
     function updateState() {
@@ -345,9 +345,8 @@ const char index_html[] PROGMEM = R"rawliteral(
               document.getElementById('drawstyles').value = data["drawStyle"];
               document.getElementById('brightness').value = data["brightness"];
               document.getElementById('speed').value = data["speed"];
-              document.getElementById('clockColor').value = '#' + data["clockColor"].toString(16);
-              document.getElementById('colorPickerWrapper').style.backgroundColor = '#' + data["clockColor"].toString(16);
-              console.info('colorPickerWrapper.style.backgroundColor = #' + data["clockColor"].toString(16));
+              document.getElementById('clockColor').value = '#' + data["clockColor"];
+              document.getElementById('colorPickerWrapper').style.backgroundColor = data["clockColor"];
             });
           }
         )
@@ -436,10 +435,10 @@ const char index_html[] PROGMEM = R"rawliteral(
       fetch(window.location.origin + '/api/settings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ clockColor: parseInt(element.value, 16) })
+        body: JSON.stringify({ clockColor: element.value })
       })
         .then((response) => {
-          console.log('changeClockColor = ' + parseInt(element.value, 16) + ' : ' + response.statusText);
+          console.log('changeClockColor = ' + element.value + ' : ' + response.statusText);
         });
     }
   </script>

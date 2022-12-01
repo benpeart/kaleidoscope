@@ -528,9 +528,12 @@ void saveSettings(AsyncWebServerRequest *request, JsonVariant &json)
   JsonVariant clockColor = jsonObj["clockColor"];
   if (!clockColor.isNull())
   {
-    settings.clockColor = CRGB((uint32_t)clockColor);
+    uint32_t color;
+
+    sscanf(clockColor, "#%06X", &color);
+    settings.clockColor = CRGB(color);
     newSettings = true;
-    DB_PRINTF("  clockColor = 0x%06X\r\n", settings.clockColor.r << 16 | settings.clockColor.g << 8 | settings.clockColor.b);
+    DB_PRINTF("  clockColor = #%06X\r\n", settings.clockColor.r << 16 | settings.clockColor.g << 8 | settings.clockColor.b);
   }
 #endif // TIME
 
@@ -548,7 +551,9 @@ void getSettings(AsyncWebServerRequest *request)
   doc["speed"] = kaleidoscope_speed;
 #ifdef TIME
   doc["clockFace"] = clockFaces[clock_face];
-  doc["clockColor"] = clockColor.r << 16 | clockColor.g << 8 | clockColor.b;
+  char color[8];
+  sprintf(color, "#%06X", settings.clockColor.r << 16 | settings.clockColor.g << 8 | settings.clockColor.b);
+  doc["clockColor"] = color;
 #endif // TIME
   serializeJson(doc, response);
   DB_PRINTLN("REST getSettings: " + response);
