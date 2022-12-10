@@ -20,7 +20,11 @@
 #endif // TIME
 
 #ifndef DEBUG
+#ifndef WIFI
+#define N_MODES 15
+#else
 #define N_MODES 16
+#endif
 #else
 #define N_MODES 19
 #endif

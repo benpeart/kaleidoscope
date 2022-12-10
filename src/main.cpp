@@ -178,6 +178,11 @@ int manualBrightness(bool useKnob)
   return LEDBrightnessManualOffset;
 }
 
+//
+// NOTE: adjustBrightness and adjustSpeed are currently called from the individual
+// modes as each mode may want to do something different with the knobs (ie the 'snake' mode)
+//
+
 // update the FastLED brightness based on our ambient and manual settings
 void adjustBrightness(bool useKnob)
 {
@@ -190,6 +195,7 @@ void adjustBrightness(bool useKnob)
   // adjust our brightness if it has changed
   if (newBrightness != LEDbrightness)
   {
+    // TODO: need to obtain the settings semaphore before changing the settings
     LEDbrightness = newBrightness;
     DB_PRINTF("new brightness = %d\r\n", newBrightness);
 
@@ -220,6 +226,7 @@ int adjustSpeed()
     else
       new_speed += INCREMENT_SPEED;
 
+    // TODO: need to obtain the settings semaphore before changing the settings
     kaleidoscope_speed = constrain(new_speed, 0, KALEIDOSCOPE_MAX_SPEED);
     lastLeftKnob = knob;
 
@@ -388,6 +395,16 @@ void setKaleidoscopeMode(int new_mode)
 }
 
 #ifdef REST
+//
+// When WiFi is actively transmitting/receiving data, the FastLED.show() command tends to crash or hang
+// the main 'loop()' thread. This is because the FastLed library disables interrupts during calls to show()
+// so that it can ensure the timing is correct while updating the LED strips. To fix this correctly
+// requires us to switch to a different type of LED that doesn't require such tight timing loops to update
+// or to switch to a different processor that has better hardware than the ESP32. Neither of these options
+// are great so I'll try to minimze the conflict using a semaphore.
+//
+SemaphoreHandle_t WiFiSemaphore = NULL;
+
 // This is needed to solve some threading issues with the REST APIs coming in via
 // asyncronous messages. When we get a change, just store them in the temporary
 // settings object then apply them on the primary thread so we aren't racing
@@ -555,6 +572,7 @@ void getSettings(AsyncWebServerRequest *request)
   sprintf(color, "#%06X", settings.clockColor.r << 16 | settings.clockColor.g << 8 | settings.clockColor.b);
   doc["clockColor"] = color;
 #endif // TIME
+
   serializeJson(doc, response);
   DB_PRINTLN("REST getSettings: " + response);
   request->send(200, "text/json", response);
@@ -679,6 +697,16 @@ void setup()
 #endif
 
 #ifdef WIFI
+  // Semaphore cannot be used before a call to vSemaphoreCreateBinary().
+  WiFiSemaphore = xSemaphoreCreateBinary();
+  if (WiFiSemaphore != NULL)
+  {
+    // The semaphore was created successfully and can now be used. Note: binary semaphores
+    // created using xSemaphoreCreateBinary() are created in a state such that the
+    // the semaphore must first be 'given' before it can be 'taken'.
+    xSemaphoreGive(WiFiSemaphore);
+  }
+
   // connect to wifi or enter AP mode so it can be configured
   wifi_setup();
 
@@ -795,6 +823,7 @@ void loop()
       new_mode = 0; // or "wrap around" to start
   }
 
+  // TODO: need to obtain the settings semaphore before changing the settings
   setKaleidoscopeMode(new_mode);
 #endif
 
@@ -850,7 +879,18 @@ void loop()
   // if we have changes in the LEDs, show the updated frame
   if (leds_dirty)
   {
-    FastLED.show();
-    leds_dirty = false;
+#ifdef WIFI    
+    // See if we can obtain the semaphore. If not, just skip this update.
+    if (WiFiSemaphore && xSemaphoreTake(WiFiSemaphore, 1) == pdTRUE)
+    {
+#endif      
+      // We were able to obtain the semaphore and can now update the LEDs and disable interrupts.
+      FastLED.show();
+      leds_dirty = false;
+#ifdef WIFI
+      // We have finished updating the LEDs.  Release the semaphore.
+      xSemaphoreGive(WiFiSemaphore);
+    }
+#endif    
   }
 }
