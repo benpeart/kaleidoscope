@@ -61,7 +61,7 @@ const char index_html[] PROGMEM = R"rawliteral(
 
     h2 {
       text-align: center;
-      margin: 2% 0;
+      margin: 15px 0;
     }
 
     /* format the select controls */
@@ -78,9 +78,8 @@ const char index_html[] PROGMEM = R"rawliteral(
     /* add a box shadow border around the brightness control */
     .brightnessSlider {
       width: 90%;
-      height: 10%;
       border-radius: 50px;
-      padding: 5% 7%;
+      padding: 20px 40px;
       margin: 0px auto;
       box-shadow: 0px 0px 10px #c1c1c1;
       box-sizing: border-box;
@@ -112,9 +111,8 @@ const char index_html[] PROGMEM = R"rawliteral(
     /* add a box shadow border around the speed control */
     .speedSlider {
       width: 90%;
-      height: 10%;
       border-radius: 50px;
-      padding: 5% 7%;
+      padding: 20px 40px;
       margin: 0px auto;
       box-shadow: 0px 0px 10px #c1c1c1;
       box-sizing: border-box;
@@ -145,7 +143,7 @@ const char index_html[] PROGMEM = R"rawliteral(
 
     /* change the appearance of the power button */
     .power {
-      margin: 8% auto;
+      margin: 25px auto;
       vertical-align: middle;
       text-align: center;
     }
@@ -320,7 +318,7 @@ const char index_html[] PROGMEM = R"rawliteral(
         )
 
       updateState();
-//      window.setInterval(updateState, 1000);
+      //      window.setInterval(updateState, 1000);
     }
 
     function updateState() {
