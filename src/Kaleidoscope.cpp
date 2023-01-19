@@ -141,12 +141,6 @@ void mode_kaleidoscope_select_speed_brightness()
     adjustBrightness();
 }
 
-// All Pixels off
-void mode_off()
-{
-  // nothing to see here... (the pixels got cleared by the button press)
-}
-
 #define SCREENSAVER_DELAY 60000 // 1 minute = 60,000 milliseconds
 void mode_kaleidoscope()
 {

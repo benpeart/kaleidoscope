@@ -1,6 +1,5 @@
 #include "main.h"
-#include "render.h"
-#include "settings.h"
+#include "modes.h"
 
 #ifdef BOUNCE
 // https://github.com/thomasfredericks/Bounce2
@@ -23,6 +22,10 @@
 #define ESPALEXA_DEBUG
 #include <Espalexa.h>
 #endif // ALEXA
+
+#ifdef TIME
+#include "RealTimeClock.h"
+#endif // TIME
 
 #ifdef WEATHER
 #include "weather.h"
@@ -236,164 +239,6 @@ int adjustSpeed()
   return kaleidoscope_speed;
 }
 
-// TODO: refactor the kaleidoscope mode logic into kaleidoscope.h/.cpp
-// This array lists each of the display/animation drawing functions
-// (which appear later in this code) in the order they're selected with
-// the right button.  Some functions appear repeatedly...for example,
-// we return to "mode_off" at several points in the sequence.
-void (*renderFunc[])(void){
-    mode_kaleidoscope,
-#ifdef ENCODER
-    mode_off, // make it obvious we're entering 'setup' modes
-    mode_kaleidoscope_select_speed_brightness,
-    //    mode_kaleidoscope_select_disks,
-    mode_kaleidoscope_select_reflection_style,
-#ifdef TIME
-    mode_select_clock_face,
-#endif
-#endif
-#ifdef DEMO
-    mode_off, // make it obvious we're entering 'demo' modes
-    mode_kaleidoscope_plasma,
-    mode_kaleidoscope_ripples,
-    mode_kaleidoscope_twinkle_fox,
-    mode_xy_aalines,
-    mode_xy_distortion_waves,
-    mode_xy_matrix,
-    mode_xy_pacifica,
-    mode_xy_snake,
-    mode_xy_fire,
-#endif
-#ifdef DEBUG
-    mode_kaleidoscope_test,
-    mode_xy_test,
-    mode_test,
-#endif
-    mode_off // make it obvious we're entering 'regular' modes
-};
-#define N_MODES (sizeof(renderFunc) / sizeof(renderFunc[0]))
-uint8_t kaleidoscope_mode = 0; // Index of current mode in table
-
-const char modeNames[N_MODES][64] =
-    {
-        "Kaleidoscope",
-#ifdef ENCODER
-        "off",
-        "kaleidoscope_select_speed_brightness",
-        //        "kaleidoscope_select_disks",
-        "kaleidoscope_select_reflection_style",
-#ifdef TIME
-        "select_clock_face",
-#endif
-#endif
-#ifdef DEMO
-        "off",
-        "Plasma",
-        "Ripples",
-        "Twinkle Fox",
-        "AA Lines",
-        "Distortion Waves",
-        "Matrix",
-        "Pacifica",
-        "Snake",
-        "Fire",
-#endif
-#ifdef DEBUG
-        "kaleidoscope_test",
-        "xy_test",
-        "test",
-#endif
-        "off"};
-
-const PROGMEM char showInRESTAPI[N_MODES]{
-    1,
-#ifdef ENCODER
-    0,
-    0,
-    //        "kaleidoscope_select_disks",
-    0,
-#ifdef TIME
-    0,
-#endif
-#endif
-#ifdef DEMO
-    0,
-    1,
-    1,
-    1,
-    1,
-    1,
-    1,
-    1,
-    1,
-    1,
-#endif
-#ifdef DEBUG
-    1,
-    1,
-    1,
-#endif
-    0};
-
-#ifdef ENCODER
-// We need to save/restore the count for the rotary encoders
-// when we switch between modes so that each mode doesn't impact
-// the other modes.
-#define LEFT_ENCODER 0
-#define RIGHT_ENCODER 1
-int modeEncoderCounts[N_MODES][2] =
-    {
-        {0, 0},
-        {0, 0},
-        {0, 0},
-        //        {0, 0},
-        {0, 0},
-#ifdef TIME
-        {0, 0},
-#endif
-#ifdef DEMO
-        {0, 0},
-        {0, 0},
-        {0, 0},
-        {0, 0},
-        {0, 0},
-        {0, 0},
-        {0, 0},
-        {0, 0},
-        {0, 0},
-        {0, 0},
-#endif
-#ifdef DEBUG
-        {0, 0},
-        {0, 0},
-        {0, 0},
-#endif
-        {0, 0}};
-#endif // ENCODER
-
-void setKaleidoscopeMode(int new_mode)
-{
-  // if the mode changed
-  if (kaleidoscope_mode != new_mode)
-  {
-#ifdef ENCODER
-    int old_mode = kaleidoscope_mode;
-
-    // save the encoder count for the old mode and restore the new mode count
-    modeEncoderCounts[old_mode][LEFT_ENCODER] = knobLeft.getCount();
-    knobLeft.setCount(modeEncoderCounts[new_mode][LEFT_ENCODER]);
-    modeEncoderCounts[old_mode][RIGHT_ENCODER] = knobRight.getCount();
-    knobRight.setCount(modeEncoderCounts[new_mode][RIGHT_ENCODER]);
-#endif
-
-    // output the new mode name and clear the led strips for the new mode
-    kaleidoscope_mode = new_mode;
-    DB_PRINTF("setKaleidoscopeMode: %s\r\n", modeNames[kaleidoscope_mode]);
-    FastLED.clear(true);
-    leds_dirty = true;
-  }
-}
-
 #ifdef REST
 //
 // When WiFi is actively transmitting/receiving data, the FastLED.show() command tends to crash or hang
@@ -499,13 +344,13 @@ void saveSettings(AsyncWebServerRequest *request, JsonVariant &json)
   const char *modeName = jsonObj["mode"];
   if (modeName)
   {
-    for (int x = 0; x < N_MODES; x++)
+    for (int x = 0; x < kaleidoscope_modes; x++)
     {
-      if (String(modeNames[x]).equalsIgnoreCase(String(modeName)))
+      if (String(KaleidoscopeModeLUT[x].modeName).equalsIgnoreCase(String(modeName)))
       {
         settings.kaleidoscope_mode = x;
         newSettings = true;
-        DB_PRINTF("  mode = %s\r\n", modeNames[x]);
+        DB_PRINTF("  mode = %s\r\n", KaleidoscopeModeLUT[x].modeName);
         break;
       }
     }
@@ -562,7 +407,7 @@ void getSettings(AsyncWebServerRequest *request)
   DynamicJsonDocument doc(512);
   String response;
 
-  doc["mode"] = modeNames[kaleidoscope_mode];
+  doc["mode"] = KaleidoscopeModeLUT[kaleidoscope_mode].modeName;
   doc["drawStyle"] = drawStyles[draw_style];
   doc["brightness"] = LEDBrightnessManualOffset;
   doc["speed"] = kaleidoscope_speed;
@@ -581,16 +426,16 @@ void getSettings(AsyncWebServerRequest *request)
 void getModes(AsyncWebServerRequest *request)
 {
   // allocate the memory for the document
-  DynamicJsonDocument doc(JSON_ARRAY_SIZE(N_MODES));
+  DynamicJsonDocument doc(JSON_ARRAY_SIZE(kaleidoscope_modes));
 
   // create an empty array
   JsonArray array = doc.to<JsonArray>();
 
   // add the names
-  for (int x = 0; x < N_MODES; x++)
+  for (int x = 0; x < kaleidoscope_modes; x++)
   {
-    if (pgm_read_byte_near(&showInRESTAPI[x]))
-      array.add(modeNames[x]);
+    if (KaleidoscopeModeLUT[x].showInRESTAPI)
+      array.add(KaleidoscopeModeLUT[x].modeName);
   }
 
   // serialize the array and send the result
@@ -786,7 +631,7 @@ void setup()
   FastLED.addLeds<LED_TYPE, LED_STRIP_PIN_3, COLOR_ORDER>(leds + 2 * NUM_LEDS_PER_STRIP, NUM_LEDS_PER_STRIP).setCorrection(TypicalLEDStrip);
   FastLED.addLeds<LED_TYPE, LED_STRIP_PIN_4, COLOR_ORDER>(leds + 3 * NUM_LEDS_PER_STRIP, NUM_LEDS_PER_STRIP).setCorrection(TypicalLEDStrip);
   leds_dirty = true;
-  DB_PRINTLN(modeNames[kaleidoscope_mode]);
+  DB_PRINTLN(KaleidoscopeModeLUT[kaleidoscope_mode].modeName);
 }
 
 //
@@ -800,31 +645,15 @@ void loop()
 #endif
 
 #ifdef BOUNCE
-  // check for a mode change
-  uint8_t new_mode = kaleidoscope_mode;
-
   // Left button pressed?
   leftButton.update();
   if (leftButton.pressed())
-  {
-    if (new_mode)
-      new_mode--; // Go to prior mode
-    else
-      new_mode = N_MODES - 1; // or "wrap around" to last mode
-  }
+    previousKaleidoscopeMode();
 
   // Right button pressed?
   rightButton.update();
   if (rightButton.pressed())
-  {
-    if (new_mode < (N_MODES - 1))
-      new_mode++; // Advance to next mode
-    else
-      new_mode = 0; // or "wrap around" to start
-  }
-
-  // TODO: need to obtain the settings semaphore before changing the settings
-  setKaleidoscopeMode(new_mode);
+    nextKaleidoscopeMode();
 #endif
 
 #ifdef WIFI
@@ -839,12 +668,12 @@ void loop()
   // Render one frame in current mode. To control the speed of updates, use the
   // EVERY_N_MILLISECONDS(N) macro to only update the frame when it is needed.
   // Also be sure to set leds_dirty = true so that the updated frame will be displayed.
-  (*renderFunc[kaleidoscope_mode])();
+  (*KaleidoscopeModeLUT[kaleidoscope_mode].renderFunc)();
 
   // draw the clock face (can be a null clock face - see mode_select_clock_face())
 #ifdef TIME
   // don't draw the clock if we're in 'off' mode
-  if (renderFunc[kaleidoscope_mode] != mode_off)
+  if (KaleidoscopeModeLUT[kaleidoscope_mode].renderFunc != mode_off)
     draw_clock();
 #endif // TIME
 
@@ -879,11 +708,11 @@ void loop()
   // if we have changes in the LEDs, show the updated frame
   if (leds_dirty)
   {
-#ifdef WIFI    
+#ifdef WIFI
     // See if we can obtain the semaphore. If not, just skip this update.
     if (WiFiSemaphore && xSemaphoreTake(WiFiSemaphore, 1) == pdTRUE)
     {
-#endif      
+#endif
       // We were able to obtain the semaphore and can now update the LEDs and disable interrupts.
       FastLED.show();
       leds_dirty = false;
@@ -891,6 +720,6 @@ void loop()
       // We have finished updating the LEDs.  Release the semaphore.
       xSemaphoreGive(WiFiSemaphore);
     }
-#endif    
+#endif
   }
 }

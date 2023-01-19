@@ -1,6 +1,4 @@
 #include "main.h"
-#include "settings.h"
-#include "render.h"
 #include "WebUI.h"
 
 #ifdef OTA

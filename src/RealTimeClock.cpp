@@ -219,14 +219,17 @@ void displayHands(int hours, int minutes, int seconds, CRGB color)
     uint16_t b = HEIGHT * 128;
     uint16_t base_theta = 65536 * 3 / 4;
 
+// Turn off the second hand as it is hard to differentiate from the minute hand
     // second hand with sweep action
     uint16_t theta = seconds * 65536 / 60;
+#ifdef SECOND_HANDS
     static uint16_t sweep_theta = theta;
     int32_t diff = theta - sweep_theta;
     if (diff < 0)
         diff += 65536;
     sweep_theta += (diff + 8) / 16;
     wuVectorAA(centrex, centrey, a, b, base_theta + sweep_theta, &color);
+#endif
 
     // minute hand
     a = a * 7 / 8;
@@ -235,8 +238,8 @@ void displayHands(int hours, int minutes, int seconds, CRGB color)
     wuVectorAA(centrex, centrey, a, b, base_theta + theta, &color);
 
     // hour hand
-    a = a * 3 / 4;
-    b = b * 3 / 4;
+    a = a * 1 / 2;
+    b = b * 1 / 2;
     theta = (theta + (hours % 12) * 65536) / 12;
     wuVectorAA(centrex, centrey, a, b, base_theta + theta, &color);
 }
@@ -246,6 +249,8 @@ void drawAnalogClock()
     struct tm timeinfo;
     static int hours = -1, minutes = -1, seconds = -1;
 
+// turn off hash marks as they confuse the wife :)        
+#ifdef NEVER
     if (leds_dirty)
     {
         // draw marks at every 5 seconds
@@ -310,6 +315,7 @@ void drawAnalogClock()
         leds[index] = BlendColors(leds[index]);
 #endif
     }
+#endif // NEVER    
 
     if (getLocalTime(&timeinfo))
     {
