@@ -214,12 +214,12 @@ void adjustBrightness(bool useKnob)
 // The increment is defined to require two complete knob rotations to go from min to max
 // Each knob roration is 20 clicks.
 #define INCREMENT_SPEED (KALEIDOSCOPE_MAX_SPEED / 40)
-uint8_t kaleidoscope_speed = KALEIDOSCOPE_DEFAULT_SPEED;
+uint8_t kaleidoscopeSpeed = KALEIDOSCOPE_DEFAULT_SPEED;
 int adjustSpeed()
 {
 #ifdef ENCODER
   static int lastLeftKnob = 0;
-  int new_speed = kaleidoscope_speed;
+  int new_speed = kaleidoscopeSpeed;
 
   int knob = knobLeft.getCount();
   if (knob != lastLeftKnob)
@@ -230,13 +230,13 @@ int adjustSpeed()
       new_speed += INCREMENT_SPEED;
 
     // TODO: need to obtain the settings semaphore before changing the settings
-    kaleidoscope_speed = constrain(new_speed, 0, KALEIDOSCOPE_MAX_SPEED);
+    kaleidoscopeSpeed = constrain(new_speed, 0, KALEIDOSCOPE_MAX_SPEED);
     lastLeftKnob = knob;
 
-    DB_PRINTF("ms between frames = %d\r\n", kaleidoscope_speed);
+    DB_PRINTF("ms between frames = %d\r\n", kaleidoscopeSpeed);
   }
 #endif
-  return kaleidoscope_speed;
+  return kaleidoscopeSpeed;
 }
 
 #ifdef REST
@@ -257,22 +257,22 @@ SemaphoreHandle_t WiFiSemaphore = NULL;
 typedef struct
 {
   int LEDBrightnessManualOffset;
-  int kaleidoscope_speed;
-  int kaleidoscope_mode;
-  int draw_style;
+  int kaleidoscopeSpeed;
+  int kaleidoscopeMode;
+  int drawStyle;
 #ifdef TIME
-  int clock_face;
+  int clockFace;
   CRGB clockColor;
 #endif // TIME
 } kaleidoscope_settings;
 kaleidoscope_settings settings = {
     LEDBrightnessManualOffset,
-    kaleidoscope_speed,
-    kaleidoscope_mode,
-    draw_style,
+    kaleidoscopeSpeed,
+    kaleidoscopeMode,
+    drawStyle,
 #ifdef TIME
-    clock_face,
-    clockColor
+    clockFace,
+    CRGB::White       // BUGBUG: Ugly hack to work around improper sequence of global initialization by startup runtime. Should be 'clockColor'.
 #endif // TIME
 };
 volatile bool newSettings = false;
@@ -289,25 +289,25 @@ void applySettings(kaleidoscope_settings &settings)
     LEDBrightnessManualOffset = settings.LEDBrightnessManualOffset;
   }
 
-  if (kaleidoscope_speed != settings.kaleidoscope_speed)
+  if (kaleidoscopeSpeed != settings.kaleidoscopeSpeed)
   {
-    kaleidoscope_speed = settings.kaleidoscope_speed;
+    kaleidoscopeSpeed = settings.kaleidoscopeSpeed;
   }
 
-  if (kaleidoscope_mode != settings.kaleidoscope_mode)
+  if (kaleidoscopeMode != settings.kaleidoscopeMode)
   {
-    setKaleidoscopeMode(settings.kaleidoscope_mode);
+    setKaleidoscopeMode(settings.kaleidoscopeMode);
   }
 
-  if (draw_style != settings.draw_style)
+  if (drawStyle != settings.drawStyle)
   {
-    set_draw_style(settings.draw_style);
+    setDrawStyle(settings.drawStyle);
   }
 
 #ifdef TIME
-  if (clock_face != settings.clock_face)
+  if (clockFace != settings.clockFace)
   {
-    set_clock_face(settings.clock_face);
+    setClockFace(settings.clockFace);
   }
 
   if (clockColor != settings.clockColor)
@@ -336,19 +336,19 @@ void saveSettings(AsyncWebServerRequest *request, JsonVariant &json)
   JsonVariant speed = jsonObj["speed"];
   if (!speed.isNull())
   {
-    settings.kaleidoscope_speed = constrain((int)speed, 0, KALEIDOSCOPE_MAX_SPEED);
+    settings.kaleidoscopeSpeed = constrain((int)speed, 0, KALEIDOSCOPE_MAX_SPEED);
     newSettings = true;
-    DB_PRINTF("  speed = %d\r\n", settings.kaleidoscope_speed);
+    DB_PRINTF("  speed = %d\r\n", settings.kaleidoscopeSpeed);
   }
 
   const char *modeName = jsonObj["mode"];
   if (modeName)
   {
-    for (int x = 0; x < kaleidoscope_modes; x++)
+    for (int x = 0; x < kaleidoscopeModes; x++)
     {
       if (String(KaleidoscopeModeLUT[x].modeName).equalsIgnoreCase(String(modeName)))
       {
-        settings.kaleidoscope_mode = x;
+        settings.kaleidoscopeMode = x;
         newSettings = true;
         DB_PRINTF("  mode = %s\r\n", KaleidoscopeModeLUT[x].modeName);
         break;
@@ -363,7 +363,7 @@ void saveSettings(AsyncWebServerRequest *request, JsonVariant &json)
     {
       if (String(drawStyles[x]).equalsIgnoreCase(String(drawStyle)))
       {
-        settings.draw_style = x;
+        settings.drawStyle = x;
         newSettings = true;
         DB_PRINTF("  drawStyle = %s\r\n", drawStyles[x]);
         break;
@@ -375,13 +375,13 @@ void saveSettings(AsyncWebServerRequest *request, JsonVariant &json)
   const char *clockFace = jsonObj["clockFace"];
   if (clockFace)
   {
-    for (int x = 0; x < N_CLOCK_FACES; x++)
+    for (int x = 0; x < clockFaces; x++)
     {
-      if (String(clockFaces[x]).equalsIgnoreCase(String(clockFace)))
+      if (String(clockFaceLUT[x].faceName).equalsIgnoreCase(String(clockFace)))
       {
-        settings.clock_face = x;
+        settings.clockFace = x;
         newSettings = true;
-        DB_PRINTF("  clockFace = %s\r\n", clockFaces[x]);
+        DB_PRINTF("  clockFace = %s\r\n", clockFaceLUT[x].faceName);
         break;
       }
     }
@@ -407,12 +407,12 @@ void getSettings(AsyncWebServerRequest *request)
   DynamicJsonDocument doc(512);
   String response;
 
-  doc["mode"] = KaleidoscopeModeLUT[kaleidoscope_mode].modeName;
-  doc["drawStyle"] = drawStyles[draw_style];
+  doc["mode"] = KaleidoscopeModeLUT[kaleidoscopeMode].modeName;
+  doc["drawStyle"] = drawStyles[drawStyle];
   doc["brightness"] = LEDBrightnessManualOffset;
-  doc["speed"] = kaleidoscope_speed;
+  doc["speed"] = kaleidoscopeSpeed;
 #ifdef TIME
-  doc["clockFace"] = clockFaces[clock_face];
+  doc["clockFace"] = clockFaceLUT[clockFace].faceName;
   char color[8];
   sprintf(color, "#%06X", settings.clockColor.r << 16 | settings.clockColor.g << 8 | settings.clockColor.b);
   doc["clockColor"] = color;
@@ -426,13 +426,13 @@ void getSettings(AsyncWebServerRequest *request)
 void getModes(AsyncWebServerRequest *request)
 {
   // allocate the memory for the document
-  DynamicJsonDocument doc(JSON_ARRAY_SIZE(kaleidoscope_modes));
+  DynamicJsonDocument doc(JSON_ARRAY_SIZE(kaleidoscopeModes));
 
   // create an empty array
   JsonArray array = doc.to<JsonArray>();
 
   // add the names
-  for (int x = 0; x < kaleidoscope_modes; x++)
+  for (int x = 0; x < kaleidoscopeModes; x++)
   {
     if (KaleidoscopeModeLUT[x].showInRESTAPI)
       array.add(KaleidoscopeModeLUT[x].modeName);
@@ -449,15 +449,15 @@ void getModes(AsyncWebServerRequest *request)
 void getFaces(AsyncWebServerRequest *request)
 {
   // allocate the memory for the document
-  DynamicJsonDocument doc(JSON_ARRAY_SIZE(N_CLOCK_FACES));
+  DynamicJsonDocument doc(JSON_ARRAY_SIZE(clockFaces));
 
   // create an empty array
   JsonArray array = doc.to<JsonArray>();
 
   // add the names
-  for (int x = 0; x < N_CLOCK_FACES; x++)
+  for (int x = 0; x < clockFaces; x++)
   {
-    array.add(clockFaces[x]);
+    array.add(clockFaceLUT[x].faceName);
   }
 
   // serialize the array and send the result
@@ -631,7 +631,7 @@ void setup()
   FastLED.addLeds<LED_TYPE, LED_STRIP_PIN_3, COLOR_ORDER>(leds + 2 * NUM_LEDS_PER_STRIP, NUM_LEDS_PER_STRIP).setCorrection(TypicalLEDStrip);
   FastLED.addLeds<LED_TYPE, LED_STRIP_PIN_4, COLOR_ORDER>(leds + 3 * NUM_LEDS_PER_STRIP, NUM_LEDS_PER_STRIP).setCorrection(TypicalLEDStrip);
   leds_dirty = true;
-  DB_PRINTLN(KaleidoscopeModeLUT[kaleidoscope_mode].modeName);
+  DB_PRINTLN(KaleidoscopeModeLUT[kaleidoscopeMode].modeName);
 }
 
 //
@@ -668,13 +668,13 @@ void loop()
   // Render one frame in current mode. To control the speed of updates, use the
   // EVERY_N_MILLISECONDS(N) macro to only update the frame when it is needed.
   // Also be sure to set leds_dirty = true so that the updated frame will be displayed.
-  (*KaleidoscopeModeLUT[kaleidoscope_mode].renderFunc)();
+  (*KaleidoscopeModeLUT[kaleidoscopeMode].renderFunc)();
 
   // draw the clock face (can be a null clock face - see mode_select_clock_face())
 #ifdef TIME
   // don't draw the clock if we're in 'off' mode
-  if (KaleidoscopeModeLUT[kaleidoscope_mode].renderFunc != mode_off)
-    draw_clock();
+  if (KaleidoscopeModeLUT[kaleidoscopeMode].renderFunc != mode_off)
+    drawClock();
 #endif // TIME
 
 #ifdef WEATHER

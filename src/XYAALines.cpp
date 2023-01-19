@@ -95,7 +95,7 @@ void mode_xy_aalines()
     static uint8_t effect = 0;
     EVERY_N_MILLIS_I(timer, DEFAULT_MILLIS)
     {
-        timer.setPeriod(MAX_MILLIS - map(kaleidoscope_speed, KALEIDOSCOPE_MIN_SPEED, KALEIDOSCOPE_MAX_SPEED, MIN_MILLIS, MAX_MILLIS));
+        timer.setPeriod(MAX_MILLIS - map(kaleidoscopeSpeed, KALEIDOSCOPE_MIN_SPEED, KALEIDOSCOPE_MAX_SPEED, MIN_MILLIS, MAX_MILLIS));
         if (++effect > 5)
             effect = 0;
     }

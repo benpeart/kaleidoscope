@@ -315,7 +315,7 @@ void (*drawPixelFunc[])(CRGB *leds, int index, CRGB color){
     drawPixel12,
     drawPixel24};
 //#define N_DRAW_STYLES (sizeof(drawPixelFunc) / sizeof(drawPixelFunc[0]))
-uint8_t draw_style = 0; // Index of current draw mode in table
+uint8_t drawStyle = 0; // Index of current draw mode in table
 uint8_t num_leds = DRAWPIXEL6_INDEX;
 
 const PROGMEM char drawStyles[N_DRAW_STYLES][16] =
@@ -324,13 +324,13 @@ const PROGMEM char drawStyles[N_DRAW_STYLES][16] =
         "Twelve way",
         "Twenty four way"};
 
-int set_draw_style(int new_draw_style)
+int setDrawStyle(int new_draw_style)
 {
-    if (draw_style != new_draw_style)
+    if (drawStyle != new_draw_style)
     {
-        draw_style = new_draw_style;
-        DB_PRINTF("set_draw_style: %s\r\n", drawStyles[draw_style]);
-        switch (draw_style)
+        drawStyle = new_draw_style;
+        DB_PRINTF("setDrawStyle: %s\r\n", drawStyles[drawStyle]);
+        switch (drawStyle)
         {
         case 0:
             num_leds = DRAWPIXEL6_INDEX;
@@ -347,13 +347,13 @@ int set_draw_style(int new_draw_style)
         leds_dirty = true;
     }
 
-    return draw_style;
+    return drawStyle;
 }
 
 // simple wrapper function to abstract out the fact that we have different draw functions
 void drawPixel(CRGB *leds, int index, CRGB color)
 {
-    drawPixelFunc[draw_style](leds, index, color);
+    drawPixelFunc[drawStyle](leds, index, color);
 }
 
 void fill_kaleidoscope_rainbow(CRGB *leds, uint8_t initialhue, uint8_t deltahue)

@@ -15,10 +15,10 @@ struct KaleidoscopeMode
 
 // This look up table lists each of the available modes.
 extern KaleidoscopeMode KaleidoscopeModeLUT[];
-extern uint8_t kaleidoscope_mode;  // Index of current mode in the LUT
-extern uint8_t kaleidoscope_modes; // total number of valid modes in the LUT
+extern uint8_t kaleidoscopeMode;  // Index of current mode in the LUT
+extern uint8_t kaleidoscopeModes; // total number of valid modes in the LUT
 
-void setKaleidoscopeMode(int new_mode);
+void setKaleidoscopeMode(int newMode);
 void nextKaleidoscopeMode();
 void previousKaleidoscopeMode();
 

@@ -16,7 +16,7 @@ void mode_xy_fire()
 
     EVERY_N_MILLIS_I(timer, DEFAULT_MILLIS)
     {
-        timer.setPeriod(MAX_MILLIS - map(kaleidoscope_speed, KALEIDOSCOPE_MIN_SPEED, KALEIDOSCOPE_MAX_SPEED, MIN_MILLIS, MAX_MILLIS));
+        timer.setPeriod(MAX_MILLIS - map(kaleidoscopeSpeed, KALEIDOSCOPE_MIN_SPEED, KALEIDOSCOPE_MAX_SPEED, MIN_MILLIS, MAX_MILLIS));
         t += speed;
         for (byte x = 0; x < NUM_COLS; x++)
         {

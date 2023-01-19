@@ -71,7 +71,7 @@ void mode_xy_distortion_waves()
     uint8_t w = 2;
     uint8_t scale = 4;
 
-    uint16_t a = (map(kaleidoscope_speed, KALEIDOSCOPE_MIN_SPEED, KALEIDOSCOPE_MAX_SPEED, 0, 64) * millis()) >> 9;
+    uint16_t a = (map(kaleidoscopeSpeed, KALEIDOSCOPE_MIN_SPEED, KALEIDOSCOPE_MAX_SPEED, 0, 64) * millis()) >> 9;
     uint16_t a2 = a / 2;
     uint16_t a3 = a / 3;
 

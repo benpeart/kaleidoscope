@@ -11,8 +11,6 @@
 // example of using GFX library with custom remap function (ie XY())
 // https://github.com/marcmerlin/FastLED_NeoMatrix/issues/6
 
-CRGB clockColor = CRGB::White;
-
 /* Useful Constants */
 #define SECS_PER_MIN ((time_t)(60UL))
 #define SECS_PER_HOUR ((time_t)(3600UL))
@@ -351,29 +349,22 @@ void drawAnalogClock()
     }
 }
 
-// Provide functions to draw different clock faces.
-void (*drawClockFunc[N_CLOCK_FACES])(void){
-    drawNullClock,
-    drawDigitalClock,
+// This look up table lists each of the clock drawing functions and their names
+ClockFace clockFaceLUT[]{
+    {drawNullClock, "Off"},
+    {drawDigitalClock, "Digital"},
 #ifdef WEATHER
-    drawTimeTempClock,
+    {drawTimeTempClock, "Time and Temp"}, 
 #endif
-    drawAnalogClock};
-//#define N_CLOCK_FACES (sizeof(drawClockFunc) / sizeof(drawClockFunc[0]))
-uint8_t clock_face = 0; // Index of current clock face in table
+    {drawAnalogClock, "Analog"}
+};
+uint8_t clockFace = 0; // Index of current clock face in table
+uint8_t clockFaces = (sizeof(clockFaceLUT) / sizeof(clockFaceLUT[0])); // total number of valid face names in table
+CRGB clockColor = CRGB::White;
 
-const PROGMEM char clockFaces[N_CLOCK_FACES][16] =
-    {
-        "Off",
-        "Digital",
-#ifdef WEATHER
-        "Time and Temp",
-#endif
-        "Analog"};
-
-void draw_clock()
+void drawClock()
 {
-    drawClockFunc[clock_face]();
+    clockFaceLUT[clockFace].renderFunc();
 }
 
 void mode_select_clock_face()
@@ -381,28 +372,28 @@ void mode_select_clock_face()
 #ifdef ENCODER
     // use the left knob to select the clock face to draw
     static int lastLeftKnob = 0;
-    int new_face = clock_face;
+    int newFace = clockFace;
     int knob = knobLeft.getCount();
     if (knob != lastLeftKnob)
     {
         if (knob < lastLeftKnob)
         {
-            new_face++;
-            new_face = new_face % N_CLOCK_FACES;
+            newFace++;
+            newFace = newFace % clockFaces;
         }
         else
         {
             // offset is an unsigned 8 bits so can't go negative
-            if (new_face == 0)
-                new_face += N_CLOCK_FACES;
-            --new_face;
+            if (newFace == 0)
+                newFace += clockFaces;
+            --newFace;
         }
         lastLeftKnob = knob;
     }
 #endif
 
     // save the new clock face
-    set_clock_face(new_face);
+    setClockFace(newFace);
 
     // draw this on a fixed schedule so that when you enter the mode, you aren't
     // faced with a black screen until you rotate the left knob
@@ -414,18 +405,18 @@ void mode_select_clock_face()
     adjustBrightness();
 }
 
-int set_clock_face(int new_face)
+int setClockFace(int newFace)
 {
-    if (clock_face != new_face)
+    if (clockFace != newFace)
     {
-        clock_face = new_face;
-        DB_PRINTF("set_clock_face: %s\r\n", clockFaces[clock_face]);
+        clockFace = newFace;
+        DB_PRINTF("setClockFace: %s\r\n", clockFaceLUT[clockFace].faceName);
         leds_dirty = true;
 #ifdef WEATHER
         // update whether we need to fetch the weather
-        need_weather = (drawClockFunc[clock_face] == drawTimeTempClock) ? true : false;
+        need_weather = (drawClockFunc[clockFace] == drawTimeTempClock) ? true : false;
 #endif
     }
 
-    return clock_face;
+    return clockFace;
 }

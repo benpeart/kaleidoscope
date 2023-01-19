@@ -133,7 +133,7 @@ void mode_kaleidoscope_ripples()
 
     EVERY_N_MILLIS_I(timer, DEFAULT_MILLIS)
     {               // Sets the original delay time.
-        timer.setPeriod(MAX_MILLIS - map(kaleidoscope_speed, KALEIDOSCOPE_MIN_SPEED, KALEIDOSCOPE_MAX_SPEED, MIN_MILLIS, MAX_MILLIS));
+        timer.setPeriod(MAX_MILLIS - map(kaleidoscopeSpeed, KALEIDOSCOPE_MIN_SPEED, KALEIDOSCOPE_MAX_SPEED, MIN_MILLIS, MAX_MILLIS));
         rippless(); // Run the ripple routine.
         leds_dirty = true;
     }

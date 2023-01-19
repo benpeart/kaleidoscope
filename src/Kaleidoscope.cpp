@@ -102,7 +102,7 @@ void mode_kaleidoscope_select_speed_brightness()
     static int time_of_last_frame = 0;
 
     int time = millis();
-    int ms_between_frames = MAX_MILLIS - map(kaleidoscope_speed, KALEIDOSCOPE_MIN_SPEED, KALEIDOSCOPE_MAX_SPEED, MIN_MILLIS, MAX_MILLIS);
+    int ms_between_frames = MAX_MILLIS - map(kaleidoscopeSpeed, KALEIDOSCOPE_MIN_SPEED, KALEIDOSCOPE_MAX_SPEED, MIN_MILLIS, MAX_MILLIS);
 
     // draw the next frame into the correct led array
     if (time >= time_of_last_frame + ms_between_frames)
@@ -169,7 +169,7 @@ void mode_kaleidoscope()
     }
 
     int time = millis();
-    int ms_between_frames = MAX_MILLIS - map(kaleidoscope_speed, KALEIDOSCOPE_MIN_SPEED, KALEIDOSCOPE_MAX_SPEED, MIN_MILLIS, MAX_MILLIS);
+    int ms_between_frames = MAX_MILLIS - map(kaleidoscopeSpeed, KALEIDOSCOPE_MIN_SPEED, KALEIDOSCOPE_MAX_SPEED, MIN_MILLIS, MAX_MILLIS);
 
     // if it is time to enter screen saver mode
     if (time >= time_to_enter_screensaver_mode)
@@ -277,15 +277,15 @@ void mode_kaleidoscope_select_reflection_style()
     {
         if (knob < lastLeftKnob)
         {
-            draw_style++;
-            draw_style = draw_style % N_DRAW_STYLES;
+            drawStyle++;
+            drawStyle = drawStyle % N_DRAW_STYLES;
         }
         else
         {
             // offset is an unsigned 8 bits so can't go negative
-            if (draw_style == 0)
-                draw_style += N_DRAW_STYLES;
-            --draw_style;
+            if (drawStyle == 0)
+                drawStyle += N_DRAW_STYLES;
+            --drawStyle;
         }
         lastLeftKnob = knob;
         drawStyleChanged = true;
@@ -295,7 +295,7 @@ void mode_kaleidoscope_select_reflection_style()
     // redraw the frame of the kaleidoscope with the new style
     if (drawStyleChanged)
     {
-        set_draw_style(draw_style);
+        setDrawStyle(drawStyle);
         drawStyleChanged = false;
     }
 

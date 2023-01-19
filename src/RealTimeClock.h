@@ -3,19 +3,27 @@
 
 #include "render.h"
 
-void rtc_setup();
+// maximum lenth of a valid mode name
+#define MAX_FACE_NAME 16
 
-#ifdef WEATHER
-#define N_CLOCK_FACES 4
-#else
-#define N_CLOCK_FACES 3
-#endif
-extern uint8_t clock_face; // Index of current clock face in table
-extern const PROGMEM char clockFaces[N_CLOCK_FACES][16];
+/// Data structure to represent each possible clock face.
+struct ClockFace
+{
+    void (*renderFunc)(void);           // pointer to the function that will render the clock face
+    const char faceName[MAX_FACE_NAME]; // name of the clock face to use in the UI and REST APIs
+};
+
+// This look up table lists each of the available modes.
+extern ClockFace clockFaceLUT[];
+extern uint8_t clockFace; // Index of current clock face in table
+extern uint8_t clockFaces; // Index of current clock face in table
+
+int setClockFace(int newFace);
 extern CRGB clockColor;
 
-void draw_clock();
+void drawClock();
 void mode_select_clock_face();
-int set_clock_face(int new_face);
+
+void rtc_setup();
 
 #endif // REALTIMECLOCK_H

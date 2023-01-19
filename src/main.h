@@ -45,7 +45,7 @@ extern void adjustBrightness(bool useKnob = true);
 #define KALEIDOSCOPE_MIN_SPEED 0
 #define KALEIDOSCOPE_MAX_SPEED 255
 #define KALEIDOSCOPE_DEFAULT_SPEED ((KALEIDOSCOPE_MAX_SPEED - KALEIDOSCOPE_MIN_SPEED) / 4)
-extern uint8_t kaleidoscope_speed;
+extern uint8_t kaleidoscopeSpeed;
 int adjustSpeed();
 
 #endif // MAIN_H

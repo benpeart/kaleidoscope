@@ -53,8 +53,8 @@ KaleidoscopeMode KaleidoscopeModeLUT[]{
 #endif
     {mode_off, "off", false, {0, 0}} // make it obvious we're entering 'regular' modes
 };
-uint8_t kaleidoscope_mode = 0;                                                               // Index of current mode in table
-uint8_t kaleidoscope_modes = (sizeof(KaleidoscopeModeLUT) / sizeof(KaleidoscopeModeLUT[0])); // total number of valid modes in table
+uint8_t kaleidoscopeMode = 0;                                                               // Index of current mode in table
+uint8_t kaleidoscopeModes = (sizeof(KaleidoscopeModeLUT) / sizeof(KaleidoscopeModeLUT[0])); // total number of valid modes in table
 
 #ifdef ENCODER
 // We need to save/restore the count for the rotary encoders
@@ -64,24 +64,24 @@ uint8_t kaleidoscope_modes = (sizeof(KaleidoscopeModeLUT) / sizeof(KaleidoscopeM
 #define RIGHT_ENCODER 1
 #endif // ENCODER
 
-void setKaleidoscopeMode(int new_mode)
+void setKaleidoscopeMode(int newMode)
 {
     // if the mode changed
-    if (kaleidoscope_mode != new_mode)
+    if (kaleidoscopeMode != newMode)
     {
 #ifdef ENCODER
-        int old_mode = kaleidoscope_mode;
+        int old_mode = kaleidoscopeMode;
 
         // save the encoder count for the old mode and restore the new mode count
         KaleidoscopeModeLUT[old_mode].modeEncoderCounts[LEFT_ENCODER] = knobLeft.getCount();
-        knobLeft.setCount(KaleidoscopeModeLUT[new_mode].modeEncoderCounts[LEFT_ENCODER]);
+        knobLeft.setCount(KaleidoscopeModeLUT[newMode].modeEncoderCounts[LEFT_ENCODER]);
         KaleidoscopeModeLUT[old_mode].modeEncoderCounts[RIGHT_ENCODER] = knobLeft.getCount();
-        knobLeft.setCount(KaleidoscopeModeLUT[new_mode].modeEncoderCounts[RIGHT_ENCODER]);
+        knobLeft.setCount(KaleidoscopeModeLUT[newMode].modeEncoderCounts[RIGHT_ENCODER]);
 #endif
 
         // output the new mode name and clear the led strips for the new mode
-        kaleidoscope_mode = new_mode;
-        DB_PRINTF("setKaleidoscopeMode: %s\r\n", KaleidoscopeModeLUT[kaleidoscope_mode].modeName);
+        kaleidoscopeMode = newMode;
+        DB_PRINTF("setKaleidoscopeMode: %s\r\n", KaleidoscopeModeLUT[kaleidoscopeMode].modeName);
         FastLED.clear(true);
         leds_dirty = true;
     }
@@ -90,27 +90,27 @@ void setKaleidoscopeMode(int new_mode)
 void nextKaleidoscopeMode()
 {
     // check for a mode change
-    uint8_t new_mode = kaleidoscope_mode;
+    uint8_t newMode = kaleidoscopeMode;
 
-    if (new_mode < (kaleidoscope_modes - 1))
-        new_mode++; // Advance to next mode
+    if (newMode < (kaleidoscopeModes - 1))
+        newMode++; // Advance to next mode
     else
-        new_mode = 0; // or "wrap around" to start
+        newMode = 0; // or "wrap around" to start
 
-    setKaleidoscopeMode(new_mode);
+    setKaleidoscopeMode(newMode);
 }
 
 void previousKaleidoscopeMode()
 {
     // check for a mode change
-    uint8_t new_mode = kaleidoscope_mode;
+    uint8_t newMode = kaleidoscopeMode;
 
-    if (new_mode)
-        new_mode--; // Go to prior mode
+    if (newMode)
+        newMode--; // Go to prior mode
     else
-        new_mode = kaleidoscope_modes - 1; // or "wrap around" to last mode
+        newMode = kaleidoscopeModes - 1; // or "wrap around" to last mode
 
-    setKaleidoscopeMode(new_mode);
+    setKaleidoscopeMode(newMode);
 }
 
 // All Pixels off
