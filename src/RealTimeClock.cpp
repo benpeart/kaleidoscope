@@ -367,6 +367,7 @@ void drawClock()
     clockFaceLUT[clockFace].renderFunc();
 }
 
+#ifndef WIFI // if we have WIFI, we don't need the manual settings modes
 void mode_select_clock_face()
 {
 #ifdef ENCODER
@@ -404,6 +405,7 @@ void mode_select_clock_face()
 
     adjustBrightness();
 }
+#endif
 
 int setClockFace(int newFace)
 {

@@ -5,6 +5,7 @@
 //#define FASTLED_ESP32_I2S true       // causes white flashes across several strips at the same time
 //#define FASTLED_ESP32_FLASH_LOCK 1   // force flash operations to wait until the show() is done. (doesn't fix the hang when updating the firmware while displaying the kaleidoscope)
 //#define FASTLED_RMT_MAX_CHANNELS 4   // ESP32 support is provided using the RMT peripheral device, use 4 channels (one per strip) (not using RMT for anything else so let it use all 8 channels)
+//#define FASTLED_ALL_PINS_HARDWARE_SPI
 #include <FastLED.h>
 
 // With parallel updates for the LEDs so fast, we get flickering if we call

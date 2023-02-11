@@ -96,51 +96,6 @@ void drawPaletteFrame(CRGB *leds, GlassDisk *disk_1, GlassDisk *disk_2)
     }
 }
 
-void mode_kaleidoscope_select_speed_brightness()
-{
-    static boolean first_array = true;
-    static int time_of_last_frame = 0;
-
-    int time = millis();
-    int ms_between_frames = MAX_MILLIS - map(kaleidoscopeSpeed, KALEIDOSCOPE_MIN_SPEED, KALEIDOSCOPE_MAX_SPEED, MIN_MILLIS, MAX_MILLIS);
-
-    // draw the next frame into the correct led array
-    if (time >= time_of_last_frame + ms_between_frames)
-    {
-#ifdef NDEBUG
-        // draw the next frame of the kaleidoscope
-        drawPaletteFrame(first_array ? leds2 : leds3, &TestDisk, NULL);
-#else
-        // draw the next frame of the kaleidoscope
-        drawPaletteFrame(first_array ? leds2 : leds3, &TriangleDisk, &SquareDisk);
-#endif
-        time_of_last_frame = time;
-        first_array = !first_array;
-
-        // update our offsets
-        ++TriangleDisk;
-        ++SquareDisk;
-    }
-
-    // smoothly blend from one frame to the next
-    EVERY_N_MILLISECONDS(5)
-    {
-        // ratio is the percentage of time remaining for this frame mapped to 0-255
-        fract8 ratio = map(time, time_of_last_frame, time_of_last_frame + ms_between_frames, 0, 255);
-
-        // reverse the blend ratio if we're blending from leds3 to leds2
-        if (!first_array)
-            ratio = 255 - ratio;
-
-        // mix the 2 arrays together
-        blend(leds2, leds3, leds, NUM_STRIPS * NUM_LEDS_PER_STRIP, ratio);
-        leds_dirty = true;
-    }
-
-    adjustSpeed();
-    adjustBrightness();
-}
-
 #define SCREENSAVER_DELAY 60000 // 1 minute = 60,000 milliseconds
 void mode_kaleidoscope()
 {
@@ -260,6 +215,52 @@ void mode_kaleidoscope()
     adjustBrightness(false);
 }
 
+#ifndef WIFI // if we have WIFI, we don't need the manual settings modes
+void mode_kaleidoscope_select_speed_brightness()
+{
+    static boolean first_array = true;
+    static int time_of_last_frame = 0;
+
+    int time = millis();
+    int ms_between_frames = MAX_MILLIS - map(kaleidoscopeSpeed, KALEIDOSCOPE_MIN_SPEED, KALEIDOSCOPE_MAX_SPEED, MIN_MILLIS, MAX_MILLIS);
+
+    // draw the next frame into the correct led array
+    if (time >= time_of_last_frame + ms_between_frames)
+    {
+#ifdef NDEBUG
+        // draw the next frame of the kaleidoscope
+        drawPaletteFrame(first_array ? leds2 : leds3, &TestDisk, NULL);
+#else
+        // draw the next frame of the kaleidoscope
+        drawPaletteFrame(first_array ? leds2 : leds3, &TriangleDisk, &SquareDisk);
+#endif
+        time_of_last_frame = time;
+        first_array = !first_array;
+
+        // update our offsets
+        ++TriangleDisk;
+        ++SquareDisk;
+    }
+
+    // smoothly blend from one frame to the next
+    EVERY_N_MILLISECONDS(5)
+    {
+        // ratio is the percentage of time remaining for this frame mapped to 0-255
+        fract8 ratio = map(time, time_of_last_frame, time_of_last_frame + ms_between_frames, 0, 255);
+
+        // reverse the blend ratio if we're blending from leds3 to leds2
+        if (!first_array)
+            ratio = 255 - ratio;
+
+        // mix the 2 arrays together
+        blend(leds2, leds3, leds, NUM_STRIPS * NUM_LEDS_PER_STRIP, ratio);
+        leds_dirty = true;
+    }
+
+    adjustSpeed();
+    adjustBrightness();
+}
+
 void mode_kaleidoscope_select_disks()
 {
     // select disk with left rotary encoder
@@ -308,6 +309,7 @@ void mode_kaleidoscope_select_reflection_style()
 
     adjustBrightness();
 }
+#endif
 
 #ifdef DEBUG
 // test the wiring and ensure all pixels light up correctly
