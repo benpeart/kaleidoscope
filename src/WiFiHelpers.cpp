@@ -1,11 +1,15 @@
 #include "main.h"
+#include "debug.h"
 #ifdef WIFI
 #include <WiFi.h>
 #include "WiFiHelpers.h"
+#include <SPIFFS.h>
+#ifdef OTA
+#include <ElegantOTA.h>
+#endif // OTA
 
 #ifdef TIME
 #include "RealTimeClock.h"
-#include <Preferences.h>
 #endif // TIME
 
 #ifdef DRD
@@ -27,32 +31,18 @@ DoubleResetDetector *drd;
 // Indicates whether ESP has WiFi credentials saved from previous session, or double reset detected
 bool initialConfig = false;
 
-// Use false if you don't like to display Available Pages in Information Page of Config Portal
-// Comment out or use true to display Available Pages in Information Page of Config Portal
-// Must be placed before #include <ESPAsync_WiFiManager.h>
-#define USE_AVAILABLE_PAGES true
-
-// Use false to disable NTP config. Advisable when using Cellphone, Tablet to access Config Portal.
-// See Issue 23: On Android phone ConfigPortal is unresponsive (https://github.com/khoih-prog/ESP_WiFiManager/issues/23)
-#define USE_ESP_WIFIMANAGER_NTP true
-
-// Just use enough to save memory. On ESP8266, can cause blank ConfigPortal screen
-// if using too much memory
-#define USING_AMERICA true
-
-// https://github.com/khoih-prog/ESPAsync_WiFiManager
-#include <ESPAsync_WiFiManager.h>
+#include <ESPAsyncWiFiManager.h>
 #include <ESPAsyncWebServer.h>
 
 #define HTTP_PORT 80
 AsyncWebServer webServer(HTTP_PORT);
-AsyncDNSServer dnsServer;
+DNSServer dnsServer;
 
 void wifi_setup(const char *iHostname)
 {
-    // connect to wifi or enter AP mode so it can be configured
-    DB_PRINTLN(ESP_ASYNC_WIFIMANAGER_VERSION);
+    WiFi.setHostname(iHostname);
 
+    // connect to wifi or enter AP mode so it can be configured
 #ifdef DRD
     drd = new DoubleResetDetector(DRD_TIMEOUT, DRD_ADDRESS);
     if (drd->detectDoubleReset())
@@ -63,16 +53,7 @@ void wifi_setup(const char *iHostname)
 #endif
 
     // Local intialization. Once its business is done, there is no need to keep it around
-    ESPAsync_WiFiManager wifiManager(&webServer, &dnsServer, "Kaleidoscope");
-
-    // Set config portal channel, default = 1. Use 0 => random channel from 1-13
-    wifiManager.setConfigPortalChannel(0);
-
-    if (wifiManager.WiFi_SSID() == "")
-    {
-        DB_PRINTLN(F("No AP credentials"));
-        initialConfig = true;
-    }
+    AsyncWiFiManager wifiManager(&webServer, &dnsServer);
 
     if (initialConfig)
     {
@@ -81,14 +62,14 @@ void wifi_setup(const char *iHostname)
         // initial config, disable timeout.
         wifiManager.setConfigPortalTimeout(0);
 
-        wifiManager.startConfigPortal("KaleidoscopeAP");
+        wifiManager.startConfigPortal(iHostname);
     }
     else
     {
         // Give 2 minutes to configure WiFi, otherwise, just go into kaleidoscope mode without it
         wifiManager.setConfigPortalTimeout(120);
 
-        wifiManager.autoConnect("KaleidoscopeAP");
+        wifiManager.autoConnect(iHostname);
     }
 
     // report on our WiFi connection status
@@ -97,26 +78,52 @@ void wifi_setup(const char *iHostname)
         DB_PRINT(F("Connected. Local IP: "));
         DB_PRINTLN(WiFi.localIP());
     }
+    // setup the home page and other web UI (WiFi settings, upgrade, etc)
+    // Serve static files from SPIFFS
+    if (!SPIFFS.begin(false))
+    {
+        DB_PRINTLN("SPIFFS mount failed");
+        return;
+    }
     else
     {
-        DB_PRINTLN(wifiManager.getStatus(WiFi.status()));
+        DB_PRINTLN("SPIFFS mount success");
     }
+    webServer.serveStatic("/", SPIFFS, "/").setDefaultFile("index.html");
+    webServer.onNotFound([](AsyncWebServerRequest *request)
+                         { request->send(404, "text/plain", "FileNotFound"); });
+#ifdef SPIFFSEDITOR
+    httpServer.addHandler(new SPIFFSEditor(SPIFFS));
+#endif // SPIFFSEDITOR
+
+#ifdef OTA
+    // Add the ElegantOTA UI and require a username/password to update the firmware
+    ElegantOTA.begin(&webServer, "admin", "admin");
+    DB_PRINTLN(F("OTA web server started."));
+#endif
+
+#ifdef ALEXA
+    webServer.onNotFound([](AsyncWebServerRequest *request)
+                         {
+                         // if you don't know the URI, ask espalexa whether it is an Alexa control request
+                         if (!espalexa.handleAlexaApiCall(request))
+                         {
+                           // handle the 404 error
+                           request->send(404, "text/plain", "Not found");
+                         } });
+
+    // Define your devices here.
+    espalexa.addDevice("Hue", hueChanged, EspalexaDeviceType::extendedcolor); // color + color temperature
+
+    // give espalexa a pointer to your server object so it can use your server instead of creating its own
+    espalexa.begin(&webServer);
+#endif
+
+#ifndef ALEXA
+    webServer.begin(); // omit this since it will be done by espalexa.begin(&webServer)
+#endif
 
 #ifdef TIME
-    // this only returns a value during the initial config step (call wifiManager.resetSettings() to test)
-    // store the string in persistant storage for later use
-    String timezoneName = wifiManager.getTimezoneName();
-    if (timezoneName.length())
-    {
-        // write the timezone string into persistant memory
-        DB_PRINTF("Saving timezone '%s'\r\n", timezoneName.c_str());
-        const char *tz = wifiManager.getTZ(timezoneName);
-        Preferences preferences;
-        preferences.begin("kaleidoscope", false);
-        preferences.putString("tz", tz);
-        preferences.end();
-    }
-
     // intialize the real time clock
     rtc_setup();
 #endif
@@ -135,10 +142,7 @@ void wifi_loop(void)
         DB_PRINTLN(F("\nWiFi lost. Attempting to reconnect"));
 
         // Local intialization. Once its business is done, there is no need to keep it around
-        ESPAsync_WiFiManager wifiManager(&webServer, &dnsServer, "Kaleidoscope");
-
-        // Set config portal channel, default = 1. Use 0 => random channel from 1-13
-        wifiManager.setConfigPortalChannel(0);
+        AsyncWiFiManager wifiManager(&webServer, &dnsServer);
 
         // attempt to reconnect
         wifiManager.autoConnect("KaleidoscopeAP");
@@ -148,10 +152,6 @@ void wifi_loop(void)
         {
             DB_PRINT(F("Connected. Local IP: "));
             DB_PRINTLN(WiFi.localIP());
-        }
-        else
-        {
-            DB_PRINTLN(wifiManager.getStatus(WiFi.status()));
         }
     }
 }

@@ -1,4 +1,5 @@
 #include "main.h"
+#include "settings.h"
 #include "render.h"
 #include "plasma.h"
 
@@ -17,7 +18,7 @@ void mode_kaleidoscope_plasma()
 
     EVERY_N_MILLIS_I(timer1, 50)
     {
-        timer1.setPeriod(100 - map(kaleidoscopeSpeed, KALEIDOSCOPE_MIN_SPEED, KALEIDOSCOPE_MAX_SPEED, 0, 100));
+        timer1.setPeriod(100 - map(settings.speed, MIN_SPEED, MAX_SPEED, 0, 100));
         int thisPhase = beatsin8(6, -64, 64); // Setting phase change for a couple of waves.
         int thatPhase = beatsin8(7, -64, 64);
 
@@ -33,7 +34,7 @@ void mode_kaleidoscope_plasma()
 
     EVERY_N_MILLIS_I(timer2, 100)
     {
-        timer2.setPeriod(200 - map(kaleidoscopeSpeed, KALEIDOSCOPE_MIN_SPEED, KALEIDOSCOPE_MAX_SPEED, 0, 200));
+        timer2.setPeriod(200 - map(settings.speed, MIN_SPEED, MAX_SPEED, 0, 200));
         uint8_t maxChanges = 24;
         nblendPaletteTowardPalette(currentPalette, targetPalette, maxChanges); // AWESOME palette blending capability.
     }

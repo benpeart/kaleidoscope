@@ -15,8 +15,7 @@ struct ClockFace
 
 // This look up table lists each of the available modes.
 extern ClockFace clockFaceLUT[];
-extern uint8_t clockFace; // Index of current clock face in table
-extern uint8_t clockFaces; // Index of current clock face in table
+extern uint8_t clockFaces; // Number of clock faces in the lookup table
 
 int setClockFace(int newFace);
 extern CRGB clockColor;

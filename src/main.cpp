@@ -1,4 +1,6 @@
 #include "main.h"
+#include "debug.h"
+#include "settings.h"
 #include "modes.h"
 
 #ifdef BOUNCE
@@ -7,8 +9,9 @@
 #endif // BOUNCE
 
 #ifdef WIFI
+#define MAX_HOSTNAME_LEN 32
+
 #include "WiFiHelpers.h"
-#include "WebUI.h"
 
 #ifdef REST
 #include <AsyncJson.h>
@@ -94,8 +97,6 @@ Espalexa espalexa;
 // BRIGHTNESS helpers -------------------------------------------------
 //
 
-#define MIN_BRIGHTNESS 32                    // the minimum brightness we want (above zero so it doesn't go completely dark)
-#define MAX_BRIGHTNESS 255                   // the max possible brightness
 #define MAX_BRIGHTNESS_READING 1024          // set this to the highest reading you get from the photocell
 #define KNOB_INCREMENT (MAX_BRIGHTNESS / 20) // brightness range / number of pulses in one rotation of rotary encoder
 #define DEBOUNCE_PHOTOCELL 64                // how much change we need to see in the average photocell reading before we change the brightness
@@ -144,11 +145,10 @@ int ambientBrightness()
 }
 
 // manually adjust the brightness of the LED strips up or down from the ambientBrightness
-static int LEDBrightnessManualOffset = MAX_BRIGHTNESS;
 int manualBrightness(bool useKnob)
 {
   if (!useKnob)
-    return LEDBrightnessManualOffset;
+    return settings.brightness;
 
 #ifdef ENCODER
   // use the right knob as a brightness increment/decrement
@@ -157,14 +157,14 @@ int manualBrightness(bool useKnob)
   if (knob != lastRightKnob)
   {
     if (knob > lastRightKnob)
-      LEDBrightnessManualOffset -= KNOB_INCREMENT;
+      settings.brightness -= KNOB_INCREMENT;
     else
-      LEDBrightnessManualOffset += KNOB_INCREMENT;
+      settings.brightness += KNOB_INCREMENT;
 
-    LEDBrightnessManualOffset = constrain(LEDBrightnessManualOffset, -MAX_BRIGHTNESS, MAX_BRIGHTNESS);
+    settings.brightness = constrain(settings.brightness, -MAX_BRIGHTNESS, MAX_BRIGHTNESS);
     lastRightKnob = knob;
 
-    DB_PRINTF("LEDBrightnessManualOffset = %d\r\n", LEDBrightnessManualOffset);
+    DB_PRINTF("brightness = %d\r\n", settings.brightness);
   }
 #ifdef DEBUG
   // test code for the left knob
@@ -178,7 +178,7 @@ int manualBrightness(bool useKnob)
 #endif // DEBUG
 #endif // ENCODER
 
-  return LEDBrightnessManualOffset;
+  return settings.brightness;
 }
 
 //
@@ -198,7 +198,6 @@ void adjustBrightness(bool useKnob)
   // adjust our brightness if it has changed
   if (newBrightness != LEDbrightness)
   {
-    // TODO: need to obtain the settings semaphore before changing the settings
     LEDbrightness = newBrightness;
     DB_PRINTF("new brightness = %d\r\n", newBrightness);
 
@@ -213,13 +212,12 @@ void adjustBrightness(bool useKnob)
 
 // The increment is defined to require two complete knob rotations to go from min to max
 // Each knob roration is 20 clicks.
-#define INCREMENT_SPEED (KALEIDOSCOPE_MAX_SPEED / 40)
-uint8_t kaleidoscopeSpeed = KALEIDOSCOPE_DEFAULT_SPEED;
+#define INCREMENT_SPEED (MAX_SPEED / 40)
 int adjustSpeed()
 {
 #ifdef ENCODER
   static int lastLeftKnob = 0;
-  int new_speed = kaleidoscopeSpeed;
+  int new_speed = settings.speed;
 
   int knob = knobLeft.getCount();
   if (knob != lastLeftKnob)
@@ -229,116 +227,35 @@ int adjustSpeed()
     else
       new_speed += INCREMENT_SPEED;
 
-    // TODO: need to obtain the settings semaphore before changing the settings
-    kaleidoscopeSpeed = constrain(new_speed, 0, KALEIDOSCOPE_MAX_SPEED);
+    settings.speed = constrain(new_speed, 0, MAX_SPEED);
     lastLeftKnob = knob;
 
-    DB_PRINTF("ms between frames = %d\r\n", kaleidoscopeSpeed);
+    DB_PRINTF("ms between frames = %d\r\n", settings.speed);
   }
 #endif
-  return kaleidoscopeSpeed;
+  return settings.speed;
 }
 
 #ifdef REST
-//
-// When WiFi is actively transmitting/receiving data, the FastLED.show() command tends to crash or hang
-// the main 'loop()' thread. This is because the FastLed library disables interrupts during calls to show()
-// so that it can ensure the timing is correct while updating the LED strips. To fix this correctly
-// requires us to switch to a different type of LED that doesn't require such tight timing loops to update
-// or to switch to a different processor that has better hardware than the ESP32. Neither of these options
-// are great so I'll try to minimze the conflict using a semaphore.
-//
-SemaphoreHandle_t WiFiSemaphore = NULL;
-
-// This is needed to solve some threading issues with the REST APIs coming in via
-// asyncronous messages. When we get a change, just store them in the temporary
-// settings object then apply them on the primary thread so we aren't racing
-// with the current display loop.
-typedef struct
-{
-  int LEDBrightnessManualOffset;
-  int kaleidoscopeSpeed;
-  int kaleidoscopeMode;
-  int drawStyle;
-#ifdef TIME
-  int clockFace;
-  CRGB clockColor;
-#endif // TIME
-} kaleidoscope_settings;
-kaleidoscope_settings settings = {
-    LEDBrightnessManualOffset,
-    kaleidoscopeSpeed,
-    kaleidoscopeMode,
-    drawStyle,
-#ifdef TIME
-    clockFace,
-    CRGB::White       // BUGBUG: Ugly hack to work around improper sequence of global initialization by startup runtime. Should be 'clockColor'.
-#endif // TIME
-};
-volatile bool newSettings = false;
-
-void applySettings(kaleidoscope_settings &settings)
-{
-  if (!newSettings)
-    return;
-
-  // all validation of values happens in saveSettings()
-  DB_PRINTF("REST applySettings: %s\r\n", newSettings ? "TRUE" : "FALSE");
-  if (LEDBrightnessManualOffset != settings.LEDBrightnessManualOffset)
-  {
-    LEDBrightnessManualOffset = settings.LEDBrightnessManualOffset;
-  }
-
-  if (kaleidoscopeSpeed != settings.kaleidoscopeSpeed)
-  {
-    kaleidoscopeSpeed = settings.kaleidoscopeSpeed;
-  }
-
-  if (kaleidoscopeMode != settings.kaleidoscopeMode)
-  {
-    setKaleidoscopeMode(settings.kaleidoscopeMode);
-  }
-
-  if (drawStyle != settings.drawStyle)
-  {
-    setDrawStyle(settings.drawStyle);
-  }
-
-#ifdef TIME
-  if (clockFace != settings.clockFace)
-  {
-    setClockFace(settings.clockFace);
-  }
-
-  if (clockColor != settings.clockColor)
-  {
-    clockColor = settings.clockColor;
-  }
-#endif // TIME
-
-  newSettings = false;
-}
-
 void saveSettings(AsyncWebServerRequest *request, JsonVariant &json)
 {
   const JsonObject &jsonObj = json.as<JsonObject>();
 
-  // update the brightness (if it was passed)
   DB_PRINTLN("REST saveSettings:");
+
+  // update the brightness (if it was passed)
   JsonVariant brightness = jsonObj["brightness"];
   if (!brightness.isNull())
   {
-    settings.LEDBrightnessManualOffset = constrain((int)brightness, -MAX_BRIGHTNESS, MAX_BRIGHTNESS);
-    newSettings = true;
-    DB_PRINTF("  brightness = %d\r\n", settings.LEDBrightnessManualOffset);
+    settings.brightness = constrain((int)brightness, -MAX_BRIGHTNESS, MAX_BRIGHTNESS);
+    DB_PRINTF("  brightness = %d\r\n", settings.brightness);
   }
 
   JsonVariant speed = jsonObj["speed"];
   if (!speed.isNull())
   {
-    settings.kaleidoscopeSpeed = constrain((int)speed, 0, KALEIDOSCOPE_MAX_SPEED);
-    newSettings = true;
-    DB_PRINTF("  speed = %d\r\n", settings.kaleidoscopeSpeed);
+    settings.speed = constrain((int)speed, 0, MAX_SPEED);
+    DB_PRINTF("  speed = %d\r\n", settings.speed);
   }
 
   const char *modeName = jsonObj["mode"];
@@ -348,8 +265,7 @@ void saveSettings(AsyncWebServerRequest *request, JsonVariant &json)
     {
       if (String(KaleidoscopeModeLUT[x].modeName).equalsIgnoreCase(String(modeName)))
       {
-        settings.kaleidoscopeMode = x;
-        newSettings = true;
+        setKaleidoscopeMode(x);
         DB_PRINTF("  mode = %s\r\n", KaleidoscopeModeLUT[x].modeName);
         break;
       }
@@ -361,11 +277,10 @@ void saveSettings(AsyncWebServerRequest *request, JsonVariant &json)
   {
     for (int x = 0; x < N_DRAW_STYLES; x++)
     {
-      if (String(drawStyles[x]).equalsIgnoreCase(String(drawStyle)))
+      if (String(drawStylesLUT[x]).equalsIgnoreCase(String(drawStyle)))
       {
-        settings.drawStyle = x;
-        newSettings = true;
-        DB_PRINTF("  drawStyle = %s\r\n", drawStyles[x]);
+        setDrawStyle(x);
+        DB_PRINTF("  drawStyle = %s\r\n", drawStylesLUT[x]);
         break;
       }
     }
@@ -379,8 +294,7 @@ void saveSettings(AsyncWebServerRequest *request, JsonVariant &json)
     {
       if (String(clockFaceLUT[x].faceName).equalsIgnoreCase(String(clockFace)))
       {
-        settings.clockFace = x;
-        newSettings = true;
+        setClockFace(x);
         DB_PRINTF("  clockFace = %s\r\n", clockFaceLUT[x].faceName);
         break;
       }
@@ -394,7 +308,6 @@ void saveSettings(AsyncWebServerRequest *request, JsonVariant &json)
 
     sscanf(clockColor, "#%06X", &color);
     settings.clockColor = CRGB(color);
-    newSettings = true;
     DB_PRINTF("  clockColor = #%06X\r\n", settings.clockColor.r << 16 | settings.clockColor.g << 8 | settings.clockColor.b);
   }
 #endif // TIME
@@ -404,15 +317,15 @@ void saveSettings(AsyncWebServerRequest *request, JsonVariant &json)
 
 void getSettings(AsyncWebServerRequest *request)
 {
-  DynamicJsonDocument doc(512);
+  JsonDocument doc;
   String response;
 
-  doc["mode"] = KaleidoscopeModeLUT[kaleidoscopeMode].modeName;
-  doc["drawStyle"] = drawStyles[drawStyle];
-  doc["brightness"] = LEDBrightnessManualOffset;
-  doc["speed"] = kaleidoscopeSpeed;
+  doc["mode"] = KaleidoscopeModeLUT[settings.mode].modeName;
+  doc["drawStyle"] = drawStylesLUT[settings.drawStyle];
+  doc["brightness"] = settings.brightness;
+  doc["speed"] = settings.speed;
 #ifdef TIME
-  doc["clockFace"] = clockFaceLUT[clockFace].faceName;
+  doc["clockFace"] = clockFaceLUT[settings.clockFace].faceName;
   char color[8];
   sprintf(color, "#%06X", settings.clockColor.r << 16 | settings.clockColor.g << 8 | settings.clockColor.b);
   doc["clockColor"] = color;
@@ -426,7 +339,7 @@ void getSettings(AsyncWebServerRequest *request)
 void getModes(AsyncWebServerRequest *request)
 {
   // allocate the memory for the document
-  DynamicJsonDocument doc(JSON_ARRAY_SIZE(kaleidoscopeModes));
+  JsonDocument doc;
 
   // create an empty array
   JsonArray array = doc.to<JsonArray>();
@@ -449,7 +362,7 @@ void getModes(AsyncWebServerRequest *request)
 void getFaces(AsyncWebServerRequest *request)
 {
   // allocate the memory for the document
-  DynamicJsonDocument doc(JSON_ARRAY_SIZE(clockFaces));
+  JsonDocument doc;
 
   // create an empty array
   JsonArray array = doc.to<JsonArray>();
@@ -471,7 +384,7 @@ void getFaces(AsyncWebServerRequest *request)
 void getDrawStyles(AsyncWebServerRequest *request)
 {
   // allocate the memory for the document
-  DynamicJsonDocument doc(JSON_ARRAY_SIZE(N_DRAW_STYLES));
+  JsonDocument doc;
 
   // create an empty array
   JsonArray array = doc.to<JsonArray>();
@@ -479,7 +392,7 @@ void getDrawStyles(AsyncWebServerRequest *request)
   // add the draw style names
   for (int x = 0; x < N_DRAW_STYLES; x++)
   {
-    array.add(drawStyles[x]);
+    array.add(drawStylesLUT[x]);
   }
 
   // serialize the array and send the result
@@ -541,25 +454,21 @@ void setup()
   DB_PRINTLN("\nStarting Kaleidoscope on " + String(ARDUINO_BOARD));
 #endif
 
+  // initialize the settings from persistent storage
+  settingsSetup();
+
 #ifdef WIFI
-  // Semaphore cannot be used before a call to vSemaphoreCreateBinary().
-  WiFiSemaphore = xSemaphoreCreateBinary();
-  if (WiFiSemaphore != NULL)
-  {
-    // The semaphore was created successfully and can now be used. Note: binary semaphores
-    // created using xSemaphoreCreateBinary() are created in a state such that the
-    // the semaphore must first be 'given' before it can be 'taken'.
-    xSemaphoreGive(WiFiSemaphore);
-  }
-
   // connect to wifi or enter AP mode so it can be configured
-  wifi_setup();
+  char hostname[MAX_HOSTNAME_LEN] = "kaleidoscope";
+  preferences.getBytes("hostname", hostname, sizeof(hostname));
+  hostname[MAX_HOSTNAME_LEN - 1] = 0; // ensure it is null terminated
+  wifi_setup(hostname);
 
-  // setup the home page and other web UI (WiFi settings, upgrade, etc)
-  WebUI_setup(&webServer);
+#ifdef REST
+  // initialize our REST settings with the values loaded from persistent storage
+  settings = settings;
 
   // setup the REST API endpoints and handlers
-#ifdef REST
   webServer.on("/api/settings", HTTP_GET, getSettings);
   AsyncCallbackJsonWebHandler *handler = new AsyncCallbackJsonWebHandler("/api/settings", saveSettings);
   webServer.addHandler(handler);
@@ -570,26 +479,6 @@ void setup()
   webServer.on("/api/drawstyles", HTTP_GET, getDrawStyles);
 #endif
 
-#ifdef ALEXA
-  webServer.onNotFound([](AsyncWebServerRequest *request)
-                       {
-                         // if you don't know the URI, ask espalexa whether it is an Alexa control request
-                         if (!espalexa.handleAlexaApiCall(request))
-                         {
-                           // handle the 404 error
-                           request->send(404, "text/plain", "Not found");
-                         } });
-
-  // Define your devices here.
-  espalexa.addDevice("Hue", hueChanged, EspalexaDeviceType::extendedcolor); // color + color temperature
-
-  // give espalexa a pointer to your server object so it can use your server instead of creating its own
-  espalexa.begin(&webServer);
-#endif
-
-#ifndef ALEXA
-  webServer.begin(); // omit this since it will be done by espalexa.begin(&webServer)
-#endif
 #endif // WIFI
 
 #ifdef PHOTOCELL
@@ -618,7 +507,7 @@ void setup()
 #ifdef ENCODER
   // Initialize the rotary encoders. The KY-040 rotary encoders already contain
   // 10k-Ohm pull up resisters so we don't need to turn on the internal ones
-  ESP32Encoder::useInternalWeakPullResistors = NONE;
+  ESP32Encoder::useInternalWeakPullResistors = puType::none;
   knobRight.attachSingleEdge(ENCODER_CLK_PIN_RIGHT, ENCODER_DT_PIN_RIGHT);
   knobRight.setFilter(1023);
   knobLeft.attachSingleEdge(ENCODER_CLK_PIN_LEFT, ENCODER_DT_PIN_LEFT);
@@ -631,7 +520,7 @@ void setup()
   FastLED.addLeds<LED_TYPE, LED_STRIP_PIN_3, COLOR_ORDER>(leds + 2 * NUM_LEDS_PER_STRIP, NUM_LEDS_PER_STRIP).setCorrection(TypicalLEDStrip);
   FastLED.addLeds<LED_TYPE, LED_STRIP_PIN_4, COLOR_ORDER>(leds + 3 * NUM_LEDS_PER_STRIP, NUM_LEDS_PER_STRIP).setCorrection(TypicalLEDStrip);
   leds_dirty = true;
-  DB_PRINTLN(KaleidoscopeModeLUT[kaleidoscopeMode].modeName);
+  DB_PRINTLN(KaleidoscopeModeLUT[settings.mode].modeName);
 }
 
 //
@@ -639,11 +528,6 @@ void setup()
 //
 void loop()
 {
-#ifdef REST
-  // apply any settings changes received via the REST APIs
-  applySettings(settings);
-#endif
-
 #ifdef BOUNCE
   // Left button pressed?
   leftButton.update();
@@ -668,12 +552,12 @@ void loop()
   // Render one frame in current mode. To control the speed of updates, use the
   // EVERY_N_MILLISECONDS(N) macro to only update the frame when it is needed.
   // Also be sure to set leds_dirty = true so that the updated frame will be displayed.
-  (*KaleidoscopeModeLUT[kaleidoscopeMode].renderFunc)();
+  (*KaleidoscopeModeLUT[settings.mode].renderFunc)();
 
-  // draw the clock face (can be a null clock face - see mode_select_clock_face())
 #ifdef TIME
-  // don't draw the clock if we're in 'off' mode
-  if (KaleidoscopeModeLUT[kaleidoscopeMode].renderFunc != mode_off)
+  // draw the clock face (can be a null clock face - see mode_select_clock_face())
+  // unless we are in 'off' mode
+  if (KaleidoscopeModeLUT[settings.mode].renderFunc != mode_off)
     drawClock();
 #endif // TIME
 
@@ -685,7 +569,7 @@ void loop()
 // Show an activity spinner and the current fps. After 500 ms of no LED updates show 0 fps.
 // This is to prevent the fps flickering between 0 fps and x fps when there are no updates
 // to display (i.e. not calling FastLED.Show every loop).
-#ifdef DEBUG
+#ifdef DEBUG_FPS
   static CEveryNMilliseconds triggerTimer(500);
   static const char *spinner = "|/-\\";
   static int spinner_index = 0;
@@ -708,18 +592,21 @@ void loop()
   // if we have changes in the LEDs, show the updated frame
   if (leds_dirty)
   {
-#ifdef WIFI
-    // See if we can obtain the semaphore. If not, just skip this update.
-    if (WiFiSemaphore && xSemaphoreTake(WiFiSemaphore, 1) == pdTRUE)
-    {
-#endif
-      // We were able to obtain the semaphore and can now update the LEDs and disable interrupts.
-      FastLED.show();
-      leds_dirty = false;
-#ifdef WIFI
-      // We have finished updating the LEDs.  Release the semaphore.
-      xSemaphoreGive(WiFiSemaphore);
-    }
-#endif
+//#define DEBUG_SPINNER
+#ifdef DEBUG_SPINNER
+    static const char *spinner = "|/-\\";
+    static int spinner_index = 0;
+
+    DB_PRINTF("\r%c", spinner[spinner_index]);
+    spinner_index = (spinner_index + 1) % sizeof(spinner);
+#endif // DEBUG_SPINNER
+    leds_dirty = false; // clear the dirty flag before showing the frame or changes via asyncronous REST calls will fail to be drawn
+    FastLED.show();
+  }
+
+  // persist any changes to the settings
+  EVERY_N_SECONDS(5)
+  {
+    settingsPersist();
   }
 }

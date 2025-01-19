@@ -1,4 +1,5 @@
 #include "main.h"
+#include "debug.h"
 #include "render.h"
 #include "displaynumbers.h"
 

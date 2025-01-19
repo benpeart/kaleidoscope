@@ -1,7 +1,8 @@
 #include "main.h"
+#include "debug.h"
+#include "settings.h"
 #include "render.h"
 #include <Time.h>
-#include <Preferences.h>
 #include "RealTimeClock.h"
 #include "displaynumbers.h"
 #ifdef WEATHER
@@ -42,10 +43,7 @@ void rtc_setup()
     DB_PRINTLN(F("RealTimeClock.setup"));
 
     // read the timezone from persistant memory
-    Preferences preferences;
-    preferences.begin("kaleidoscope", true);
-    String tz = preferences.getString("tz", "");
-    preferences.end();
+    String tz = preferences.getString("tz", "EST5EDT,M3.2.0/2,M11.1.0/2");
     if (tz.length())
     {
         configTzTime(tz.c_str(), "us.pool.ntp.org", "time.nist.gov");
@@ -358,13 +356,12 @@ ClockFace clockFaceLUT[]{
 #endif
     {drawAnalogClock, "Analog"}
 };
-uint8_t clockFace = 0; // Index of current clock face in table
 uint8_t clockFaces = (sizeof(clockFaceLUT) / sizeof(clockFaceLUT[0])); // total number of valid face names in table
 CRGB clockColor = CRGB::White;
 
 void drawClock()
 {
-    clockFaceLUT[clockFace].renderFunc();
+    clockFaceLUT[settings.clockFace].renderFunc();
 }
 
 #ifndef WIFI // if we have WIFI, we don't need the manual settings modes
@@ -409,10 +406,10 @@ void mode_select_clock_face()
 
 int setClockFace(int newFace)
 {
-    if (clockFace != newFace)
+    if (settings.clockFace != newFace)
     {
-        clockFace = newFace;
-        DB_PRINTF("setClockFace: %s\r\n", clockFaceLUT[clockFace].faceName);
+        settings.clockFace = newFace;
+        DB_PRINTF("setClockFace: %s\r\n", clockFaceLUT[settings.clockFace].faceName);
         leds_dirty = true;
 #ifdef WEATHER
         // update whether we need to fetch the weather
@@ -420,5 +417,5 @@ int setClockFace(int newFace)
 #endif
     }
 
-    return clockFace;
+    return settings.clockFace;
 }

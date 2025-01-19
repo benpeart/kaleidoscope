@@ -1,4 +1,6 @@
 #include "main.h"
+#include "debug.h"
+#include "settings.h"
 #include "render.h"
 #include "Kaleidoscope.h"
 #include "GlassDisk.h"
@@ -124,7 +126,7 @@ void mode_kaleidoscope()
     }
 
     int time = millis();
-    int ms_between_frames = MAX_MILLIS - map(kaleidoscopeSpeed, KALEIDOSCOPE_MIN_SPEED, KALEIDOSCOPE_MAX_SPEED, MIN_MILLIS, MAX_MILLIS);
+    int ms_between_frames = MAX_MILLIS - map(settings.speed, MIN_SPEED, MAX_SPEED, MIN_MILLIS, MAX_MILLIS);
 
     // if it is time to enter screen saver mode
     if (time >= time_to_enter_screensaver_mode)
@@ -222,7 +224,7 @@ void mode_kaleidoscope_select_speed_brightness()
     static int time_of_last_frame = 0;
 
     int time = millis();
-    int ms_between_frames = MAX_MILLIS - map(kaleidoscopeSpeed, KALEIDOSCOPE_MIN_SPEED, KALEIDOSCOPE_MAX_SPEED, MIN_MILLIS, MAX_MILLIS);
+    int ms_between_frames = MAX_MILLIS - map(settings.speed, MIN_SPEED, MAX_SPEED, MIN_MILLIS, MAX_MILLIS);
 
     // draw the next frame into the correct led array
     if (time >= time_of_last_frame + ms_between_frames)

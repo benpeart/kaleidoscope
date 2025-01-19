@@ -1,4 +1,5 @@
 #include "main.h"
+#include "settings.h"
 #include "render.h"
 #include "XYAALines.h"
 
@@ -95,7 +96,7 @@ void mode_xy_aalines()
     static uint8_t effect = 0;
     EVERY_N_MILLIS_I(timer, DEFAULT_MILLIS)
     {
-        timer.setPeriod(MAX_MILLIS - map(kaleidoscopeSpeed, KALEIDOSCOPE_MIN_SPEED, KALEIDOSCOPE_MAX_SPEED, MIN_MILLIS, MAX_MILLIS));
+        timer.setPeriod(MAX_MILLIS - map(settings.speed, MIN_SPEED, MAX_SPEED, MIN_MILLIS, MAX_MILLIS));
         if (++effect > 5)
             effect = 0;
     }

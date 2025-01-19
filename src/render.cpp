@@ -1,6 +1,7 @@
 #include "main.h"
-#include "render.h"
 #include "debug.h"
+#include "settings.h"
+#include "render.h"
 
 // With parallel updates for the LEDs so fast, we get flickering if we call
 // FastLED.Show every loop. Maintain a 'dirty' bit so we know when to call Show.
@@ -315,22 +316,21 @@ void (*drawPixelFunc[])(CRGB *leds, int index, CRGB color){
     drawPixel12,
     drawPixel24};
 //#define N_DRAW_STYLES (sizeof(drawPixelFunc) / sizeof(drawPixelFunc[0]))
-uint8_t drawStyle = 0; // Index of current draw mode in table
 uint8_t num_leds = DRAWPIXEL6_INDEX;
 
-const PROGMEM char drawStyles[N_DRAW_STYLES][16] =
+const PROGMEM char drawStylesLUT[N_DRAW_STYLES][16] =
     {
         "Six way",
         "Twelve way",
         "Twenty four way"};
 
-int setDrawStyle(int new_draw_style)
+int setDrawStyle(int drawStyle)
 {
-    if (drawStyle != new_draw_style)
+    if (settings.drawStyle != drawStyle)
     {
-        drawStyle = new_draw_style;
-        DB_PRINTF("setDrawStyle: %s\r\n", drawStyles[drawStyle]);
-        switch (drawStyle)
+        settings.drawStyle = drawStyle;
+        DB_PRINTF("setDrawStyle: %s\r\n", drawStylesLUT[settings.drawStyle]);
+        switch (settings.drawStyle)
         {
         case 0:
             num_leds = DRAWPIXEL6_INDEX;
@@ -347,13 +347,13 @@ int setDrawStyle(int new_draw_style)
         leds_dirty = true;
     }
 
-    return drawStyle;
+    return settings.drawStyle;
 }
 
 // simple wrapper function to abstract out the fact that we have different draw functions
 void drawPixel(CRGB *leds, int index, CRGB color)
 {
-    drawPixelFunc[drawStyle](leds, index, color);
+    drawPixelFunc[settings.drawStyle](leds, index, color);
 }
 
 void fill_kaleidoscope_rainbow(CRGB *leds, uint8_t initialhue, uint8_t deltahue)

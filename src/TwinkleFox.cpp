@@ -1,4 +1,5 @@
 #include "main.h"
+#include "settings.h"
 #include "render.h"
 #include "TwinkleFox.h"
 
@@ -249,7 +250,7 @@ void chooseNextColorPalette(CRGBPalette16 &pal)
 CRGB computeOneTwinkle(uint32_t ms, uint8_t salt)
 {
     // enable us to change the twinkle speed dynamically
-    uint16_t twinkle_speed = map(kaleidoscopeSpeed, KALEIDOSCOPE_MIN_SPEED, KALEIDOSCOPE_MAX_SPEED, TWINKLE_MIN_SPEED, TWINKLE_MAX_SPEED);
+    uint16_t twinkle_speed = map(settings.speed, MIN_SPEED, MAX_SPEED, TWINKLE_MIN_SPEED, TWINKLE_MAX_SPEED);
     uint16_t ticks = ms >> (8 - twinkle_speed);
     uint8_t fastcycle8 = ticks;
     uint16_t slowcycle16 = (ticks >> 8) + salt;

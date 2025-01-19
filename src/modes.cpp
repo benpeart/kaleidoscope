@@ -1,4 +1,6 @@
 #include "main.h"
+#include "debug.h"
+#include "settings.h"
 #include "modes.h"
 
 #include "Kaleidoscope.h"
@@ -53,7 +55,6 @@ KaleidoscopeMode KaleidoscopeModeLUT[]{
 #endif
     {mode_off, "off", false, {0, 0}} // make it obvious we're entering 'regular' modes
 };
-uint8_t kaleidoscopeMode = 0;                                                               // Index of current mode in table
 uint8_t kaleidoscopeModes = (sizeof(KaleidoscopeModeLUT) / sizeof(KaleidoscopeModeLUT[0])); // total number of valid modes in table
 
 #ifdef ENCODER
@@ -67,10 +68,10 @@ uint8_t kaleidoscopeModes = (sizeof(KaleidoscopeModeLUT) / sizeof(KaleidoscopeMo
 void setKaleidoscopeMode(int newMode)
 {
     // if the mode changed
-    if (kaleidoscopeMode != newMode)
+    if (settings.mode != newMode)
     {
 #ifdef ENCODER
-        int old_mode = kaleidoscopeMode;
+        int old_mode = settings.mode;
 
         // save the encoder count for the old mode and restore the new mode count
         KaleidoscopeModeLUT[old_mode].modeEncoderCounts[LEFT_ENCODER] = knobLeft.getCount();
@@ -80,8 +81,8 @@ void setKaleidoscopeMode(int newMode)
 #endif
 
         // output the new mode name and clear the led strips for the new mode
-        kaleidoscopeMode = newMode;
-        DB_PRINTF("setKaleidoscopeMode: %s\r\n", KaleidoscopeModeLUT[kaleidoscopeMode].modeName);
+        settings.mode = newMode;
+        DB_PRINTF("setKaleidoscopeMode: %s\r\n", KaleidoscopeModeLUT[settings.mode].modeName);
         FastLED.clear(true);
         leds_dirty = true;
     }
@@ -90,7 +91,7 @@ void setKaleidoscopeMode(int newMode)
 void nextKaleidoscopeMode()
 {
     // check for a mode change
-    uint8_t newMode = kaleidoscopeMode;
+    uint8_t newMode = settings.mode;
 
     if (newMode < (kaleidoscopeModes - 1))
         newMode++; // Advance to next mode
@@ -103,7 +104,7 @@ void nextKaleidoscopeMode()
 void previousKaleidoscopeMode()
 {
     // check for a mode change
-    uint8_t newMode = kaleidoscopeMode;
+    uint8_t newMode = settings.mode;
 
     if (newMode)
         newMode--; // Go to prior mode
