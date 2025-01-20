@@ -82,7 +82,7 @@ CRGB FadeColors(CRGB rgb)
 
 CRGB BlendColors(CRGB rgb)
 {
-    return blend(rgb, clockColor, 200);
+    return blend(rgb, settings.clockColor, 200);
 }
 
 void drawNullClock()
@@ -265,7 +265,7 @@ void drawAnalogClock()
             y1 = (b * 3 / 4 * (int32_t)sin16(base_theta + theta)) / 32768;
             x2 = (a * (int32_t)cos16(base_theta + theta)) / 32768;
             y2 = (b * (int32_t)sin16(base_theta + theta)) / 32768;
-            wuLineAA(centrex + x1, centrey + y1, centrex + x2, centrey + y2, &clockColor);
+            wuLineAA(centrex + x1, centrey + y1, centrex + x2, centrey + y2, &settings.clockColor);
         }
 #else
         uint16_t index;
@@ -343,7 +343,7 @@ void drawAnalogClock()
         }
 
         if (leds_dirty)
-            displayHands(hours, minutes, seconds, clockColor);
+            displayHands(hours, minutes, seconds, settings.clockColor);
     }
 }
 
@@ -357,7 +357,6 @@ ClockFace clockFaceLUT[]{
     {drawAnalogClock, "Analog"}
 };
 uint8_t clockFaces = (sizeof(clockFaceLUT) / sizeof(clockFaceLUT[0])); // total number of valid face names in table
-CRGB clockColor = CRGB::White;
 
 void drawClock()
 {
