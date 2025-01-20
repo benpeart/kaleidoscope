@@ -398,6 +398,7 @@ void getDrawStyles(AsyncWebServerRequest *request)
   // serialize the array and send the result
   String response;
   serializeJson(doc, response);
+  DB_PRINTLN("REST getDrawStyles: " + response);
   request->send(200, "text/json", response);
 }
 
@@ -465,9 +466,6 @@ void setup()
   wifi_setup(hostname);
 
 #ifdef REST
-  // initialize our REST settings with the values loaded from persistent storage
-  settings = settings;
-
   // setup the REST API endpoints and handlers
   webServer.on("/api/settings", HTTP_GET, getSettings);
   AsyncCallbackJsonWebHandler *handler = new AsyncCallbackJsonWebHandler("/api/settings", saveSettings);
@@ -478,7 +476,6 @@ void setup()
 #endif // TIME
   webServer.on("/api/drawstyles", HTTP_GET, getDrawStyles);
 #endif
-
 #endif // WIFI
 
 #ifdef PHOTOCELL

@@ -3,8 +3,9 @@
 #ifdef WIFI
 #include <WiFi.h>
 #include "WiFiHelpers.h"
-#include <SPIFFS.h>
+#include "WebUI.h"
 #ifdef OTA
+// https://github.com/ayushsharma82/AsyncElegantOTA
 #include <ElegantOTA.h>
 #endif // OTA
 
@@ -78,23 +79,9 @@ void wifi_setup(const char *iHostname)
         DB_PRINT(F("Connected. Local IP: "));
         DB_PRINTLN(WiFi.localIP());
     }
+
     // setup the home page and other web UI (WiFi settings, upgrade, etc)
-    // Serve static files from SPIFFS
-    if (!SPIFFS.begin(false))
-    {
-        DB_PRINTLN("SPIFFS mount failed");
-        return;
-    }
-    else
-    {
-        DB_PRINTLN("SPIFFS mount success");
-    }
-    webServer.serveStatic("/", SPIFFS, "/").setDefaultFile("index.html");
-    webServer.onNotFound([](AsyncWebServerRequest *request)
-                         { request->send(404, "text/plain", "FileNotFound"); });
-#ifdef SPIFFSEDITOR
-    httpServer.addHandler(new SPIFFSEditor(SPIFFS));
-#endif // SPIFFSEDITOR
+    WebUI_setup(&webServer);
 
 #ifdef OTA
     // Add the ElegantOTA UI and require a username/password to update the firmware

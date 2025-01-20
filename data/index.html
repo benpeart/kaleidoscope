@@ -161,24 +161,9 @@
   <hr style="width: 100; color: black; border-style: solid; margin-left: auto; margin-right: auto;">
 
   <div>
-    <select name="modes" class="select" id="modes" onchange="onchangeModeName(this)">
-      <option>Kaleidoscope</option>
-      <option>Plasma</option>
-      <option>Ripples</option>
-      <option>Twinkle Fox</option>
-    </select><br>
-
-    <select name="faces" class="select" id="faces" onchange="onchangeClockFace(this)">
-      <option>Off</option>
-      <option>Digital</option>
-      <option>Analog</option>
-    </select><br>
-
-    <select name="drawstyles" class="select" id="drawstyles" onchange="onchangeDrawStyle(this)">
-      <option>Six Way</option>
-      <option>Twelve Way</option>
-      <option>Twenty Four Way</option>
-    </select>
+    <select name="modes" class="select" id="modes" onchange="onchangeModeName(this)"></select><br>
+    <select name="faces" class="select" id="faces" onchange="onchangeClockFace(this)"></select><br>
+    <select name="drawstyles" class="select" id="drawstyles" onchange="onchangeDrawStyle(this)"></select>
   </div>
 
   <h2>Brightness</h2>
@@ -204,74 +189,76 @@
     <img width="50" src='/settings.svg' />
   </a>
   <script>
-    function initialize() {
+    async function initialize() {
       console.info('body.onload called')
 
-      let modesDropdown = document.getElementById('modes');
-      fetch(window.location.origin + '/api/modes')
-        .then(
-          function (response) {
-            if (!response.ok) {
-              console.error('Error requesting /api/modes. Status Code: ' + response.status);
-              return;
-            }
-
-            response.json().then(function (data) {
-              let option;
-              console.info('modes = ' + data);
-              modesDropdown.length = 0;
-              for (let i = 0; i < data.length; i++) {
-                option = document.createElement('option');
-                option.text = data[i];
-                modesDropdown.append(option);
+      await Promise.all([
+        fetch('/api/modes')
+          .then(
+            function (response) {
+              if (!response.ok) {
+                console.error('Error requesting /api/modes. Status Code: ' + response.status);
+                return;
               }
-            });
-          }
-        )
 
-      let facesDropdown = document.getElementById('faces');
-      fetch(window.location.origin + '/api/faces')
-        .then(
-          function (response) {
-            if (!response.ok) {
-              console.error('Error requesting /api/faces. Status Code: ' + response.status);
-              return;
+              response.json().then(function (data) {
+                let option;
+                console.info('modes = ' + data);
+                let modesDropdown = document.getElementById('modes');
+                modesDropdown.length = 0;
+                for (let i = 0; i < data.length; i++) {
+                  option = document.createElement('option');
+                  option.text = data[i];
+                  modesDropdown.append(option);
+                }
+              });
             }
+          ),
 
-            response.json().then(function (data) {
-              let option;
-              console.info('faces = ' + data);
-              facesDropdown.length = 0;
-              for (let i = 0; i < data.length; i++) {
-                option = document.createElement('option');
-                option.text = data[i];
-                facesDropdown.append(option);
+        fetch('/api/faces')
+          .then(
+            function (response) {
+              if (!response.ok) {
+                console.error('Error requesting /api/faces. Status Code: ' + response.status);
+                return;
               }
-            });
-          }
-        )
 
-      let drawStylesDropdown = document.getElementById('drawstyles');
-      fetch(window.location.origin + '/api/drawstyles')
-        .then(
-          function (response) {
-            if (!response.ok) {
-              console.error('Error requesting /api/drawstyles. Status Code: ' + response.status);
-              return;
+              response.json().then(function (data) {
+                let option;
+                console.info('faces = ' + data);
+                let facesDropdown = document.getElementById('faces');
+                facesDropdown.length = 0;
+                for (let i = 0; i < data.length; i++) {
+                  option = document.createElement('option');
+                  option.text = data[i];
+                  facesDropdown.append(option);
+                }
+              });
             }
+          ),
 
-            response.json().then(function (data) {
-              let option;
-              console.info('drawstyles = ' + data);
-              drawStylesDropdown.length = 0;
-              for (let i = 0; i < data.length; i++) {
-                option = document.createElement('option');
-                option.text = data[i];
-                drawStylesDropdown.append(option);
+        fetch('/api/drawstyles')
+          .then(
+            function (response) {
+              if (!response.ok) {
+                console.error('Error requesting /api/drawstyles. Status Code: ' + response.status);
+                return;
               }
-            });
-          }
-        )
+
+              response.json().then(function (data) {
+                let option;
+                console.info('drawstyles = ' + data);
+                let drawStylesDropdown = document.getElementById('drawstyles');
+                drawStylesDropdown.length = 0;
+                for (let i = 0; i < data.length; i++) {
+                  option = document.createElement('option');
+                  option.text = data[i];
+                  drawStylesDropdown.append(option);
+                }
+              });
+            }
+          )
+      ]);
 
       updateState();
       //      window.setInterval(updateState, 1000);
@@ -279,7 +266,7 @@
 
     function updateState() {
 
-      fetch(window.location.origin + '/api/settings')
+      fetch('/api/settings')
         .then(
           function (response) {
             if (!response.ok) {
@@ -319,7 +306,7 @@
           newMode = 'Kaleidoscope';
       }
 
-      fetch(window.location.origin + '/api/settings', {
+      fetch('/api/settings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ mode: newMode })
@@ -330,7 +317,7 @@
     }
 
     function onchangeModeName(element) {
-      fetch(window.location.origin + '/api/settings', {
+      fetch('/api/settings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ mode: element.value })
@@ -341,7 +328,7 @@
     }
 
     function onchangeClockFace(element) {
-      fetch(window.location.origin + '/api/settings', {
+      fetch('/api/settings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ clockFace: element.value })
@@ -352,7 +339,7 @@
     }
 
     function onchangeDrawStyle(element) {
-      fetch(window.location.origin + '/api/settings', {
+      fetch('/api/settings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ drawStyle: element.value })
@@ -363,7 +350,7 @@
     }
 
     function onchangeBrightness(element) {
-      fetch(window.location.origin + '/api/settings', {
+      fetch('/api/settings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ brightness: element.value })
@@ -374,7 +361,7 @@
     }
 
     function onchangeSpeed(element) {
-      fetch(window.location.origin + '/api/settings', {
+      fetch('/api/settings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ speed: element.value })
@@ -386,7 +373,7 @@
 
     function onchangeClockColor(element) {
       document.getElementById("colorPickerWrapper").style.backgroundColor = element.value;
-      fetch(window.location.origin + '/api/settings', {
+      fetch('/api/settings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ clockColor: element.value })
