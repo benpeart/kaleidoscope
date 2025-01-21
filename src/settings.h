@@ -2,9 +2,8 @@
 #define SETTINGS_H
 
 #include <Preferences.h> // for storing settings in the ESP32 EEPROM
-#include <FastLED.h>
 #include "main.h"
-// #include <pixeltypes.h>  // for CRGB
+#include "render.h" // for CRGB
 
 // allow access to the preferences for additional settings
 extern Preferences preferences;

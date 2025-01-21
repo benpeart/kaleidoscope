@@ -1,5 +1,4 @@
 #include <Arduino.h>
-#include <FastLED.h>
 #include "render.h"
 #include "aurora.h"
 

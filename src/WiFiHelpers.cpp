@@ -4,6 +4,8 @@
 #include <WiFi.h>
 #include "WiFiHelpers.h"
 #include "WebUI.h"
+#include <ESPAsyncWiFiManager.h>
+#include <ESPAsyncWebServer.h>
 #ifdef OTA
 // https://github.com/ayushsharma82/AsyncElegantOTA
 #include <ElegantOTA.h>
@@ -31,9 +33,6 @@ DoubleResetDetector *drd;
 
 // Indicates whether ESP has WiFi credentials saved from previous session, or double reset detected
 bool initialConfig = false;
-
-#include <ESPAsyncWiFiManager.h>
-#include <ESPAsyncWebServer.h>
 
 #define HTTP_PORT 80
 AsyncWebServer webServer(HTTP_PORT);
@@ -122,6 +121,11 @@ void wifi_loop(void)
     // Call the double reset detector loop method every so often so that it can recognise when the timeout expires.
     // You can also call drd.stop() when you wish to no longer consider the next reset as a double reset.
     drd->loop();
+#endif
+
+#ifdef OTA
+    // will reboot the system 2 seconds after an upgrade
+    ElegantOTA.loop();
 #endif
 
     if ((WiFi.status() != WL_CONNECTED))

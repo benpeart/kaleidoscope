@@ -1,7 +1,7 @@
 #ifndef WEBUI_H
 #define WEBUI_H
 
-#include <ESPAsyncWebServer.h>
+class AsyncWebServer;
 
 //
 // Provide a web UI for getting and setting the kaleidoscope state.
