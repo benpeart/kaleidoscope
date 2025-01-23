@@ -6,6 +6,7 @@
 #include "WebUI.h"
 #include <ESPAsyncWiFiManager.h>
 #include <ESPAsyncWebServer.h>
+#include "settings.h"
 #ifdef OTA
 // https://github.com/ayushsharma82/AsyncElegantOTA
 #include <ElegantOTA.h>
@@ -31,6 +32,9 @@
 DoubleResetDetector *drd;
 #endif // DRD
 
+#define MAX_HOSTNAME_LEN 32
+char hostname[MAX_HOSTNAME_LEN] = "kaleidoscope";
+
 // Indicates whether ESP has WiFi credentials saved from previous session, or double reset detected
 bool initialConfig = false;
 
@@ -38,9 +42,13 @@ bool initialConfig = false;
 AsyncWebServer webServer(HTTP_PORT);
 DNSServer dnsServer;
 
-void wifi_setup(const char *iHostname)
+void wifi_setup(void)
 {
-    WiFi.setHostname(iHostname);
+    // connect to wifi or enter AP mode so it can be configured
+    preferences.getBytes("hostname", hostname, sizeof(hostname));
+    hostname[MAX_HOSTNAME_LEN - 1] = 0; // ensure it is null terminated
+
+    WiFi.setHostname(hostname);
 
     // connect to wifi or enter AP mode so it can be configured
 #ifdef DRD
@@ -62,14 +70,14 @@ void wifi_setup(const char *iHostname)
         // initial config, disable timeout.
         wifiManager.setConfigPortalTimeout(0);
 
-        wifiManager.startConfigPortal(iHostname);
+        wifiManager.startConfigPortal((String(hostname) + "AP").c_str());
     }
     else
     {
         // Give 2 minutes to configure WiFi, otherwise, just go into kaleidoscope mode without it
         wifiManager.setConfigPortalTimeout(120);
 
-        wifiManager.autoConnect(iHostname);
+        wifiManager.autoConnect((String(hostname) + "AP").c_str());
     }
 
     // report on our WiFi connection status
@@ -136,7 +144,7 @@ void wifi_loop(void)
         AsyncWiFiManager wifiManager(&webServer, &dnsServer);
 
         // attempt to reconnect
-        wifiManager.autoConnect("KaleidoscopeAP");
+        wifiManager.autoConnect((String(hostname) + "AP").c_str());
 
         // report on our WiFi connection status
         if (WiFi.status() == WL_CONNECTED)

@@ -49,37 +49,40 @@ void settingsPersist()
     // if any changes have been made and not persisted, write them out now
     if (EEPROMSettings.brightness != settings.brightness)
     {
-        DB_PRINTF("settingsPersist: brightness = %d\r\n", settings.brightness);
-        preferences.putInt("brightness", settings.brightness);
+        EEPROMSettings.brightness = settings.brightness;
+        preferences.putInt("brightness", EEPROMSettings.brightness);
+        DB_PRINTF("settingsPersist: brightness = %d\r\n", EEPROMSettings.brightness);
     }
     if (EEPROMSettings.speed != settings.speed)
     {
-        DB_PRINTF("settingsPersist: speed = %d\r\n", settings.speed);
-        preferences.putInt("speed", settings.speed);
+        EEPROMSettings.speed = settings.speed;
+        preferences.putInt("speed", EEPROMSettings.speed);
+        DB_PRINTF("settingsPersist: speed = %d\r\n", EEPROMSettings.speed);
     }
     if (EEPROMSettings.mode != settings.mode)
     {
-        DB_PRINTF("settingsPersist: mode = %s\r\n", KaleidoscopeModeLUT[settings.mode].modeName);
-        preferences.putInt("mode", settings.mode);
+        EEPROMSettings.mode = settings.mode;
+        preferences.putInt("mode", EEPROMSettings.mode);
+        DB_PRINTF("settingsPersist: mode = %s\r\n", KaleidoscopeModeLUT[EEPROMSettings.mode].modeName);
     }
     if (EEPROMSettings.drawStyle != settings.drawStyle)
     {
+        EEPROMSettings.drawStyle = settings.drawStyle;
+        preferences.putInt("drawStyle", EEPROMSettings.drawStyle);
         DB_PRINTF("settingsPersist: drawStyle = %s\r\n", drawStylesLUT[settings.drawStyle]);
-        preferences.putInt("drawStyle", settings.drawStyle);
     }
 #ifdef TIME
     if (EEPROMSettings.clockFace != settings.clockFace)
     {
-        DB_PRINTF("settingsPersist: clockFace = %s\r\n", clockFaceLUT[settings.clockFace].faceName);
-        preferences.putInt("clockFace", settings.clockFace);
+        EEPROMSettings.clockFace = settings.clockFace;
+        preferences.putInt("clockFace", EEPROMSettings.clockFace);
+        DB_PRINTF("settingsPersist: clockFace = %s\r\n", clockFaceLUT[EEPROMSettings.clockFace].faceName);
     }
     if (EEPROMSettings.clockColor != settings.clockColor)
     {
-        DB_PRINTF("settingsPersist: clockColor = #%06X\r\n", settings.clockColor.r << 16 | settings.clockColor.g << 8 | settings.clockColor.b);
-        preferences.putBytes("clockColor", &settings.clockColor, sizeof(settings.clockColor));
+        EEPROMSettings.clockColor = settings.clockColor;
+        preferences.putBytes("clockColor", &EEPROMSettings.clockColor, sizeof(EEPROMSettings.clockColor));
+        DB_PRINTF("settingsPersist: clockColor = #%06X\r\n", EEPROMSettings.clockColor.r << 16 | EEPROMSettings.clockColor.g << 8 | EEPROMSettings.clockColor.b);
     }
 #endif // TIME
-
-    // update our cached settings values
-    EEPROMSettings = settings;
 };

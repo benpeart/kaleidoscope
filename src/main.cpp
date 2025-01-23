@@ -9,8 +9,6 @@
 #endif // BOUNCE
 
 #ifdef WIFI
-#define MAX_HOSTNAME_LEN 32
-
 #include "WiFiHelpers.h"
 
 #ifdef REST
@@ -460,10 +458,7 @@ void setup()
 
 #ifdef WIFI
   // connect to wifi or enter AP mode so it can be configured
-  char hostname[MAX_HOSTNAME_LEN] = "kaleidoscope";
-  preferences.getBytes("hostname", hostname, sizeof(hostname));
-  hostname[MAX_HOSTNAME_LEN - 1] = 0; // ensure it is null terminated
-  wifi_setup(hostname);
+  wifi_setup();
 
 #ifdef REST
   // setup the REST API endpoints and handlers
