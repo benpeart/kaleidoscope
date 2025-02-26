@@ -110,12 +110,11 @@ void wifi_setup(void)
     espalexa.addDevice("Hue", hueChanged, EspalexaDeviceType::extendedcolor); // color + color temperature
 
     // give espalexa a pointer to your server object so it can use your server instead of creating its own
+    // espalexa.begin(&webServer) will call webServer.begin() internally
     espalexa.begin(&webServer);
-#endif
-
-#ifndef ALEXA
-    webServer.begin(); // omit this since it will be done by espalexa.begin(&webServer)
-#endif
+#else
+    webServer.begin(); 
+#endif // ALEXA
 
 #ifdef TIME
     // intialize the real time clock
@@ -126,7 +125,7 @@ void wifi_setup(void)
 void wifi_loop(void)
 {
 #ifdef DRD
-    // Call the double reset detector loop method every so often so that it can recognise when the timeout expires.
+    // Call the double reset detector loop method every so often so that it can recognize when the timeout expires.
     // You can also call drd.stop() when you wish to no longer consider the next reset as a double reset.
     drd->loop();
 #endif

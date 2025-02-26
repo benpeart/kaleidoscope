@@ -146,7 +146,7 @@ byte Snake::getSnakeDirection()
     return _direction;
 }
 
-int Snake::getSnakeLenght()
+int Snake::getSnakeLength()
 {
     return _snakeLength;
 }

@@ -84,7 +84,7 @@ public:
     void resetGame();
     bool wasGameReset();
     byte getSnakeDirection();
-    int getSnakeLenght();
+    int getSnakeLength();
     void increaseSize();
     void setDelay(int moveDelay);
     void setBodyColor(byte r, byte g, byte b)

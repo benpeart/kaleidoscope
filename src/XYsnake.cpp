@@ -19,7 +19,7 @@ bool isMoveToneStop = false;
 bool isSnakeRose = false;
 bool isSnakeRoseEnd = false;
 
-int lastSnakeLenght = 0;
+int lastSnakeLength = 0;
 
 uint8_t direction = 0;
 uint8_t lastDirection = 0;
@@ -30,46 +30,54 @@ void inputEvent()
     // use the left knob to change directions left/right
     static int lastLeftKnob = 0;
     int knob = knobLeft.getCount();
-    if (knob != lastLeftKnob)
+
+    // do not allow multiple moves within 250ms as turning the knob is very sensitive
+    static uint32_t lastMove = 0;
+    uint32_t ms = millis();
+    if (ms - lastMove > 250)
     {
-        // if the knob was twisted left
-        if (knob > lastLeftKnob)
+        if (knob != lastLeftKnob)
         {
-            switch (snakeGame.getSnakeDirection())
+            // if the knob was twisted left
+            if (knob > lastLeftKnob)
             {
-            case LEFT:
-                snakeGame.goDown();
-                break;
-            case RIGHT:
-                snakeGame.goUp();
-                break;
-            case UP:
-                snakeGame.goLeft();
-                break;
-            case DOWN:
-                snakeGame.goRight();
-                break;
+                switch (snakeGame.getSnakeDirection())
+                {
+                case LEFT:
+                    snakeGame.goDown();
+                    break;
+                case RIGHT:
+                    snakeGame.goUp();
+                    break;
+                case UP:
+                    snakeGame.goLeft();
+                    break;
+                case DOWN:
+                    snakeGame.goRight();
+                    break;
+                }
             }
-        }
-        else
-        {
-            switch (snakeGame.getSnakeDirection())
+            else
             {
-            case LEFT:
-                snakeGame.goUp();
-                break;
-            case RIGHT:
-                snakeGame.goDown();
-                break;
-            case UP:
-                snakeGame.goRight();
-                break;
-            case DOWN:
-                snakeGame.goLeft();
-                break;
+                switch (snakeGame.getSnakeDirection())
+                {
+                case LEFT:
+                    snakeGame.goUp();
+                    break;
+                case RIGHT:
+                    snakeGame.goDown();
+                    break;
+                case UP:
+                    snakeGame.goRight();
+                    break;
+                case DOWN:
+                    snakeGame.goLeft();
+                    break;
+                }
             }
         }
         lastLeftKnob = knob;
+        lastMove = ms;
     }
 #endif
 
@@ -123,7 +131,7 @@ void mode_xy_snake()
         snakeGame.setBodyColor(255, 0, 255); // Optionally set the color of the snakeparts
         snakeGame.setFoodColor(0, 60, 125);  // Optionally set the color of the food
         snakeGame.setHeadColor(225, 20, 60); // Optionally set the color of the snakeparts
-        lastSnakeLenght = snakeGame.getSnakeLenght();
+        lastSnakeLength = snakeGame.getSnakeLength();
     }
 
     inputEvent();
@@ -140,19 +148,19 @@ void mode_xy_snake()
 
         setPixel(snakeFood[0].posX, snakeFood[0].posY, snakeFood[0].pixelColor.r, snakeFood[0].pixelColor.g, snakeFood[0].pixelColor.b); // display the food
 
-        for (int i = 0; i < snakeGame.getSnakeLenght(); i++)
+        for (int i = 0; i < snakeGame.getSnakeLength(); i++)
         {
             setPixel(snakeLimbs[i].posX, snakeLimbs[i].posY, snakeLimbs[i].pixelColor.r, snakeLimbs[i].pixelColor.g, snakeLimbs[i].pixelColor.b);
         }
 
-        if (lastSnakeLenght != snakeGame.getSnakeLenght())
+        if (lastSnakeLength != snakeGame.getSnakeLength())
         {
-            lastSnakeLenght = snakeGame.getSnakeLenght();
+            lastSnakeLength = snakeGame.getSnakeLength();
             isSnakeRose = true;
             timerSnakeRose = millis();
         }
 
-        //FastLED.show();
+        // FastLED.show();
         snakeGame.tick(); // Main loop for the snake library
     }
 
@@ -172,7 +180,7 @@ void mode_xy_snake()
     if (snakeGame.wasGameReset())
     {
         changeRGBtoGBR();
-        //FastLED.show();
+        // FastLED.show();
         isGameReset = true;
         timerReset = millis();
     }
