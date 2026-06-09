@@ -3,8 +3,6 @@
 
 #include <Arduino.h>
 // flags to enable turning of various parts of the app for debugging purposes
-// #define DEBUG
-// #define JTAG
 #define BOUNCE
 #define DEMO
 #define ENCODER
@@ -14,13 +12,10 @@
 // don't include components that require WiFi unless it is included
 #define WIFI
 #ifdef WIFI
-#define DRD
-#define OTA
 #define REST
-// #define ALEXA // can't get Alexa to discover my devices, from the issues, seems like this is a common problem
 #define TIME
 // #define WEATHER
-#endif
+#endif // WIFI
 
 #ifdef ENCODER
 #ifdef STATEMACHINEENCODER

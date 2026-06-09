@@ -1,120 +1,69 @@
 #include "main.h"
 #include "debug.h"
 #ifdef WIFI
-#include <WiFi.h>
-#include "WiFiHelpers.h"
-#include "WebUI.h"
-#include <ESPAsyncWiFiManager.h>
-#include <ESPAsyncWebServer.h>
+#include <MycilaESPConnect.h>
 #include "settings.h"
-#ifdef OTA
-// https://github.com/ayushsharma82/AsyncElegantOTA
-#include <ElegantOTA.h>
-#endif // OTA
-
 #ifdef TIME
 #include "RealTimeClock.h"
 #endif // TIME
+#include "WebUI.h"
 
-#ifdef DRD
-// https://github.com/khoih-prog/ESP_DoubleResetDetector
-#define ESP_DRD_USE_EEPROM true
-
-// Number of seconds after reset during which a
-// subseqent reset will be considered a double reset.
-#define DRD_TIMEOUT 10
-
-// RTC Memory Address for the DoubleResetDetector to use
-#define DRD_ADDRESS 0
-
-#include <ESP_DoubleResetDetector.h>
-
-DoubleResetDetector *drd;
-#endif // DRD
-
-#define MAX_HOSTNAME_LEN 32
-char hostname[MAX_HOSTNAME_LEN] = "kaleidoscope";
-
-// Indicates whether ESP has WiFi credentials saved from previous session, or double reset detected
-bool initialConfig = false;
-
-#define HTTP_PORT 80
-AsyncWebServer webServer(HTTP_PORT);
-DNSServer dnsServer;
+AsyncWebServer webServer(80);
+static Mycila::ESPConnect espConnect(webServer);
+static Mycila::ESPConnect::Config espConnectConfig;
 
 void wifi_setup(void)
 {
-    // connect to wifi or enter AP mode so it can be configured
-    preferences.getBytes("hostname", hostname, sizeof(hostname));
-    hostname[MAX_HOSTNAME_LEN - 1] = 0; // ensure it is null terminated
-
-    WiFi.setHostname(hostname);
-
-    // connect to wifi or enter AP mode so it can be configured
-#ifdef DRD
-    drd = new DoubleResetDetector(DRD_TIMEOUT, DRD_ADDRESS);
-    if (drd->detectDoubleReset())
+    // reuse a potentially set hostname, or set a default one
+    espConnect.loadConfiguration(espConnectConfig);
+    if (!espConnectConfig.hostname.length())
     {
-        DB_PRINTLN("Double reset detected");
-        initialConfig = true;
-    }
-#endif
-
-    // Local intialization. Once its business is done, there is no need to keep it around
-    AsyncWiFiManager wifiManager(&webServer, &dnsServer);
-
-    if (initialConfig)
-    {
-        DB_PRINTLN(F("Starting Config Portal"));
-
-        // initial config, disable timeout.
-        wifiManager.setConfigPortalTimeout(0);
-
-        wifiManager.startConfigPortal((String(hostname) + "AP").c_str());
-    }
-    else
-    {
-        // Give 2 minutes to configure WiFi, otherwise, just go into kaleidoscope mode without it
-        wifiManager.setConfigPortalTimeout(120);
-
-        wifiManager.autoConnect((String(hostname) + "AP").c_str());
+        espConnectConfig.hostname = "kaleidoscope";
     }
 
-    // report on our WiFi connection status
-    if (WiFi.status() == WL_CONNECTED)
-    {
-        DB_PRINT(F("Connected. Local IP: "));
-        DB_PRINTLN(WiFi.localIP());
-    }
+    // clear persisted config
+    webServer.on("/clear", HTTP_GET, [&](AsyncWebServerRequest *request)
+                 {
+        DB_PRINTLN("Clearing configuration...");
+        espConnect.clearConfiguration();
+        request->send(200);
+        ESP.restart(); });
 
-    // setup the home page and other web UI (WiFi settings, upgrade, etc)
-    WebUI_setup(&webServer);
+    // restart the device
+    webServer.on("/restart", HTTP_GET, [&](AsyncWebServerRequest *request)
+                 {
+        DB_PRINTLN("Restarting...");
+        request->send(200);
+        ESP.restart(); });
 
-#ifdef OTA
-    // Add the ElegantOTA UI and require a username/password to update the firmware
-    ElegantOTA.begin(&webServer, "admin", "admin");
-    DB_PRINTLN(F("OTA web server started."));
-#endif
+    // network state listener is required here in async mode
+    espConnect.listen([](__unused Mycila::ESPConnect::State previous, Mycila::ESPConnect::State state)
+                      {
+        switch (state) {
+        case Mycila::ESPConnect::State::NETWORK_CONNECTED:
+        case Mycila::ESPConnect::State::AP_STARTED:
+            // Setup the web UI handlers (kaleidoscope page and API endpoints)
+            WebUI_setup(&webServer, &espConnect);
+            webServer.begin();
+            break;
 
-#ifdef ALEXA
-    webServer.onNotFound([](AsyncWebServerRequest *request)
-                         {
-                         // if you don't know the URI, ask espalexa whether it is an Alexa control request
-                         if (!espalexa.handleAlexaApiCall(request))
-                         {
-                           // handle the 404 error
-                           request->send(404, "text/plain", "Not found");
-                         } });
+        case Mycila::ESPConnect::State::NETWORK_DISCONNECTED:
+            webServer.end();
+            break;
 
-    // Define your devices here.
-    espalexa.addDevice("Hue", hueChanged, EspalexaDeviceType::extendedcolor); // color + color temperature
+        default:
+            break;
+        } });
 
-    // give espalexa a pointer to your server object so it can use your server instead of creating its own
-    // espalexa.begin(&webServer) will call webServer.begin() internally
-    espalexa.begin(&webServer);
-#else
-    webServer.begin(); 
-#endif // ALEXA
+    espConnect.setAutoRestart(true);
+    espConnect.setBlocking(false);
+
+    DB_PRINTLN("====> Trying to connect to saved WiFi or will start captive portal in the background...");
+
+    // Use the automatic form of begin that handles NVS save/load
+    espConnect.begin(espConnectConfig.hostname.c_str(), (espConnectConfig.hostname + "AP").c_str());
+
+    DB_PRINTLN("====> WiFi setup() completed...");
 
 #ifdef TIME
     // intialize the real time clock
@@ -124,33 +73,19 @@ void wifi_setup(void)
 
 void wifi_loop(void)
 {
-#ifdef DRD
-    // Call the double reset detector loop method every so often so that it can recognize when the timeout expires.
-    // You can also call drd.stop() when you wish to no longer consider the next reset as a double reset.
-    drd->loop();
-#endif
+    espConnect.loop();
 
-#ifdef OTA
-    // will reboot the system 2 seconds after an upgrade
-    ElegantOTA.loop();
-#endif
+#ifdef DEBUG
+    static uint32_t last = 0;
 
-    if ((WiFi.status() != WL_CONNECTED))
+    if (millis() - last > 5000)
     {
-        DB_PRINTLN(F("\nWiFi lost. Attempting to reconnect"));
-
-        // Local intialization. Once its business is done, there is no need to keep it around
-        AsyncWiFiManager wifiManager(&webServer, &dnsServer);
-
-        // attempt to reconnect
-        wifiManager.autoConnect((String(hostname) + "AP").c_str());
-
-        // report on our WiFi connection status
-        if (WiFi.status() == WL_CONNECTED)
-        {
-            DB_PRINT(F("Connected. Local IP: "));
-            DB_PRINTLN(WiFi.localIP());
-        }
+        last = millis();
+        JsonDocument doc;
+        espConnect.toJson(doc.to<JsonObject>());
+        serializeJsonPretty(doc, Serial);
+        DB_PRINTLN();
     }
+#endif // DEBUG
 }
 #endif // WIFI

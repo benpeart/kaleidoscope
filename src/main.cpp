@@ -13,16 +13,7 @@
 
 #ifdef REST
 #include <AsyncJson.h>
-#include <ArduinoJson.h>
 #endif // REST
-
-#ifdef ALEXA
-// https://github.com/Aircoookie/Espalexa
-#define ESPALEXA_ASYNC
-#define ESPALEXA_MAXDEVICES 1
-#define ESPALEXA_DEBUG
-#include <Espalexa.h>
-#endif // ALEXA
 
 #ifdef TIME
 #include "RealTimeClock.h"
@@ -85,10 +76,6 @@ Bounce2::Button rightButton = Bounce2::Button();
 // Instantiate rotary encoder knob objects
 ESP32Encoder knobRight;
 ESP32Encoder knobLeft;
-#endif
-
-#ifdef ALEXA
-Espalexa espalexa;
 #endif
 
 //
@@ -402,41 +389,6 @@ void getDrawStyles(AsyncWebServerRequest *request)
 
 #endif // REST
 
-#ifdef ALEXA
-// our Alexa callback function
-void hueChanged(EspalexaDevice *d)
-{
-  Serial.print("E changed to ");
-  Serial.print(d->getValue());
-  Serial.print(", colormode ");
-  switch (d->getColorMode())
-  {
-  case EspalexaColorMode::hs:
-    Serial.print("hs, ");
-    Serial.print("hue ");
-    Serial.print(d->getHue());
-    Serial.print(", sat ");
-    Serial.println(d->getSat());
-    break;
-  case EspalexaColorMode::xy:
-    Serial.print("xy, ");
-    Serial.print("x ");
-    Serial.print(d->getX());
-    Serial.print(", y ");
-    Serial.println(d->getY());
-    break;
-  case EspalexaColorMode::ct:
-    Serial.print("ct, ");
-    Serial.print("ct ");
-    Serial.println(d->getCt());
-    break;
-  case EspalexaColorMode::none:
-    Serial.println("none");
-    break;
-  }
-}
-#endif // ALEXA
-
 //
 // SETUP FUNCTION -- RUNS ONCE AT PROGRAM START ----------------------------
 //
@@ -447,7 +399,7 @@ void setup()
   // 3 second delay for recovery
   delay(3000);
 
-  Serial.begin(115200);
+  Serial.begin(921600);
   while (!Serial)
     ; // wait for serial port to connect. Needed for native USB port only
   DB_PRINTLN("\nStarting Kaleidoscope on " + String(ARDUINO_BOARD));
@@ -482,8 +434,7 @@ void setup()
 // gpio_pullup_en((gpio_num_t)PHOTOCELL_PIN);
 #endif
 
-  // initialize the random number generator using noise from an analog pin
-  randomSeed(analogRead(33));
+  randomSeed(esp_random()); // Get a random number from the hardware RNG
 
 #ifdef BOUNCE
   // initialize the rotary encoder switches. The KY-040 rotary encoders already contain
@@ -535,10 +486,6 @@ void loop()
 #ifdef WIFI
   // check that WiFi is still connected and reconnect if necessary
   wifi_loop();
-
-#ifdef ALEXA
-  espalexa.loop();
-#endif // ALEXA
 #endif // WIFI
 
   // Render one frame in current mode. To control the speed of updates, use the

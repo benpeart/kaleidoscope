@@ -36,7 +36,7 @@ void settingsSetup()
 #ifdef TIME
     EEPROMSettings.clockFace = preferences.getInt("clockFace", 0);
     EEPROMSettings.clockColor = CRGB::White;
-    preferences.getBytes("clockColor", &settings.clockColor, sizeof(settings.clockColor));
+    preferences.getBytes("clockColor", &EEPROMSettings.clockColor, sizeof(EEPROMSettings.clockColor));
 #endif // TIME
 
     // copy the persisted settings to the current settings

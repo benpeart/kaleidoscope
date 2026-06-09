@@ -1,6 +1,10 @@
 #include "main.h"
+#include "debug.h"
 #include "WebUI.h"
 #include <ESPAsyncWebServer.h>
+#include <MycilaESPConnect.h>
+#include <MycilaSystem.h>
+
 #ifdef SPIFFS
 #include <SPIFFS.h>
 
@@ -222,9 +226,19 @@ const char index_html[] PROGMEM = R"rawliteral(
     <input type="color" class="colorPicker" id="clockColor" value="#000000" onchange="onchangeClockColor(this)">
   </div>
 
-  <a href="/update">
-    <img width="50" src='/settings.svg' />
+  <a onclick="(async function(e) {
+          e.preventDefault();
+          await fetch('/api/safeboot', { method: 'POST' });
+          setTimeout(()=> window.location.replace('/'), 1500);
+     })(event)" style="cursor:pointer;"> 
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="50" height="50"
+      fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M7.5 18.5h9a3 3 0 0 0 0-6h-.3A4.2 4.2 0 0 0 12 6.5 a4.1 4.1 0 0 0-3.9 3.1H7.5a3.5 3.5 0 0 0 0 7z" />
+      <path d="M12 16.5v-6" />
+      <path d="M9.75 12.25 12 10l2.25 2.25" />
+    </svg>
   </a>
+
   <script>
     async function initialize() {
       console.info('body.onload called')
@@ -426,36 +440,48 @@ const char index_html[] PROGMEM = R"rawliteral(
 )rawliteral";
 #endif // SPIFFS
 
-void WebUI_setup(AsyncWebServer *webServer)
+void WebUI_setup(AsyncWebServer *webServer, Mycila::ESPConnect *espConnect)
 {
 #ifdef SPIFFS
-    // Serve static files from SPIFFS
-    if (!SPIFFS.begin(false))
-    {
-        DB_PRINTLN("SPIFFS mount failed");
-        return;
-    }
-    else
-    {
-        DB_PRINTLN("SPIFFS mount success");
-    }
-    webServer.serveStatic("/", SPIFFS, "/").setDefaultFile("index.html");
-    webServer.onNotFound([](AsyncWebServerRequest *request)
-                         { request->send(404, "text/plain", "FileNotFound"); });
+  // Serve static files from SPIFFS
+  if (!SPIFFS.begin(false))
+  {
+    DB_PRINTLN("SPIFFS mount failed");
+    return;
+  }
+  else
+  {
+    DB_PRINTLN("SPIFFS mount success");
+  }
+  webServer->serveStatic("/", SPIFFS, "/").setDefaultFile("index.html");
+
+// Add /settings route - serves the captive portal HTML for WiFi configuration
+#ifndef ESPCONNECT_NO_CAPTIVE_PORTAL
+  webServer->on("/settings", HTTP_GET, [](AsyncWebServerRequest *request)
+                { request->send(200, "text/html", ESPCONNECT_HTML, ESPCONNECT_HTML_SIZE); });
+#endif // ESPCONNECT_NO_CAPTIVE_PORTAL
+
+  webServer->onNotFound([](AsyncWebServerRequest *request)
+                        { request->send(404, "text/plain", "FileNotFound"); });
 #ifdef SPIFFSEDITOR
-    httpServer.addHandler(new SPIFFSEditor(SPIFFS));
+  httpServer.addHandler(new SPIFFSEditor(SPIFFS));
 #endif // SPIFFSEDITOR
 #else
   // Add root web page
   webServer->on("/", HTTP_GET, [](AsyncWebServerRequest *request)
-                { request->send(200, "text/html", index_html); });
+                { request->send(200, "text/html", index_html); })
+      .setFilter([espConnect](__unused AsyncWebServerRequest *request)
+                 { return espConnect->getState() != Mycila::ESPConnect::State::PORTAL_STARTED; });
 
   // Add images (used in browser UI and the root page)
+  webServer->on("/logo", HTTP_GET, [](AsyncWebServerRequest *request)
+                { request->send(200, "image/png", favicon_png, sizeof(favicon_png)); });
+
   webServer->on("/favicon.ico", HTTP_GET, [](AsyncWebServerRequest *request)
                 { request->send(200, "image/png", favicon_png, sizeof(favicon_png)); });
 
-  webServer->on("/settings.svg", HTTP_GET, [](AsyncWebServerRequest *request)
-                { request->send(200, "image/svg+xml", settings_svg, sizeof(settings_svg)); });
+  // webServer->on("/settings.svg", HTTP_GET, [](AsyncWebServerRequest *request)
+  //               { request->send(200, "image/svg+xml", settings_svg, sizeof(settings_svg)); });
 
   webServer->on("/brightness.svg", HTTP_GET, [](AsyncWebServerRequest *request)
                 { request->send(200, "image/svg+xml", brightness_svg, sizeof(brightness_svg)); });
@@ -466,4 +492,11 @@ void WebUI_setup(AsyncWebServer *webServer)
   webServer->on("/power.svg", HTTP_GET, [](AsyncWebServerRequest *request)
                 { request->send(200, "image/svg+xml", power_svg, sizeof(power_svg)); });
 #endif // SPIFFS
+
+  // reboot into SafeBoot app factory partition
+  webServer->on("/api/safeboot", HTTP_POST, [](AsyncWebServerRequest *request)
+                {
+        DB_PRINTLN("Restarting in SafeBoot mode...");
+        request->send(200, "text/html", "<META http-equiv=\"refresh\" content=\"10;URL=/\">Restarting in SafeBoot mode...");
+        Mycila::System::restartFactory("safeboot", 250); });
 }

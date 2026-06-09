@@ -20,7 +20,7 @@
 
 Snake::Snake(int fieldSizeX, int fieldSizeY, int moveDelay)
 {
-    randomSeed(analogRead(0));
+    randomSeed(esp_random()); // Get a random number from the hardware RNG
 
     _fieldSizeX = fieldSizeX;
     _fieldSizeY = fieldSizeY;

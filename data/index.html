@@ -185,9 +185,23 @@
     <input type="color" class="colorPicker" id="clockColor" value="#000000" onchange="onchangeClockColor(this)">
   </div>
 
-  <a href="/update">
+  <!-- <a href="/settings">
     <img width="50" src='/settings.svg' />
+  </a> -->
+
+  <a onclick="(async function(e) {
+          e.preventDefault();
+          await fetch('/api/safeboot', { method: 'POST' });
+          setTimeout(()=> window.location.replace('/'), 1500);
+     })(event)" style="cursor:pointer;"> 
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="50" height="50"
+      fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M7.5 18.5h9a3 3 0 0 0 0-6h-.3A4.2 4.2 0 0 0 12 6.5 a4.1 4.1 0 0 0-3.9 3.1H7.5a3.5 3.5 0 0 0 0 7z" />
+      <path d="M12 16.5v-6" />
+      <path d="M9.75 12.25 12 10l2.25 2.25" />
+    </svg>
   </a>
+
   <script>
     async function initialize() {
       console.info('body.onload called')

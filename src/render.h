@@ -1,10 +1,10 @@
 #ifndef RENDER_H
 #define RENDER_H
 
-// https://github.com/FastLED/FastLED
-// #define FASTLED_ESP32_I2S true // causes white flashes across several strips at the same time
-#define FASTLED_ESP32_FLASH_LOCK 1   // force flash operations to wait until the show() is done. (doesn't fix the hang when updating the firmware while displaying the kaleidoscope)
-// #define FASTLED_ALL_PINS_HARDWARE_SPI
+// Force flash operations to wait until the show() is done.
+// Enable it since we’re running Wi‑Fi that might access flash during LED updates
+// (even though it doesn't fix the hang when updating the firmware while displaying the kaleidoscope)
+#define FASTLED_ESP32_FLASH_LOCK 1   
 #include <FastLED.h>
 
 // With parallel updates for the LEDs so fast, we get flickering if we call
@@ -28,7 +28,6 @@ void drawPixel(CRGB *leds, int index, CRGB color);
 
 void fill_kaleidoscope_rainbow(CRGB *leds, uint8_t initialhue, uint8_t deltahue);
 void fill_kaleidoscope_solid(CRGB *leds, const struct CRGB &color);
-void fill_kaleidoscope_gradient_RGB(CRGB *leds, uint16_t startpos, CRGB startcolor, uint16_t endpos, CRGB endcolor);
 
 // The width and height of the XY coordinate system. The corners outside the hexagon
 // are 'missing' so can't display any values assigned to them.

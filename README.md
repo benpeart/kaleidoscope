@@ -1,32 +1,46 @@
 # Kaleidoscope
 A Digital Kaleidoscope maker project.
 
-## Configure WiFi settings
+## Developer Workflow
 
-When the Kaleidoscope first boots up, it will attempt to connect to WiFi using the current settings.
-If that fails, it will will go into "Access Point mode" which will allow you to access it via WiFi using your laptop or phone.
+Build the [env:release] image then flash the entire image (nvs, otadata, safeboot, app) with the command:
 
-Connect to the Kaleidoscope WiFi access point with your device and follow the onscreen instructions to configure the WiFi settings.
-The Kaleidoscope will then reboot and connect using the updated settings.
+```
+cd %userprofile%\.platformio\packages\tool-esptoolpy
+python .\esptool.py write_flash 0x0 \src\kaleidoscope\.pio\build\release\firmware.factory.bin
+```
 
-Any time the Kaleidoscope cannot connect with the current WiFi settings, it will go into AP mode so that the settings can be updated.
-If you are still having problems, reboot the Kaleidoscope (unplug/plug) twice a few seconds apart (less than 10) and the settings will be cleared and it will go into AP mode.
+Then connect to the KaleidoscopeAP with your phone and setup your WiFi credentials. Save and reboot and it will connect to your wifi with the name "kaleidoscope.local." Open http://kaleidoscope.local and configure the UI of the Kaleidoscope (mode, clock, reflection, brightness, speed, clock color).
 
-## Over-the-air updates
+Subsequent updates of the app partition can be updated using platform.io and the [env:release-ota] or [env:debug-ota] environments. You can also click the 'cloud upload' icon in the bottom left of the Kaleidoscope UI, refresh the page to load the safeboot ui, then drag/drop the firmware.bin file you want to flash
 
-**Important note**: Over-the-air updates can only be done when the Kaleidoscope is powered on and connected to the internet but in 'off' mode.
+## User Workflow
 
-1. Build your new image
-2. On the Kaleidoscope (or via the app) select the mode 'off.'
-3. In a web browser, go to the URL http://kaleidoscope/update
-4. Login with the correct credentials (default is admin/admin)
-5. Ensure the "Firmware" button is selected and click the "Choose File" button
-6. Find the firmware you just built (the default filename is .pio/build/node32s/firmware.bin) and choose "Open"
-7. The firmware will be uploaded to the Kaleidoscope and then it will reboot
+### First Time Setup
+1. Device starts without saved WiFi credentials
+2. Fails to connect (timeout after 20 seconds)
+3. Enters AP mode with SSID: `kaleidoscopeAP`
+4. User connects their phone/computer to `kaleidoscopeAP`
+5. Captive portal automatically opens (or user goes to `http://192.168.4.1`)
+6. Configure WiFi SSID and password
+7. Device saves credentials and reconnects
+8. Kaleidoscope page becomes accessible at device's IP or `kaleidoscope.local`
+
+### Subsequent Starts
+1. Device boots and loads saved WiFi credentials
+2. Connects to WiFi automatically
+3. Kaleidoscope page immediately available
+
+### OTA Update Process
+1. User clicks cloud upload icon on the kaleidoscope page
+2. Device reboots with SafeBoot partition active (refresh page to see)
+3. Use the safeboot UI page to upload the new firmware
+4. Device restarts with new firmware
+5. If failure: SafeBoot recovery mechanism allows fallback
 
 ## REST API documentation
 
-The Kaleidoscope connects to the WiFi with the device name "kaleidoscope." The web ui and REST API can be found at http://kaleidoscope/. 
+The Kaleidoscope connects to the WiFi with the device name "kaleidoscope." The web ui and REST API can be found at http://kaleidoscope.local/. 
 Alternately, check your router for the IP address.
 
 There are four REST endpoints that make up the REST API:

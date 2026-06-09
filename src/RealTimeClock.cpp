@@ -1,5 +1,6 @@
 #include "main.h"
 #include "debug.h"
+#ifdef TIME
 #include "settings.h"
 #include "render.h"
 #include <Time.h>
@@ -331,6 +332,7 @@ void drawAnalogClock()
         {
             minutes = tmp;
             leds_dirty = true;
+            DB_PRINTLN(&timeinfo, "%A, %B %d %Y %I:%M:%S %p");
         }
 
         // compute seconds
@@ -339,7 +341,6 @@ void drawAnalogClock()
         {
             seconds = tmp;
             leds_dirty = true;
-            DB_PRINTLN(&timeinfo, "%A, %B %d %Y %I:%M:%S %p");
         }
 
         if (leds_dirty)
@@ -418,3 +419,5 @@ int setClockFace(int newFace)
 
     return settings.clockFace;
 }
+
+#endif // TIME
