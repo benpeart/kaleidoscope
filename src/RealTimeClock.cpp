@@ -92,51 +92,27 @@ void drawNullClock()
 
 void drawDigitalClock()
 {
+    static int digit1 = 0, digit2 = 0, digit3 = 0, digit4 = 0;
     struct tm timeinfo;
-    static int digit1 = -1, digit2 = -1, digit3 = -1, digit4 = -1;
 
     if (getLocalTime(&timeinfo))
     {
-        int tmp;
-
         // compute first digit of hours
-        tmp = ConvertMilitaryTime(timeinfo.tm_hour);
-        tmp /= 10;
-        if (digit1 != tmp)
-        {
-            digit1 = tmp;
-            leds_dirty = true;
-        }
+        digit1 = ConvertMilitaryTime(timeinfo.tm_hour) / 10;
 
         // compute second digit of hours
-        tmp = ConvertMilitaryTime(timeinfo.tm_hour) % 10;
-        if (digit2 != tmp)
-        {
-            digit2 = tmp;
-            leds_dirty = true;
-        }
+        digit2 = ConvertMilitaryTime(timeinfo.tm_hour) % 10;
 
         // compute first digit of minutes
-        tmp = timeinfo.tm_min;
-        tmp /= 10;
-        if (digit3 != tmp)
-        {
-            digit3 = tmp;
-            leds_dirty = true;
-        }
+        digit3 = timeinfo.tm_min / 10;
 
         // compute second digit of minutes
-        tmp = timeinfo.tm_min % 10;
-        if (digit4 != tmp)
-        {
-            digit4 = tmp;
-            leds_dirty = true;
-            DB_PRINTLN(&timeinfo, "%A, %B %d %Y %I:%M:%S %p");
-        }
+        digit4 = timeinfo.tm_min % 10;
 
-        if (leds_dirty)
-            displayNumbers(digit1, digit2, digit3, digit4, BlendColors);
+        DB_PRINTLN(&timeinfo, "%A, %B %d %Y %I:%M:%S %p");
     }
+
+    displayNumbers(digit1, digit2, digit3, digit4, BlendColors);
 }
 
 #ifdef WEATHER
@@ -216,7 +192,7 @@ void displayHands(int hours, int minutes, int seconds, CRGB color)
     uint16_t b = HEIGHT * 128;
     uint16_t base_theta = 65536 * 3 / 4;
 
-// Turn off the second hand as it is hard to differentiate from the minute hand
+    // Turn off the second hand as it is hard to differentiate from the minute hand
     // second hand with sweep action
     uint16_t theta = seconds * 65536 / 60;
 #ifdef SECOND_HANDS
@@ -243,10 +219,10 @@ void displayHands(int hours, int minutes, int seconds, CRGB color)
 
 void drawAnalogClock()
 {
+    static int hours = 0, minutes = 0, seconds = 0;
     struct tm timeinfo;
-    static int hours = -1, minutes = -1, seconds = -1;
 
-// turn off hash marks as they confuse the wife :)        
+// turn off hash marks as they confuse the wife :)
 #ifdef NEVER
     if (leds_dirty)
     {
@@ -312,40 +288,18 @@ void drawAnalogClock()
         leds[index] = BlendColors(leds[index]);
 #endif
     }
-#endif // NEVER    
+#endif // NEVER
 
     if (getLocalTime(&timeinfo))
     {
-        int tmp;
-
-        // compute hours
-        tmp = ConvertMilitaryTime(timeinfo.tm_hour);
-        if (hours != tmp)
-        {
-            hours = tmp;
-            leds_dirty = true;
-        }
-
-        // compute minutes
-        tmp = timeinfo.tm_min;
-        if (minutes != tmp)
-        {
-            minutes = tmp;
-            leds_dirty = true;
-            DB_PRINTLN(&timeinfo, "%A, %B %d %Y %I:%M:%S %p");
-        }
-
-        // compute seconds
-        tmp = timeinfo.tm_sec;
-        if (seconds != tmp)
-        {
-            seconds = tmp;
-            leds_dirty = true;
-        }
-
-        if (leds_dirty)
-            displayHands(hours, minutes, seconds, settings.clockColor);
+        // update hours, minutes, and seconds
+        hours = ConvertMilitaryTime(timeinfo.tm_hour);
+        minutes = timeinfo.tm_min;
+        seconds = timeinfo.tm_sec;
+        DB_PRINTLN(&timeinfo, "%A, %B %d %Y %I:%M:%S %p");
     }
+
+    displayHands(hours, minutes, seconds, settings.clockColor);
 }
 
 // This look up table lists each of the clock drawing functions and their names
@@ -353,16 +307,10 @@ ClockFace clockFaceLUT[]{
     {drawNullClock, "Off"},
     {drawDigitalClock, "Digital"},
 #ifdef WEATHER
-    {drawTimeTempClock, "Time and Temp"}, 
+    {drawTimeTempClock, "Time and Temp"},
 #endif
-    {drawAnalogClock, "Analog"}
-};
+    {drawAnalogClock, "Analog"}};
 uint8_t clockFaces = (sizeof(clockFaceLUT) / sizeof(clockFaceLUT[0])); // total number of valid face names in table
-
-void drawClock()
-{
-    clockFaceLUT[settings.clockFace].renderFunc();
-}
 
 #ifndef WIFI // if we have WIFI, we don't need the manual settings modes
 void mode_select_clock_face()

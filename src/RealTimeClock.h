@@ -20,7 +20,6 @@ extern uint8_t clockFaces; // Number of clock faces in the lookup table
 int setClockFace(int newFace);
 extern CRGB clockColor;
 
-void drawClock();
 #ifndef WIFI // if we have WIFI, we don't need the manual settings modes
 void mode_select_clock_face();
 #endif

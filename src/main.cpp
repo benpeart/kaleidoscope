@@ -491,13 +491,12 @@ void loop()
   // Render one frame in current mode. To control the speed of updates, use the
   // EVERY_N_MILLISECONDS(N) macro to only update the frame when it is needed.
   // Also be sure to set leds_dirty = true so that the updated frame will be displayed.
-  (*KaleidoscopeModeLUT[settings.mode].renderFunc)();
+  KaleidoscopeModeLUT[settings.mode].renderFunc();
 
 #ifdef TIME
-  // draw the clock face (can be a null clock face - see mode_select_clock_face())
-  // unless we are in 'off' mode
-  if (KaleidoscopeModeLUT[settings.mode].renderFunc != mode_off)
-    drawClock();
+  // if the frame has been updated, overlay the clock face (can be a null clock face - see mode_select_clock_face())
+  if (leds_dirty)
+    clockFaceLUT[settings.clockFace].renderFunc();
 #endif // TIME
 
 #ifdef WEATHER
