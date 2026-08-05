@@ -76,11 +76,8 @@ void wifi_loop(void)
     espConnect.loop();
 
 #ifdef DEBUG
-    static uint32_t last = 0;
-
-    if (millis() - last > 5000)
+    EVERY_N_SECONDS(5)
     {
-        last = millis();
         JsonDocument doc;
         espConnect.toJson(doc.to<JsonObject>());
         serializeJsonPretty(doc, Serial);

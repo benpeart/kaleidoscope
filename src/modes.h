@@ -21,6 +21,11 @@ void setKaleidoscopeMode(int newMode);
 void nextKaleidoscopeMode();
 void previousKaleidoscopeMode();
 
+// Calls to setKaleidoscopeMode() can happen asynchronously from the main loop, so we need to
+// make sure that we don't try to clear the pixels until the previous mode has finished drawing. 
+// This flag is set to true when we enter a new mode in setKaleidoscopeMode and cleared in the main loop.
+extern bool eraseLEDs;
+
 extern void mode_off();
 
 #endif // MODES_H

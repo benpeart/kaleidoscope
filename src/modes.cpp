@@ -20,6 +20,11 @@
 #include "RealTimeClock.h"
 #endif // TIME
 
+// Calls to setMode() can happen asynchronously from the main loop, so we need to make sure that we don't
+// try to draw a new mode until the previous mode has finished drawing. This flag is set to true when we
+// enter a new mode and cleared when the first draw() call for that mode is complete.
+extern bool eraseLEDs = true;
+
 // This look up table lists each of the display/animation drawing functions
 // (which appear later in this code) in the order they're selected with
 // the right button.  Some functions appear repeatedly...for example,
@@ -76,15 +81,14 @@ void setKaleidoscopeMode(int newMode)
         // save the encoder count for the old mode and restore the new mode count
         KaleidoscopeModeLUT[old_mode].modeEncoderCounts[LEFT_ENCODER] = knobLeft.getCount();
         knobLeft.setCount(KaleidoscopeModeLUT[newMode].modeEncoderCounts[LEFT_ENCODER]);
-        KaleidoscopeModeLUT[old_mode].modeEncoderCounts[RIGHT_ENCODER] = knobLeft.getCount();
-        knobLeft.setCount(KaleidoscopeModeLUT[newMode].modeEncoderCounts[RIGHT_ENCODER]);
+        KaleidoscopeModeLUT[old_mode].modeEncoderCounts[RIGHT_ENCODER] = knobRight.getCount();
+        knobRight.setCount(KaleidoscopeModeLUT[newMode].modeEncoderCounts[RIGHT_ENCODER]);
 #endif
 
-        // output the new mode name and clear the led strips for the new mode
-        settings.mode = newMode;
+        // output the new mode name and set a flag to clear the led strips for the new mode
         DB_PRINTF("setKaleidoscopeMode: %s\r\n", KaleidoscopeModeLUT[settings.mode].modeName);
-        FastLED.clear(true);
-        leds_dirty = true;
+        settings.mode = newMode;
+        eraseLEDs = true;
     }
 }
 
@@ -117,5 +121,5 @@ void previousKaleidoscopeMode()
 // All Pixels off
 void mode_off()
 {
-    // nothing to see here... (the pixels got cleared by the button press)
+    // nothing to see here...
 }

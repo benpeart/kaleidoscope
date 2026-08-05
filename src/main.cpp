@@ -488,6 +488,14 @@ void loop()
   wifi_loop();
 #endif // WIFI
 
+  if (eraseLEDs)
+  {
+    // clear the LED strips before drawing the new mode
+    FastLED.clear(true);
+    leds_dirty = true;
+    eraseLEDs = false;
+  }
+
   // Render one frame in current mode. To control the speed of updates, use the
   // EVERY_N_MILLISECONDS(N) macro to only update the frame when it is needed.
   // Also be sure to set leds_dirty = true so that the updated frame will be displayed.
@@ -495,7 +503,7 @@ void loop()
 
 #ifdef TIME
   // if the frame has been updated, overlay the clock face (can be a null clock face - see mode_select_clock_face())
-  if (leds_dirty)
+  if ((KaleidoscopeModeLUT[settings.mode].renderFunc != mode_off) && leds_dirty)
     clockFaceLUT[settings.clockFace].renderFunc();
 #endif // TIME
 
