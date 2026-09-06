@@ -5,7 +5,7 @@
 
 // With parallel updates for the LEDs so fast, we get flickering if we call
 // FastLED.Show every loop. Maintain a 'dirty' bit so we know when to call Show.
-boolean leds_dirty = true;
+volatile boolean leds_dirty = true;
 
 // led array which will be displayed
 CRGB leds[NUM_STRIPS * NUM_LEDS_PER_STRIP];

@@ -2,6 +2,7 @@
 #include "debug.h"
 #include "settings.h"
 #include "modes.h"
+#include <math.h>
 
 #ifdef BOUNCE
 // https://github.com/thomasfredericks/Bounce2
@@ -82,54 +83,127 @@ ESP32Encoder knobLeft;
 // BRIGHTNESS helpers -------------------------------------------------
 //
 
-#define MAX_BRIGHTNESS_READING 1024          // set this to the highest reading you get from the photocell
+// Solar calculation constants (Set to your local coordinates)
+#define LATITUDE 38.048136f   // Positive = North, Negative = South
+#define LONGITUDE -79.481413f // Positive = East, Negative = West
+
+// true if the brightness has been changed via the REST API and needs to be reflected immediately
+volatile bool brightness_dirty = false;
+
+// Tracks the next Unix timestamp (epoch seconds) when brightness needs recalculation.
+// Checking once every 15 to 30 seconds only while in twilight, and setting the next wake 
+// time to the exact start of the next twilight when outside it, drops checks from ~28,000 down to
+// roughly ~250 per day.
+static time_t nextSolarCheckEpoch = 0;
+
+// Transition window duration in minutes (e.g., 60 mins total: 30 mins before, 30 mins after dawn/dusk)
+#define TWILIGHT_TRANSITION_MINUTES 60.0f
+
 #define KNOB_INCREMENT (MAX_BRIGHTNESS / 20) // brightness range / number of pulses in one rotation of rotary encoder
-#define DEBOUNCE_PHOTOCELL 64                // how much change we need to see in the average photocell reading before we change the brightness
 
-#ifdef PHOTOCELL
-#define FILTER_LEN 50
-uint32_t readADC_Avg(int ADC_Raw)
+// Returns a smooth multiplier from 0.5 (full night) to 1.0 (full day) and schedules next check
+float getSolarBrightnessScale()
 {
-  static uint32_t ADCBuffer[FILTER_LEN];
-  static int index = 0;
-  uint32_t Sum = 0;
+#if defined(TIME)
+  time_t now = time(nullptr);
+  if (now < 100000)
+  {
+    // Fallback if clock is not synchronized yet; recheck in 10s
+    nextSolarCheckEpoch = now + 10;
+    return 1.0f;
+  }
 
-  ADCBuffer[index++] = ADC_Raw;
-  if (index == FILTER_LEN)
+  struct tm local_tm;
+  struct tm utc_tm;
+  localtime_r(&now, &local_tm);
+  gmtime_r(&now, &utc_tm);
+
+  int N = local_tm.tm_yday + 1;
+
+  // Solar declination (radians)
+  float declination = 0.4093f * sin(2.0f * M_PI * (284 + N) / 365.0f);
+  float latRad = LATITUDE * (M_PI / 180.0f);
+
+  // Hour angle for standard zenith
+  float cosOmega = -tan(latRad) * tan(declination);
+
+  if (cosOmega >= 1.0f)
   {
-    index = 0;
+    // Polar night: check again in an hour
+    nextSolarCheckEpoch = now + 3600;
+    return 0.5f;
   }
-  for (int i = 0; i < FILTER_LEN; i++)
+  if (cosOmega <= -1.0f)
   {
-    Sum += ADCBuffer[i];
+    // Midnight sun: check again in an hour
+    nextSolarCheckEpoch = now + 3600;
+    return 1.0f;
   }
-  return (Sum / FILTER_LEN);
+
+  float omega = acos(cosOmega) * (180.0f / M_PI);
+
+  // Solar noon adjusted for UTC offset
+  time_t local_sec = mktime(&local_tm);
+  time_t utc_sec = mktime(&utc_tm);
+  float gmtOffsetHours = (float)difftime(local_sec, utc_sec) / 3600.0f;
+  float solarNoon = 12.0f - (LONGITUDE / 15.0f) + gmtOffsetHours;
+
+  float dawnHour = solarNoon - (omega / 15.0f);
+  float duskHour = solarNoon + (omega / 15.0f);
+
+  // Local time in fractional hours
+  float currentHour = local_tm.tm_hour + (local_tm.tm_min / 60.0f) + (local_tm.tm_sec / 3600.0f);
+
+  float halfWindowHours = (TWILIGHT_TRANSITION_MINUTES / 60.0f) / 2.0f;
+  float dawnStart = dawnHour - halfWindowHours;
+  float dawnEnd = dawnHour + halfWindowHours;
+  float duskStart = duskHour - halfWindowHours;
+  float duskEnd = duskHour + halfWindowHours;
+
+  float dayFactor = 0.0f;
+
+  if (currentHour >= dawnEnd && currentHour < duskStart)
+  {
+    // Full daylight: schedule wake-up exactly when dusk transition begins
+    dayFactor = 1.0f;
+    float secondsUntilDusk = (duskStart - currentHour) * 3600.0f;
+    nextSolarCheckEpoch = now + (time_t)max(1.0f, secondsUntilDusk);
+  }
+  else if (currentHour >= duskEnd || currentHour < dawnStart)
+  {
+    // Full night: schedule wake-up exactly when dawn transition begins
+    dayFactor = 0.0f;
+    float hoursUntilDawn = (currentHour < dawnStart) ? (dawnStart - currentHour)
+                                                     : (24.0f - currentHour + dawnStart);
+    nextSolarCheckEpoch = now + (time_t)max(1.0f, hoursUntilDawn * 3600.0f);
+  }
+  else
+  {
+    // In active twilight transition: step every 15s (captures single-unit changes at max slope)
+    nextSolarCheckEpoch = now + 15;
+
+    if (currentHour < dawnEnd)
+    {
+      // Dawn window: ramping UP (night -> day)
+      float progress = (currentHour - dawnStart) / (2.0f * halfWindowHours);
+      dayFactor = 0.5f * (1.0f - cos(constrain(progress, 0.0f, 1.0f) * M_PI));
+    }
+    else
+    {
+      // Dusk window: ramping DOWN (day -> night)
+      float progress = (currentHour - duskStart) / (2.0f * halfWindowHours);
+      dayFactor = 0.5f * (1.0f + cos(constrain(progress, 0.0f, 1.0f) * M_PI));
+    }
+  }
+
+  // Scale: 0.5 (night) to 1.0 (day)
+  return 0.5f + (0.5f * dayFactor);
+#else
+  return 1.0f;
+#endif
 }
-#endif // PHOTOCELL
 
-// compute the brightness of the LED strips to match the ambient lighting
-int ambientBrightness()
-{
-  // check the photocell and debounce it a bit as it moves around a lot
-  static int lastPhotocell = 0;
-
-#ifdef PHOTOCELL
-  // The ADC input channels have a 12 bit resolution. This means that you can get analog readings
-  // ranging from 0 to 4095, in which 0 corresponds to 0V and 4095 to 3.3V. https://randomnerdtutorials.com/esp32-pinout-reference-gpios/
-  // However, I've only measured it as high as 1903 with a very bright light directly on the photocell.
-  int photocellReading = readADC_Avg(analogRead(PHOTOCELL_PIN));
-  if ((photocellReading > lastPhotocell + DEBOUNCE_PHOTOCELL) || (photocellReading < lastPhotocell - DEBOUNCE_PHOTOCELL))
-  {
-    lastPhotocell = photocellReading;
-    DB_PRINTF("photocell reading = %d\r\n", photocellReading);
-  }
-#endif // PHOTOCELL
-
-  // ensure we stay between our min and max valid values
-  return constrain(map(lastPhotocell, 0, MAX_BRIGHTNESS_READING, 0, MAX_BRIGHTNESS), 0, MAX_BRIGHTNESS);
-}
-
-// manually adjust the brightness of the LED strips up or down from the ambientBrightness
+// manually adjust the brightness offset via the rotary encoder
 int manualBrightness(bool useKnob)
 {
   if (!useKnob)
@@ -146,7 +220,7 @@ int manualBrightness(bool useKnob)
     else
       settings.brightness += KNOB_INCREMENT;
 
-    settings.brightness = constrain(settings.brightness, -MAX_BRIGHTNESS, MAX_BRIGHTNESS);
+    settings.brightness = constrain(settings.brightness, MIN_BRIGHTNESS, MAX_BRIGHTNESS);
     lastRightKnob = knob;
 
     DB_PRINTF("brightness = %d\r\n", settings.brightness);
@@ -171,23 +245,31 @@ int manualBrightness(bool useKnob)
 // modes as each mode may want to do something different with the knobs (ie the 'snake' mode)
 //
 
-// update the FastLED brightness based on our ambient and manual settings
+// update the FastLED brightness based on getSolarBrightnessScale and settings
 void adjustBrightness(bool useKnob)
 {
-  // store the current LED brightness so we can minimize minor differences
+  manualBrightness(useKnob);
+
   static int LEDbrightness = 0;
+  time_t now = time(nullptr);
 
-  // constrain our total brightness from MIN_BRIGHTNESS to MAX_BRIGHTNESS so it doesn't get too dark
-  int newBrightness = constrain(ambientBrightness() + manualBrightness(useKnob), MIN_BRIGHTNESS, MAX_BRIGHTNESS);
-
-  // adjust our brightness if it has changed
-  if (newBrightness != LEDbrightness)
+  // Recompute immediately if:
+  // 1. Encoder knob was turned (useKnob)
+  // 2. REST API modified settings (brightness_dirty)
+  // 3. Next scheduled recalculation time has arrived
+  if (useKnob || brightness_dirty || (now >= nextSolarCheckEpoch))
   {
-    LEDbrightness = newBrightness;
-    DB_PRINTF("new brightness = %d\r\n", newBrightness);
+    brightness_dirty = false;
 
-    FastLED.setBrightness(dim8_raw(LEDbrightness));
-    leds_dirty = true;
+    int newBrightness = constrain((int)round(settings.brightness * getSolarBrightnessScale()), MIN_BRIGHTNESS, MAX_BRIGHTNESS);
+    if (newBrightness != LEDbrightness)
+    {
+      LEDbrightness = newBrightness;
+      DB_PRINTF("new brightness = %d\r\n", newBrightness);
+
+      FastLED.setBrightness(dim8_raw(LEDbrightness));
+      leds_dirty = true;
+    }
   }
 }
 
@@ -232,7 +314,8 @@ void saveSettings(AsyncWebServerRequest *request, JsonVariant &json)
   JsonVariant brightness = jsonObj["brightness"];
   if (!brightness.isNull())
   {
-    settings.brightness = constrain((int)brightness, -MAX_BRIGHTNESS, MAX_BRIGHTNESS);
+    settings.brightness = constrain((int)brightness, MIN_BRIGHTNESS, MAX_BRIGHTNESS);
+    brightness_dirty = true; // Triggers immediate adjustment in loop
     DB_PRINTF("  brightness = %d\r\n", settings.brightness);
   }
 
@@ -429,9 +512,6 @@ void setup()
   // Testing shows that the internal pullup resistors on the ESP32 are complete crap and
   // unusable. Probably why every example does their own external pullup/down resistors.
   pinMode(PHOTOCELL_PIN, INPUT /*_PULLUP*/);
-
-// D:\src\kaleidoscope\.pio\libdeps\node32s\ESP32Encoder\src\ESP32Encoder.cpp
-// gpio_pullup_en((gpio_num_t)PHOTOCELL_PIN);
 #endif
 
   randomSeed(esp_random()); // Get a random number from the hardware RNG
@@ -538,14 +618,14 @@ void loop()
   // if we have changes in the LEDs, show the updated frame
   if (leds_dirty)
   {
-//#define DEBUG_SPINNER
+// #define DEBUG_SPINNER
 #ifdef DEBUG_SPINNER
     static const char *spinner = "|/-\\";
     static int spinner_index = 0;
 
     DB_PRINTF("\r%c", spinner[spinner_index]);
     spinner_index = (spinner_index + 1) % sizeof(spinner);
-#endif // DEBUG_SPINNER
+#endif                  // DEBUG_SPINNER
     leds_dirty = false; // clear the dirty flag before showing the frame or changes via asyncronous REST calls will fail to be drawn
     FastLED.show();
   }

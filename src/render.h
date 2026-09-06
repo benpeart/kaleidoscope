@@ -9,7 +9,7 @@
 
 // With parallel updates for the LEDs so fast, we get flickering if we call
 // FastLED.Show every loop. Maintain a 'dirty' bit so we know when to call Show.
-extern boolean leds_dirty;
+extern volatile boolean leds_dirty;
 
 #define N_DRAW_STYLES 3
 extern const PROGMEM char drawStylesLUT[N_DRAW_STYLES][16];

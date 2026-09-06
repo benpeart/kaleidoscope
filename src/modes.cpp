@@ -23,7 +23,7 @@
 // Calls to setMode() can happen asynchronously from the main loop, so we need to make sure that we don't
 // try to draw a new mode until the previous mode has finished drawing. This flag is set to true when we
 // enter a new mode and cleared when the first draw() call for that mode is complete.
-extern bool eraseLEDs = true;
+bool eraseLEDs = true;
 
 // This look up table lists each of the display/animation drawing functions
 // (which appear later in this code) in the order they're selected with
