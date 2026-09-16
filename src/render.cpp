@@ -266,8 +266,6 @@ void drawPixel6(CRGB *leds, int index, CRGB color)
 {
     if (index < 0 || index >= DRAWPIXEL6_INDEX)
     {
-        DB_PRINT("drawPixel6 index out of range ");
-        DB_PRINTLN(index);
         return;
     }
 
@@ -281,8 +279,6 @@ void drawPixel12(CRGB *leds, int index, CRGB color)
 {
     if (index < 0 || index >= DRAWPIXEL12_INDEX)
     {
-        DB_PRINT("drawPixel12 index out of range ");
-        DB_PRINTLN(index);
         return;
     }
 
@@ -297,8 +293,6 @@ void drawPixel24(CRGB *leds, int index, CRGB color)
 {
     if (index < 0 || index >= DRAWPIXEL24_INDEX)
     {
-        DB_PRINT("drawPixel24 index out of range ");
-        DB_PRINTLN(index);
         return;
     }
 

@@ -4,6 +4,7 @@
 #include "settings.h"
 #include "render.h"
 #include <Time.h>
+#include <esp_sntp.h>
 #include "RealTimeClock.h"
 #include "displaynumbers.h"
 #ifdef WEATHER
@@ -25,23 +26,31 @@
 //
 // RealTimeClock ----------------------------
 //
-
 #ifdef DEBUG
-void printLocalTime()
+void timeSyncNotificationCallback(struct timeval *tv)
 {
+    DB_PRINTLN(F("NTP Time Synchronized!"));
     struct tm timeinfo;
-    if (!getLocalTime(&timeinfo))
+    if (getLocalTime(&timeinfo, 0)) // 0 timeout because we know it's ready
     {
-        DB_PRINTLN("Failed to obtain time");
-        return;
+        DB_PRINTLN(&timeinfo, "%A, %B %d %Y %I:%M:%S %p");
     }
-    DB_PRINTLN(&timeinfo, "%A, %B %d %Y %I:%M:%S %p");
 }
-#endif
+#endif // DEBUG
 
 void rtc_setup()
 {
+    static bool tzConfigured = false;
+
+    // we only need to do this once
+    if (tzConfigured)
+        return;
+
     DB_PRINTLN(F("RealTimeClock.setup"));
+#ifdef DEBUG
+    // Register callback BEFORE configuring time
+    sntp_set_time_sync_notification_cb(timeSyncNotificationCallback);
+#endif // DEBUG
 
     // read the timezone from persistant memory
     String tz = preferences.getString("tz", "EST5EDT,M3.2.0/2,M11.1.0/2");
@@ -56,9 +65,8 @@ void rtc_setup()
         configTime(-5 * SECS_PER_HOUR, SECS_PER_HOUR, "us.pool.ntp.org", "time.nist.gov");
         DB_PRINTLN(F("Current Timezone is not set. Enter Config Portal to set."));
     }
-#ifdef DEBUG
-    printLocalTime();
-#endif
+
+    tzConfigured = true;
 }
 
 int ConvertMilitaryTime(int hours)
@@ -108,8 +116,6 @@ void drawDigitalClock()
 
         // compute second digit of minutes
         digit4 = timeinfo.tm_min % 10;
-
-        DB_PRINTLN(&timeinfo, "%A, %B %d %Y %I:%M:%S %p");
     }
 
     displayNumbers(digit1, digit2, digit3, digit4, BlendColors);
@@ -296,7 +302,6 @@ void drawAnalogClock()
         hours = ConvertMilitaryTime(timeinfo.tm_hour);
         minutes = timeinfo.tm_min;
         seconds = timeinfo.tm_sec;
-        DB_PRINTLN(&timeinfo, "%A, %B %d %Y %I:%M:%S %p");
     }
 
     displayHands(hours, minutes, seconds, settings.clockColor);

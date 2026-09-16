@@ -3,6 +3,8 @@
 #include "settings.h"
 #include "modes.h"
 #include <math.h>
+#include "DoubleResetDetector.h"
+#include <MycilaSystem.h>
 
 #ifdef BOUNCE
 // https://github.com/thomasfredericks/Bounce2
@@ -66,6 +68,8 @@
 // Global variables  -------------------------------------------------
 //
 
+DoubleResetDetector drd(&preferences);
+
 #ifdef BOUNCE
 // Instantiate Button objects from the Bounce2 namespace
 Bounce2::Button leftButton = Bounce2::Button();
@@ -83,15 +87,11 @@ ESP32Encoder knobLeft;
 // BRIGHTNESS helpers -------------------------------------------------
 //
 
-// Solar calculation constants (Set to your local coordinates)
-#define LATITUDE 38.048136f   // Positive = North, Negative = South
-#define LONGITUDE -79.481413f // Positive = East, Negative = West
-
 // true if the brightness has been changed via the REST API and needs to be reflected immediately
 volatile bool brightness_dirty = false;
 
 // Tracks the next Unix timestamp (epoch seconds) when brightness needs recalculation.
-// Checking once every 15 to 30 seconds only while in twilight, and setting the next wake 
+// Checking once every 15 to 30 seconds only while in twilight, and setting the next wake
 // time to the exact start of the next twilight when outside it, drops checks from ~28,000 down to
 // roughly ~250 per day.
 static time_t nextSolarCheckEpoch = 0;
@@ -122,7 +122,7 @@ float getSolarBrightnessScale()
 
   // Solar declination (radians)
   float declination = 0.4093f * sin(2.0f * M_PI * (284 + N) / 365.0f);
-  float latRad = LATITUDE * (M_PI / 180.0f);
+  float latRad = currentLatitude * (M_PI / 180.0f);
 
   // Hour angle for standard zenith
   float cosOmega = -tan(latRad) * tan(declination);
@@ -146,7 +146,7 @@ float getSolarBrightnessScale()
   time_t local_sec = mktime(&local_tm);
   time_t utc_sec = mktime(&utc_tm);
   float gmtOffsetHours = (float)difftime(local_sec, utc_sec) / 3600.0f;
-  float solarNoon = 12.0f - (LONGITUDE / 15.0f) + gmtOffsetHours;
+  float solarNoon = 12.0f - (currentLongitude / 15.0f) + gmtOffsetHours;
 
   float dawnHour = solarNoon - (omega / 15.0f);
   float duskHour = solarNoon + (omega / 15.0f);
@@ -479,17 +479,32 @@ void getDrawStyles(AsyncWebServerRequest *request)
 void setup()
 {
 #ifdef DEBUG
-  // 3 second delay for recovery
-  delay(3000);
-
   Serial.begin(921600);
-  while (!Serial)
-    ; // wait for serial port to connect. Needed for native USB port only
+  Serial.setTimeout(2); // Fail-safe: prevent any blocking stream reads
+
+  // Bounded startup check: do not block indefinitely if host is absent or rebooting
+  unsigned long startWait = millis();
+  while (!Serial && (millis() - startWait < 1500))
+    ;
+
   DB_PRINTLN("\nStarting Kaleidoscope on " + String(ARDUINO_BOARD));
+
+  // Debug info about the ESP32 we are running on
+  DB_PRINTF("ESP32 Chip Model: %s\r\n", ESP.getChipModel());
+  DB_PRINTF("ESP32 Chip Revision: %u\r\n", ESP.getChipRevision());
+  DB_PRINTF("ESP32 Chip Cores: %d\r\n", ESP.getChipCores());
+  DB_PRINTF("ESP32 CPU Frequency: %d MHz\r\n", ESP.getCpuFreqMHz());
+  DB_PRINTF("ESP32 Flash Size: %d MB\r\n", ESP.getFlashChipSize() / (1024 * 1024));
+  DB_PRINTF("ESP32 Flash Speed: %d MHz\r\n", ESP.getFlashChipSpeed() / 1000000);
+  DB_PRINTF("ESP32 PSRAM Size: %d MB\r\n", ESP.getPsramSize() / (1024 * 1024));
+  DB_PRINTF("ESP32 Free PSRAM: %d MB\r\n", ESP.getFreePsram() / (1024 * 1024));
 #endif
 
   // initialize the settings from persistent storage
   settingsSetup();
+
+  // Initialize the double reset detector
+  drd.setup();
 
 #ifdef WIFI
   // connect to wifi or enter AP mode so it can be configured
@@ -551,6 +566,28 @@ void setup()
 //
 void loop()
 {
+  // check for a double reset where we should enter safeboot mode
+  drd.loop();
+  if (drd.isDoubleReset())
+  {
+    DB_PRINTLN("Double reset detected, entering SafeBoot mode...");
+    preferences.end();
+    Mycila::System::restartFactory("safeboot");
+  }
+
+#ifdef WIFI
+  // check that WiFi is still connected and reconnect if necessary
+  wifi_loop();
+
+  // if we get an updated location, force a solar brightness recalculation
+  static bool locationUpdated = false;
+  if (locationAcquired && !locationUpdated)
+  {
+    locationUpdated = true;
+    nextSolarCheckEpoch = 0;
+  }
+#endif // WIFI
+
 #ifdef BOUNCE
   // Left button pressed?
   leftButton.update();
@@ -562,11 +599,6 @@ void loop()
   if (rightButton.pressed())
     nextKaleidoscopeMode();
 #endif
-
-#ifdef WIFI
-  // check that WiFi is still connected and reconnect if necessary
-  wifi_loop();
-#endif // WIFI
 
   if (eraseLEDs)
   {

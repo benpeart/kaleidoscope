@@ -1,6 +1,7 @@
 #include "main.h"
 #include "debug.h"
 #include "WebUI.h"
+#include "settings.h"
 #include <ESPAsyncWebServer.h>
 #include <MycilaESPConnect.h>
 #include <MycilaSystem.h>
@@ -498,5 +499,6 @@ void WebUI_setup(AsyncWebServer *webServer, Mycila::ESPConnect *espConnect)
                 {
         DB_PRINTLN("Restarting in SafeBoot mode...");
         request->send(200, "text/html", "<META http-equiv=\"refresh\" content=\"10;URL=/\">Restarting in SafeBoot mode...");
+        preferences.end();
         Mycila::System::restartFactory("safeboot", 250); });
 }
