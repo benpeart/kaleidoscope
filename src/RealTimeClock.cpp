@@ -23,6 +23,9 @@
 #define SECS_PER_YEAR ((time_t)(SECS_PER_DAY * 365UL)) // TODO: ought to handle leap years
 #define SECS_YR_2000 ((time_t)(946684800UL))           // the time at the start of y2k
 
+static struct tm timeinfo;
+static bool timeinfo_valid = false;
+
 //
 // RealTimeClock ----------------------------
 //
@@ -30,9 +33,9 @@
 void timeSyncNotificationCallback(struct timeval *tv)
 {
     DB_PRINTLN(F("NTP Time Synchronized!"));
-    struct tm timeinfo;
-    if (getLocalTime(&timeinfo, 0)) // 0 timeout because we know it's ready
+    if (getLocalTime(&timeinfo, 0)) // 0 timeout so we don't block
     {
+        timeinfo_valid = true;
         DB_PRINTLN(&timeinfo, "%A, %B %d %Y %I:%M:%S %p");
     }
 }
@@ -101,10 +104,11 @@ void drawNullClock()
 void drawDigitalClock()
 {
     static int digit1 = 0, digit2 = 0, digit3 = 0, digit4 = 0;
-    struct tm timeinfo;
 
-    if (getLocalTime(&timeinfo))
+    if (getLocalTime(&timeinfo, 0)) // 0 timeout so we don't block
     {
+        timeinfo_valid = true;
+
         // compute first digit of hours
         digit1 = ConvertMilitaryTime(timeinfo.tm_hour) / 10;
 
@@ -118,7 +122,10 @@ void drawDigitalClock()
         digit4 = timeinfo.tm_min % 10;
     }
 
-    displayNumbers(digit1, digit2, digit3, digit4, BlendColors);
+    if (timeinfo_valid)
+    {
+        displayNumbers(digit1, digit2, digit3, digit4, BlendColors);
+    }
 }
 
 #ifdef WEATHER
@@ -226,7 +233,6 @@ void displayHands(int hours, int minutes, int seconds, CRGB color)
 void drawAnalogClock()
 {
     static int hours = 0, minutes = 0, seconds = 0;
-    struct tm timeinfo;
 
 // turn off hash marks as they confuse the wife :)
 #ifdef NEVER
@@ -296,15 +302,20 @@ void drawAnalogClock()
     }
 #endif // NEVER
 
-    if (getLocalTime(&timeinfo))
+    if (getLocalTime(&timeinfo, 0)) // 0 timeout so we don't block
     {
+        timeinfo_valid = true;
+
         // update hours, minutes, and seconds
         hours = ConvertMilitaryTime(timeinfo.tm_hour);
         minutes = timeinfo.tm_min;
         seconds = timeinfo.tm_sec;
     }
 
-    displayHands(hours, minutes, seconds, settings.clockColor);
+    if (timeinfo_valid)
+    {
+        displayHands(hours, minutes, seconds, settings.clockColor);
+    }
 }
 
 // This look up table lists each of the clock drawing functions and their names
